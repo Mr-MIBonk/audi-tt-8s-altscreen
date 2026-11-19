@@ -36,7 +36,7 @@
 | Lane sets | Up to 6 upcoming | Up to 6 upcoming |
 | Junction angles (`exit_angle`, `turn_angle`) | Not sent (1000) | Not sent (1000) |
 | Distance to the next turn | Not sent while parked | `dist_maneuver_m` and `mN_distance` sent |
-| Text language | Phone language (Chinese phone: "W Copper Lakes Ct方面") | Phone language |
+| Text language | Chinese on this phone ("W Copper Lakes Ct方面") | English ("Start on W Copper Lakes Dr") |
 
 So routes planned while parked capture only the first maneuvers; the research
 log fills from normal drives. Real junction shapes are not possible from this
