@@ -11,7 +11,8 @@ included), fed live from the iPhone ([Turn-by-turn data](Turn-by-turn-data.md)).
 
 | View | Panel | Frame |
 |---|---|---|
-| Small (tach-centred) | 328x170 at 991,160, just under the trim line | Our own: chamfered top-right corner, light border, red accent |
+| Small (tach-centred), car page | 328x170 at 991,160, just under the trim line | Our own: chamfered top-right corner, light border, red accent |
+| Small, map showing (v35) | 328x170 at 130,76, over the map left of the tach (the banner window is gone with the banner off) | Our own |
 | Large, car tab | 210x150 at 1105,110 | The stock frame |
 | Large, map tab (v33) | 210x150 at 1105,110, over the CarPlay map | Our own (stock banner off, it hides the map) |
 
@@ -89,7 +90,8 @@ cluster. Code 12 stays stock's "prepare" icon, so lane change got its own code.
 | v31 | RGBA text colours, top-line fitting | |
 | v32 | Nine new pictures, fixed roundabout U-turn, research log | Pictures as previewed; live route: the stock banner hid the CarPlay map |
 | v33 | Banner off while the map shows (context 10/89), own frame on the map, full-screen grid | Map kept on live Google and Apple routes in every view; banner back on the car page. At a playback start the banner stayed up about 11 s |
-| v34 | Map check reads the live context; the watcher runs for as long as a route is declared | Test pending |
+| v34 | Map check reads the live context; the watcher runs for as long as a route is declared | Photos: CarPlay map + framed panel on the large map, panel in the stock frame on the car pages. Small view with the map: map kept, panel not visible (its window is gone) |
+| v35 | Small view with the map: panel over the map at 130,76; U-turn lanes drawn as a hook; street names shrink before "..." | Test pending |
 
 Previews: [v27](../docs/panel-preview-v27.png), [v28](../docs/panel-preview-v28.png),
 [v29](../docs/panel-preview-v29.png), [v30](../docs/panel-preview-v30.png),

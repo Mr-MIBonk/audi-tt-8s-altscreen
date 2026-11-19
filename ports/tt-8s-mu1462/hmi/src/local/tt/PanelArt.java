@@ -618,6 +618,29 @@ public final class PanelArt {
             float mid = y + rh * (multi ? 0.62f : 0.55f);
             thick(cx, base, cx, mid, t, c);
             for (int k = 0; k < a.length; k++) {
+                if (a[k] <= -150 || a[k] >= 150) {
+                    // v35: a U-turn lane (Apple sends -180) is a hook, not a down arrow (it read as a double arrow).
+                    float sgn = a[k] > 0 ? 1f : -1f;
+                    float r = Math.max(4f, cell * 0.17f);
+                    float top = y + rh * 0.24f;
+                    thick(cx, mid, cx, top + r, t, c);
+                    float hx = cx + sgn * r;
+                    float lx = cx;
+                    float ly = top + r;
+                    for (int q = 1; q <= 12; q++) {
+                        double th = Math.PI * q / 12.0;
+                        float nx = (float) (hx - sgn * r * Math.cos(th));
+                        float ny = (float) (top + r - r * Math.sin(th));
+                        thick(lx, ly, nx, ny, t, c);
+                        lx = nx;
+                        ly = ny;
+                    }
+                    float ex = cx + 2f * sgn * r;
+                    float ey = top + r + rh * 0.16f;
+                    thick(ex, top + r, ex, ey, t, c);
+                    laneHead(ex, ey, 128, rh * 0.22f, c);
+                    continue;
+                }
                 int d = laneDir(a[k]);
                 boolean straight = d == 0;
                 float from = multi && !straight ? mid + rh * 0.08f : mid;

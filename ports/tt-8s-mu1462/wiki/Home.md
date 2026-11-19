@@ -42,8 +42,8 @@ Everything marked "works" was checked on one car (US TT, MU1462), November 2026.
 
 - v33 map test (`play map`): CarPlay map kept with our framed panel on the map;
   where our layer shows over the map in the small view (full-screen grid).
-- Small view with the map: the stock banner hides the CarPlay map there too; the
-  panel needs another place (grid photo decides).
+- v35 guided test (`sh tt.sh test`): panel over the map in the small view; the
+  iPhone's own maneuver card switched off (hook surface "map", `/tmp/mibr-alt111-url-mode`).
 - Chinese phone language: exit numbers from Chinese instructions (need a sample).
 - Live drive with Google and Apple Maps.
 - Try the iPhone's own maneuver card (hook switches `/mnt/app/root/mibr-carplay111-nav*`).

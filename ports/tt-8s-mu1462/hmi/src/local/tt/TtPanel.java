@@ -643,7 +643,9 @@ public final class TtPanel {
         int pw = t.width(mode);
         int ph = t.height(mode);
         boolean kdkMode = mode == TurnSpec.KDK || mode == TurnSpec.KDK_WIDE || mode == TurnSpec.KDK_MAP;
-        String spot = kdkMode ? (mode == TurnSpec.KDK_WIDE ? "kdk-small" : "kdk-large")
+        // v35: in the small view the banner window is gone while the map shows (banner off), so the
+        // panel moves over the map, left of the tach (v33 grid photo).
+        String spot = kdkMode ? (mode == TurnSpec.KDK_WIDE ? (mapShowing ? "kdk-smallmap" : "kdk-small") : "kdk-large")
             : (mode == TurnSpec.FULL ? "small" : (mode == TurnSpec.FLAP ? "flap" : "left"));
         StringBuffer b = new StringBuffer(spot).append(' ');
         IWrappedNode3D front = parent(m);
@@ -982,7 +984,12 @@ public final class TtPanel {
     private static void place(IWrappedNode3D n, String which) {
         int x;
         int y;
-        if (which.equals("kdk-small")) {
+        if (which.equals("kdk-smallmap")) {
+            // v33 grid photo, small view with the map: the map shows at x 0..~520 (tach to the
+            // right), its top edge is a diagonal from (0,110) to (200,50).
+            x = 130;
+            y = 76;
+        } else if (which.equals("kdk-small")) {
             // v28 grid photos: the small view shows us only in 328x180 at 991,152 and the UI trim
             // line runs along its top edge, so the wide panel starts just below it.
             x = 991;
@@ -1552,8 +1559,13 @@ public final class TtPanel {
         }
         if (l.streetTop >= 0) {
             // With a badge the street is secondary (grey); without one it is the main line (white).
-            String st = fitText(m, t.street, 1, l.streetSize, l.cw);
-            tx(m, 4, "ttStreet", st, 1, l.streetSize, (float) l.centre(textW(m, st, 1, l.streetSize)),
+            // v35: up to 3 px smaller before "..." ("Kieth H..." in the narrow panel).
+            int ss = l.streetSize;
+            while (ss > l.streetSize - 3 && textW(m, t.street, 1, ss) > l.cw) {
+                ss--;
+            }
+            String st = fitText(m, t.street, 1, ss, l.cw);
+            tx(m, 4, "ttStreet", st, 1, ss, (float) l.centre(textW(m, st, 1, ss)),
                 base(l.streetTop, l.streetSize), 0, l.badgeTop >= 0 ? SOFT : WHITE);
         } else {
             tx(m, 4, "ttStreet", "", 1, l.streetSize, (float) l.col, 0f, 0, SOFT);

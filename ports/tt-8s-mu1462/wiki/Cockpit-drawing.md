@@ -41,7 +41,8 @@ in fixed windows. Grid photos (`panel grid on`) measured them:
 |---|---|---|
 | Small (tach-centred) | 328x180 at 991,152 | Fixed by the cluster: moving the stock banner does not move it (v30 window test). The UI trim line runs along its top edge |
 | Large, car tab / map tab | Stock frame inner box about 210x153 at 1105,110 | The stock frame and the large-view speedometer are drawn above our layer |
-| Large, map tab | The CarPlay map area | |
+| Large, map tab | The whole screen (v33 full grid) | |
+| Small, map showing | The map left of the tach: x 0 to about 520, top edge a diagonal from (0,110) to (200,50), bottom about 440 | Only with the stock banner off |
 
 The banner spot shows only while the stock banner (KDK displayable 20) is on.
 

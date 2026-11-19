@@ -15,12 +15,10 @@ say M2 (20 s) LARGE view, CAR tab: panel inside the stock frame?
 panel turn 15,192,-1 300 140 0:0/0:0/45:2 4400 420 12A Spring Cypress Rd
 wait 20000
 panel kdk info
-say M3 (20 s) SMALL view with the MAP: full-screen grid, where does it show?
-panel grid full
+say M3 (20 s) SMALL view with the MAP: panel over the map, left of the tach?
 panel turn 13,64,-1,0,192 300 150 - 4300 420 - Alpha St
 wait 20000
 panel kdk info
-panel grid off
 say M4 (20 s) SMALL view, car page (trip computer): panel as before?
 panel turn 13,64,-1,0,192 200 100 - 4200 420 - Alpha St
 wait 20000
