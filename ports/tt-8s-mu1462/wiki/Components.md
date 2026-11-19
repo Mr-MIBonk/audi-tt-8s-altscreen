@@ -73,3 +73,13 @@ one, not committed) without that switch, since tt-zoom v37+ puts layer 60 into c
 itself; it also checks that `sleep 0.2` really sleeps and logs its version. Install with
 `sh tt.sh sup` (keeps v2, `sh tt.sh sup undo`), then replug. The supervisor's own log is
 `/tmp/mu1462-supervisor.log` (kept by `save` since v40).
+
+Run38 (v3 installed): still dropped on the first flip test. The drop came 12 ms after a
+renderer had just started (v2/v3 start it 1 s after the car gets the screen back): the CarPlay
+tab opened while the renderer was still setting up its video output on the same display. A
+flip at 101.9 s, with the renderer running for 2 s and stopped cleanly, did not drop.
+Supervisor v4 starts the renderer only after the car has held the screen 4 s
+(`/tmp/mu1462-start-delay`), so quick flips never start it; test switch
+`/tmp/mu1462-keep-renderer` keeps it running on the CarPlay tab (do both fit on one display?).
+`sh tt.sh crash` now tests quick flips, long stays and the keep switch; each `c` also stores a
+slice of `sloginfo` (stock dio_manager/AirPlay messages) in `/tmp/tt-slog-marks.txt`.
