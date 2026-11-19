@@ -346,6 +346,42 @@ crash)
     next
     finish
     ;;
+unstick)
+    # After a crash the next connections fail ("cannot bind renderer tee port"): something from
+    # the dead session still holds 127.0.0.1:19820. Record who, then stop leftover supervisor /
+    # renderer processes whose session (dio_manager PID, their last argument) is gone.
+    sh "$0" diag >/dev/null 2>&1
+    n=0
+    stopped=
+    pidin ar 2>/dev/null | grep -E 'cluster_supervisor.sh|cluster_runtime' | grep -v grep > /tmp/tt-unstick.$$
+    while read -r pid rest; do
+        owner=${rest##* }
+        case "$owner" in ''|*[!0-9]*) continue;; esac
+        if ! kill -0 "$owner" 2>/dev/null; then
+            say "stopping $pid ($rest): its session $owner is gone"
+            kill -TERM "$pid" 2>/dev/null; n=$((n + 1)); stopped="$stopped $pid"
+        fi
+    done < /tmp/tt-unstick.$$
+    if test $n -gt 0; then
+        sleep 2
+        for pid in $stopped; do kill -0 "$pid" 2>/dev/null && kill -KILL "$pid" 2>/dev/null && say "forced $pid"; done
+    fi
+    rm -f /tmp/tt-unstick.$$
+    d=$(pidin ar 2>/dev/null | grep -c '[d]io_manager')
+    say "Stopped $n leftover process(es). dio_manager processes running: $d"
+    test "$d" -gt 1 && say 'More than one dio_manager: an old session did not end - send the logs (sh tt.sh save).'
+    { echo "===== UNSTICK stopped=$n dio_manager=$d"; } >> /tmp/tt-diag.txt
+    say 'Now unplug the iPhone, wait 10 s, plug it back in. If it still flickers: sh tt.sh save, then restart the MMI.'
+    ;;
+delay)
+    # Seconds the cockpit renderer waits on the map view before starting (supervisor v5 reads it
+    # at the next connect; lost at an MMI restart). Longer = fewer crashes, slower map return.
+    case "${2:-}" in
+        ''|*[!0-9]*) say "Usage: sh tt.sh delay SECONDS   (now: $(cat /tmp/mu1462-start-delay 2>/dev/null || echo 1))"; exit 2;;
+    esac
+    echo "$2" > /tmp/mu1462-start-delay
+    say "Renderer start delay on the map view: $2 s from the next connect (replug)."
+    ;;
 diag)
     # When the CarPlay icon only flickers: who holds the hook's ports? Added to the logs.
     { echo "===== DIAG"; echo '--- processes'; pidin arg 2>/dev/null | grep -E 'dio_manager|cluster_|mm-ipod|sleep' | grep -v grep
@@ -448,6 +484,8 @@ save)
     say 'sh tt.sh hookfix [undo]      CarPlay hook fix1: a busy port no longer blocks CarPlay (flash, then MMI restart)'
     say 'sh tt.sh sup [undo]          supervisor v5 for the CarPlay-tab crash (flash, then replug)'
     say 'sh tt.sh crash               check: tab flips, map return, unplug and replug'
+    say 'sh tt.sh unstick             after a crash, when CarPlay will not reconnect: clear the old session'
+    say 'sh tt.sh delay SECONDS       renderer start delay on the map view (default 1)'
     say 'sh tt.sh diag                when the CarPlay icon only flickers: record who holds the ports'
     say 'sh tt.sh mark [text]         put a marker line into all logs (e.g. right after a crash)'
     say 'sh tt.sh layers              parked layer test for the map + banner (context 89)'

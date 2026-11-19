@@ -96,3 +96,15 @@ like v2. v41 also switches the jar's layer lists back at once when the iPhone's 
 retries the real context switch for up to 20 s while the banner is still up (unplugged during
 a route: the map stayed black). Remaining: rare crash (map view -> CarPlay tab right after the
 renderer started), and the replug flicker (busy tee port; needs a native fix).
+
+Run40 (v41 + v5): no crash in 20+ car tab <-> CarPlay tab flips (renderer never started). Map
+view <-> CarPlay tab still dropped once: the CarPlay tab opened 0.76 s after a renderer had
+attached; flips 2 s after an attach were fine. Each renderer start creates a video output on
+display 0 ("Created output ... displayId:0"); a start overlapping the CarPlay tab's own video
+start is the trigger. After the drop every reconnect hit the busy tee port until an MMI
+restart. Kit: `sh tt.sh unstick` records `diag`, then stops leftover supervisor/renderer
+processes whose session (dio_manager PID, last argument) is gone; `sh tt.sh delay N` sets the
+renderer start delay on the map view (read at the next connect). dio_manager gets a new PID
+for every CarPlay session (so the hook's constructor runs once per session). A real fix needs
+the native renderer (keep its video output across the CarPlay tab instead of closing and
+reopening it) and the hook (close-on-exec on its listening sockets).
