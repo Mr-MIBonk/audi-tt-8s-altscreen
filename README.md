@@ -4,7 +4,9 @@ Apple Maps and Google Maps from CarPlay on the Audi TT 8S Virtual Cockpit, with
 turn-by-turn guidance drawn in the cockpit's guidance banner.
 
 Target: **MHI2_US_AU43x_P5180 / MU1462 (G24)**, Nvidia Tegra MHI2, QNX 6.5.
-Fork of [aberbic's MU1438 AltScreen](https://github.com/aberbic/Audi-MHI2-Virtual-Cockpit-Altscreen-CarPlay-AndroidAuto).
+Based on [aberbic's Audi-MHI2-Virtual-Cockpit-Altscreen](https://github.com/aberbic/Audi-MHI2-Virtual-Cockpit-Altscreen-CarPlay-AndroidAuto)
+(GPL-3.0, MU1438). Its full history is kept here, and its code still does much
+of the work.
 
 > **Works on one car (US TT, MU1462).** It modifies system files on the head unit
 > and can stop CarPlay working. Do not install it on any other firmware. You need
