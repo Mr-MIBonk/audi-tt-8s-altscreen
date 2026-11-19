@@ -19,7 +19,7 @@ of the work.
 | CarPlay map on the cockpit map tab, switched automatically | Works |
 | Large and small (tach-centred) cockpit views | Works |
 | Steering-wheel scroll zoom on the CarPlay map | Works |
-| Turn-by-turn panel: 3D arrows, lanes, exit badge, distance, ETA | Works parked; live drive pending |
+| Turn-by-turn panel: 3D arrows, lanes, exit badge, distance, ETA | Works; first drives in progress |
 | Android Auto | Not ported to the TT |
 
 Details, the dead ends and what is next: **[the TT wiki](ports/tt-8s-mu1462/wiki/Home.md)**.
