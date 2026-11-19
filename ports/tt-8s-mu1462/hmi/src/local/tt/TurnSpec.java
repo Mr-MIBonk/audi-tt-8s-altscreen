@@ -23,6 +23,8 @@ final class TurnSpec {
     static final int KDK_H = 150;
     /** v28: small view (big tach) window is 328x180 at 991,152; the panel sits below the trim line. */
     static final int KDK_WIDE = 4;
+    /** v33: the large view's map tab, stock banner off: same size as KDK, with our own frame. */
+    static final int KDK_MAP = 5;
     static final int WIDE_W = 328;
     static final int WIDE_H = 170;
     static final int LEFT_W = 270;
@@ -103,7 +105,7 @@ final class TurnSpec {
     }
 
     int width(int mode) {
-        if (mode == KDK) {
+        if (mode == KDK || mode == KDK_MAP) {
             return KDK_W;
         }
         if (mode == KDK_WIDE) {
@@ -113,7 +115,7 @@ final class TurnSpec {
     }
 
     int height(int mode) {
-        if (mode == KDK) {
+        if (mode == KDK || mode == KDK_MAP) {
             return KDK_H;
         }
         if (mode == KDK_WIDE) {
@@ -135,9 +137,9 @@ final class TurnSpec {
 
     PanelArt render(int mode) {
         PanelArt art = new PanelArt(width(mode), height(mode));
-        if (mode == KDK || mode == KDK_WIDE) {
+        if (mode == KDK || mode == KDK_WIDE || mode == KDK_MAP) {
             // v29: TT style; our own frame only in the tach-centred view (no stock frame there).
-            art.kdkStyled(main, dir, arms, bar, laneAngles, laneStatus, exit, street.length() > 0, mode == KDK_WIDE);
+            art.kdkStyled(main, dir, arms, bar, laneAngles, laneStatus, exit, street.length() > 0, mode != KDK);
         } else if (mode == BANNER) {
             art.banner(main, dir, arms, bar, laneAngles, laneStatus);
         } else {

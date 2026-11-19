@@ -28,6 +28,20 @@
 - No separate exit-number field has been seen yet. `RgdBus.exitNumber` takes the
   token after "exit" in the maneuver text ("Take exit 12A toward ..." gives 12A).
 
+## What the apps actually send (parked, v32 log)
+
+| Item | Google Maps | Apple Maps |
+|---|---|---|
+| Maneuvers sent | Current and next only (list "0,1" of 12-19) | Current only (list "0" of 22) |
+| Lane sets | Up to 6 upcoming | Up to 6 upcoming |
+| Junction angles (`exit_angle`, `turn_angle`) | Not sent (1000) | Not sent (1000) |
+| Distance to the next turn | Not sent while parked | `dist_maneuver_m` and `mN_distance` sent |
+| Text language | Phone language (Chinese phone: "W Copper Lakes Ct方面") | Phone language |
+
+So routes planned while parked capture only the first maneuvers; the research
+log fills from normal drives. Real junction shapes are not possible from this
+data. Exit numbers from non-English instructions need their own patterns.
+
 ## Maneuver types
 
 Both apps reach the car through Apple's 54 maneuver types (public as

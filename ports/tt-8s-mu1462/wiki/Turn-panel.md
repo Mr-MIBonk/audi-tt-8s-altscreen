@@ -12,7 +12,8 @@ included), fed live from the iPhone ([Turn-by-turn data](Turn-by-turn-data.md)).
 | View | Panel | Frame |
 |---|---|---|
 | Small (tach-centred) | 328x170 at 991,160, just under the trim line | Our own: chamfered top-right corner, light border, red accent |
-| Large (car tab, map tab) | 210x150 at 1105,110 | The stock frame |
+| Large, car tab | 210x150 at 1105,110 | The stock frame |
+| Large, map tab (v33) | 210x150 at 1105,110, over the CarPlay map | Our own (stock banner off, it hides the map) |
 
 - Left: thin cylinder-shaded progress bar, then the maneuver picture, centred in its area.
 - Right column, rows spread evenly and each centred: top line (small view:
@@ -86,7 +87,8 @@ cluster. Code 12 stays stock's "prepare" icon, so lane change got its own code.
 | v28 | Wide 328x170 panel under the trim line in the small view | Fit; looked like a pasted-on slab, "1..." cut-offs |
 | v29-v30 | TT-styled frame, 3D arrows, exit badge, background picture, centred layout (five PC mockups first) | Looked right; pink text, cut top line |
 | v31 | RGBA text colours, top-line fitting | |
-| v32 | Nine new pictures, fixed roundabout U-turn, research log | Parked test pending |
+| v32 | Nine new pictures, fixed roundabout U-turn, research log | Pictures as previewed; live route: the stock banner hid the CarPlay map |
+| v33 | Banner off while the map shows (context 10/89), own frame on the map, full-screen grid | Parked test pending |
 
 Previews: [v27](../docs/panel-preview-v27.png), [v28](../docs/panel-preview-v28.png),
 [v29](../docs/panel-preview-v29.png), [v30](../docs/panel-preview-v30.png),

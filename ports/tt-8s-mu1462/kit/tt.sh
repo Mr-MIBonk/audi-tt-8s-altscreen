@@ -26,6 +26,7 @@ V29=f2a3405ec73b3e2325bbfb950c2bf7321ac72f0668a288cf02c3db8eb8dbbf5a
 V30=8d495fb124f657554084a05ba779be75a2abef5057d50638e6e4869a33f3a323
 V31=a837524259224b5a62c41f2d23ccb9173ca6871e27d173b70d2397aa0bea2b88
 V32=0128845e24b72cf59eb8f9ff5225422b42591926cfd44b9407620d5bfbc1a830
+V33=d60fdb3d06402a71df22974c56e758becac30d24c65ad0ef08cfa0e2c279bcc1
 T=$K/altscreen-sha256
 
 say(){ echo "$*"; }
@@ -34,20 +35,20 @@ ro(){ sync; mount -ur /mnt/app 2>/dev/null; }
 which_jar(){
     h=$("$T" "$JAR" 2>/dev/null)
     case "$h" in
-        $V12) echo v12;; $V14) echo v14;; $V15) echo v15;; $V16) echo v16;; $V17) echo v17;; $V18) echo v18;; $V19) echo v19;; $V20) echo v20;; $V21) echo v21;; $V22) echo v22;; $V23) echo v23;; $V24) echo v24;; $V25) echo v25;; $V26) echo v26;; $V27) echo v27;; $V28) echo v28;; $V29) echo v29;; $V30) echo v30;; $V31) echo v31;; $V32) echo v32;; "") echo none;; *) echo "unknown ($h)";;
+        $V12) echo v12;; $V14) echo v14;; $V15) echo v15;; $V16) echo v16;; $V17) echo v17;; $V18) echo v18;; $V19) echo v19;; $V20) echo v20;; $V21) echo v21;; $V22) echo v22;; $V23) echo v23;; $V24) echo v24;; $V25) echo v25;; $V26) echo v26;; $V27) echo v27;; $V28) echo v28;; $V29) echo v29;; $V30) echo v30;; $V31) echo v31;; $V32) echo v32;; $V33) echo v33;; "") echo none;; *) echo "unknown ($h)";;
     esac
 }
 
 case "${1:-help}" in
 setup)
     # Run from /tmp after copying the kit there. Safe to run again for a kit update.
-    test -f /tmp/tt-zoom-v32.jar || { say 'Copy the kit files to /tmp first.'; exit 1; }
+    test -f /tmp/tt-zoom-v33.jar || { say 'Copy the kit files to /tmp first.'; exit 1; }
     rw
     mkdir -p "$K/logs"
-    for f in altscreen-sha256 tt-zoom-v32.jar stock-replay.txt catalogue.txt komo-test.txt panel-test.txt kdk-test.txt fit-test.txt win-test.txt new-test.txt; do
+    for f in altscreen-sha256 tt-zoom-v33.jar stock-replay.txt catalogue.txt komo-test.txt panel-test.txt kdk-test.txt fit-test.txt win-test.txt new-test.txt map-test.txt; do
         cp "/tmp/$f" "$K/$f" || { say "missing /tmp/$f"; ro; exit 1; }
     done
-    for f in tt-zoom-v12.jar tt-zoom-v14.jar tt-zoom-v15.jar tt-zoom-v16.jar tt-zoom-v17.jar tt-zoom-v18.jar tt-zoom-v19.jar tt-zoom-v20.jar tt-zoom-v21.jar tt-zoom-v22.jar tt-zoom-v23.jar tt-zoom-v24.jar tt-zoom-v25.jar tt-zoom-v26.jar tt-zoom-v27.jar tt-zoom-v28.jar tt-zoom-v29.jar tt-zoom-v30.jar tt-zoom-v31.jar; do
+    for f in tt-zoom-v12.jar tt-zoom-v14.jar tt-zoom-v15.jar tt-zoom-v16.jar tt-zoom-v17.jar tt-zoom-v18.jar tt-zoom-v19.jar tt-zoom-v20.jar tt-zoom-v21.jar tt-zoom-v22.jar tt-zoom-v23.jar tt-zoom-v24.jar tt-zoom-v25.jar tt-zoom-v26.jar tt-zoom-v27.jar tt-zoom-v28.jar tt-zoom-v29.jar tt-zoom-v30.jar tt-zoom-v31.jar tt-zoom-v32.jar; do
         test -f "/tmp/$f" && cp "/tmp/$f" "$K/$f"
     done
     # Optional panel background picture (made with scripts/mkbg.py; kept on the car, not in git).
@@ -55,14 +56,14 @@ setup)
     cp /tmp/tt.sh /mnt/app/root/tt.sh
     chmod 755 "$T" /mnt/app/root/tt.sh
     ok=1
-    "$T" $V32 "$K/tt-zoom-v32.jar" || ok=0
+    "$T" $V33 "$K/tt-zoom-v33.jar" || ok=0
     ro
     if test $ok = 1; then say 'Kit installed. From now on just type:  sh tt.sh help'
     else say 'A kit file is damaged - copy the kit again and rerun setup.'; exit 1; fi
     ;;
 use)
     v=${2:-}
-    case "$v" in v12) h=$V12;; v14) h=$V14;; v15) h=$V15;; v16) h=$V16;; v17) h=$V17;; v18) h=$V18;; v19) h=$V19;; v20) h=$V20;; v21) h=$V21;; v22) h=$V22;; v23) h=$V23;; v24) h=$V24;; v25) h=$V25;; v26) h=$V26;; v27) h=$V27;; v28) h=$V28;; v29) h=$V29;; v30) h=$V30;; v31) h=$V31;; v32) h=$V32;; *) say 'Usage: sh tt.sh use v32   (or v31 ... v12)'; exit 2;; esac
+    case "$v" in v12) h=$V12;; v14) h=$V14;; v15) h=$V15;; v16) h=$V16;; v17) h=$V17;; v18) h=$V18;; v19) h=$V19;; v20) h=$V20;; v21) h=$V21;; v22) h=$V22;; v23) h=$V23;; v24) h=$V24;; v25) h=$V25;; v26) h=$V26;; v27) h=$V27;; v28) h=$V28;; v29) h=$V29;; v30) h=$V30;; v31) h=$V31;; v32) h=$V32;; v33) h=$V33;; *) say 'Usage: sh tt.sh use v33   (or v32 ... v12)'; exit 2;; esac
     test -f "$K/tt-zoom-$v.jar" || { say "$v is not in the kit on the car."; exit 1; }
     "$T" $h "$K/tt-zoom-$v.jar" || { say "Stored $v jar is damaged."; exit 1; }
     rw
@@ -78,13 +79,14 @@ play)
     case "${2:-stock}" in
         stock) cp "$K/stock-replay.txt" /tmp/tt-rgi-play.txt && say 'Stock-nav replay playing (about 2 min, repeats). Stop: sh tt.sh stop';;
         win) cp "$K/win-test.txt" /tmp/tt-rgi-play.txt && say 'Window test playing (about 65 s, repeats): stay in the TACH-CENTRED view, one photo per step (W1, W2, W3). Stop: sh tt.sh stop';;
+        map) cp "$K/map-test.txt" /tmp/tt-rgi-play.txt && say 'Map test playing (about 80 s, repeats): CarPlay connected, follow the steps M1..M4, one photo each. Stop: sh tt.sh stop';;
         new) cp "$K/new-test.txt" /tmp/tt-rgi-play.txt && say 'New pictures playing (about 75 s, repeats): one photo per step N1..N11, any view. Stop: sh tt.sh stop';;
         fit) cp "$K/fit-test.txt" /tmp/tt-rgi-play.txt && say 'Panel test playing (about 65 s, repeats): switch views and tabs while it runs. Stop: sh tt.sh stop';;
         kdk) cp "$K/kdk-test.txt" /tmp/tt-rgi-play.txt && say 'Banner-spot test 2 playing (about 110 s, repeats). Stop: sh tt.sh stop';;
         panel) cp "$K/panel-test.txt" /tmp/tt-rgi-play.txt && say 'Turn panel demo playing (about 2 min, repeats). Stop: sh tt.sh stop';;
         komo) cp "$K/komo-test.txt" /tmp/tt-rgi-play.txt && say 'KOMO test playing (about 100 s, repeats). Stop: sh tt.sh stop';;
         arrows) cp "$K/catalogue.txt" /tmp/tt-rgi-play.txt && say 'Arrow catalogue playing (about 3 min). Stop: sh tt.sh stop';;
-        *) say 'Usage: sh tt.sh play new | fit | win | kdk | panel | komo | stock | arrows'; exit 2;;
+        *) say 'Usage: sh tt.sh play map | new | fit | win | kdk | panel | komo | stock | arrows'; exit 2;;
     esac
     ;;
 stop)
@@ -92,7 +94,8 @@ stop)
     ;;
 mode)
     case "${2:-}" in
-        default) rm -f /tmp/tt-rgi-noactive /tmp/tt-rgi-kdk /tmp/tt-rgi-nokdk /tmp/tt-rgi-nokdk-small /tmp/tt-rgi-nopad /tmp/tt-rgi-off /tmp/tt-panel-off; say 'Mode: default (our panel inside the stock banner, every view).';;
+        default) rm -f /tmp/tt-rgi-kdk-map /tmp/tt-rgi-noactive /tmp/tt-rgi-kdk /tmp/tt-rgi-nokdk /tmp/tt-rgi-nokdk-small /tmp/tt-rgi-nopad /tmp/tt-rgi-off /tmp/tt-panel-off; say 'Mode: default (our panel inside the stock banner, every view).';;
+        kdkmap) touch /tmp/tt-rgi-kdk-map; say 'Mode: stock banner on the map too (v32 behaviour, hides the CarPlay map).';;
         nokdk) touch /tmp/tt-rgi-nokdk; say 'Mode: no stock banner (v26 behaviour: small view only).';;
         kdk) rm -f /tmp/tt-rgi-nokdk; touch /tmp/tt-rgi-kdk; say 'Mode: stock banner in every view.';;
         nokdksmall) touch /tmp/tt-rgi-nokdk-small; say 'Mode: no stock banner in the small view either.';;
@@ -101,7 +104,7 @@ mode)
         nopad) touch /tmp/tt-rgi-nopad; say 'Arrows: bare 2-number shape.';;
         off) touch /tmp/tt-rgi-off; say 'Cockpit feed off.';;
         on) rm -f /tmp/tt-rgi-off; say 'Cockpit feed on.';;
-        *) say 'Usage: sh tt.sh mode default|nokdk|kdk|nopanel|noactive|nopad|off|on'; exit 2;;
+        *) say 'Usage: sh tt.sh mode default|kdkmap|nokdk|kdk|nopanel|noactive|nopad|off|on'; exit 2;;
     esac
     ;;
 panel)
@@ -118,7 +121,7 @@ panel)
     esac
     ;;
 report)
-    say "== jar: $(which_jar)    (v32 is the current one)"
+    say "== jar: $(which_jar)    (v33 is the current one)"
     test -f "$K/panel-bg.a8" && say '== panel background: installed' || say '== panel background: none'
     say '== switches:'
     ls /tmp/tt-rgi-* 2>/dev/null || say '(none)'
@@ -151,8 +154,8 @@ save)
     ;;
 *)
     say 'sh tt.sh report              what is installed and what it is doing (paste this)'
-    say 'sh tt.sh use v32             switch version (v32 ... v12), then restart the MMI'
-    say 'sh tt.sh play new|fit|win|kdk|panel|komo|stock  parked tests'
+    say 'sh tt.sh use v33             switch version (v33 ... v12), then restart the MMI'
+    say 'sh tt.sh play map|new|fit|win|kdk|panel|komo|stock  parked tests'
     say 'sh tt.sh play arrows | stop  arrow catalogue / stop playback'
     say 'sh tt.sh seen                what the iPhone sent so far (maneuver types, lanes)'
     say 'sh tt.sh mode default|nokdk|kdk|nopanel|noactive|nopad|off|on'

@@ -55,6 +55,8 @@ public final class TtRgi {
     private static final File KDK_NOSMALL = new File("/tmp/tt-rgi-nokdk-small");
     /** v27: the stock banner frame is on in every view for a CarPlay route; this marker turns it off. */
     private static final File KDK_OFF = new File("/tmp/tt-rgi-nokdk");
+    /** v33: keep the stock banner on the map too (v27-v32 behaviour; it hides the CarPlay map). */
+    private static final File KDK_ONMAP = new File("/tmp/tt-rgi-kdk-map");
     private static CombiBAPListener listener;
     private static volatile boolean carplayRg;
     /** Whether a CarPlay route is reported as "route active" right now. */
@@ -141,7 +143,9 @@ public final class TtRgi {
      */
     private static boolean kdkWanted() {
         if (!KDK_OFF.exists()) {
-            return true;
+            // v33 (car test): the banner moves the map's context 10 to 89, where the stock map
+            // covers the CarPlay map. On the map the banner stays off; our panel brings its frame.
+            return KDK_ONMAP.exists() || !local.tt.TtPanel.mapShowing();
         }
         return KDK_ALLOW.exists() || (local.tt.ZoomGate.small() && !KDK_NOSMALL.exists());
     }

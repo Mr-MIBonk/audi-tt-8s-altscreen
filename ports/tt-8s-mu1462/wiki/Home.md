@@ -40,10 +40,12 @@ Everything marked "works" was checked on one car (US TT, MU1462), November 2026.
 
 ## Next
 
-- v31/v32 parked check: grey text, top line, the new pictures (`play new`).
-- Parked routes in both apps, then `sh tt.sh seen` / `save`: does iOS send the
-  whole route up front? Which fields does the hook pass on?
-- Then: real junction shapes, roundabout exit stubs, exit label field, "then" preview.
+- v33 map test (`play map`): CarPlay map kept with our framed panel on the map;
+  where our layer shows over the map in the small view (full-screen grid).
+- Small view with the map: the stock banner hides the CarPlay map there too; the
+  panel needs another place (grid photo decides).
+- Chinese phone language: exit numbers from Chinese instructions (need a sample).
+- Distance to the next turn: none arrived while parked; check on a drive.
 - Live drive with Google and Apple Maps.
 - Try the iPhone's own maneuver card (hook switches `/mnt/app/root/mibr-carplay111-nav*`).
 - Refresh the installer `package/` with the final jar; SD-card (M.I.B.) installer.

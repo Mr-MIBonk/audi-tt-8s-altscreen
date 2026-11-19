@@ -269,7 +269,8 @@ public final class TtPanel {
             return guardCheck(m);
         }
         if (op.equals("grid") && w.length >= 2) {
-            return gridCmd(m, w[1].equals("on"));
+            gridFull = w[1].equals("full");
+            return gridCmd(m, w[1].equals("on") || gridFull);
         }
         if (op.equals("parent") && w.length >= 2) {
             clearTurn(m);
@@ -571,6 +572,11 @@ public final class TtPanel {
         }
         // v27 default ("kdk", also "auto"): one panel in the stock banner window, every view.
         // v28: the small view's window is wider (328x180), so it gets the wide panel.
+        // v33: on the large view's map the stock banner is off (it hides the CarPlay map), so
+        // the panel brings its own frame.
+        if (mapShowing && !ZoomGate.small()) {
+            return TurnSpec.KDK_MAP;
+        }
         return ZoomGate.small() ? TurnSpec.KDK_WIDE : TurnSpec.KDK;
     }
 
@@ -636,7 +642,7 @@ public final class TtPanel {
         boolean full = mode != TurnSpec.BANNER;
         int pw = t.width(mode);
         int ph = t.height(mode);
-        boolean kdkMode = mode == TurnSpec.KDK || mode == TurnSpec.KDK_WIDE;
+        boolean kdkMode = mode == TurnSpec.KDK || mode == TurnSpec.KDK_WIDE || mode == TurnSpec.KDK_MAP;
         String spot = kdkMode ? (mode == TurnSpec.KDK_WIDE ? "kdk-small" : "kdk-large")
             : (mode == TurnSpec.FULL ? "small" : (mode == TurnSpec.FLAP ? "flap" : "left"));
         StringBuffer b = new StringBuffer(spot).append(' ');
@@ -1262,6 +1268,30 @@ public final class TtPanel {
     // for 2 s after anything that shows the banner (route start, view change, TtRgi.kdkRg).
     private static volatile long burstUntil;
     private static volatile boolean guardRunning;
+    /** v33: the cockpit shows the map: display context 10, or 89 (10 + 79 while the stock banner is up). */
+    private static volatile boolean mapShowing;
+    private static int lastCtx = -1;
+    private static boolean gridFull;
+
+    /** TtRgi.kdkWanted: is the map showing? Reads the context now when the watcher is not running. */
+    public static boolean mapShowing() {
+        if (!guardRunning) {
+            try {
+                EALManager m = manager();
+                de.audi.atip.hmi.view.IDisplayManager d = m == null ? null : dm(m);
+                if (d != null) {
+                    mapShowing = isMap(d.getCurrentContextID(0));
+                }
+            } catch (Throwable ignored) {
+            }
+        }
+        return mapShowing;
+    }
+
+    private static boolean isMap(int ctx) {
+        int base = ctx >= 79 && ctx <= 157 ? ctx - 79 : ctx;
+        return base == 10;
+    }
     private static int guardFixes;
     private static int guardLastOpacity = -1;
 
@@ -1292,7 +1322,7 @@ public final class TtPanel {
         try {
             while (true) {
                 long now = System.currentTimeMillis();
-                boolean watch = kdkAlpha == -2 && kdkPanelUp;
+                boolean watch = (kdkAlpha == -2 && kdkPanelUp) || liveShown;
                 if (!watch && now > burstUntil) {
                     break;
                 }
@@ -1307,12 +1337,33 @@ public final class TtPanel {
     }
 
     private static String guardCheck(EALManager m) {
-        if (kdkAlpha != -2 || !kdkPanelUp) {
-            return "idle";
-        }
         de.audi.atip.hmi.view.IDisplayManager d = dm(m);
         if (d == null) {
             return "no dm";
+        }
+        // v33: follow the cockpit's context. When the map appears or goes, re-declare the route
+        // (TtRgi.kdkWanted turns the stock banner off on the map) and redraw in the new mode.
+        try {
+            int ctx = d.getCurrentContextID(0);
+            if (ctx != lastCtx) {
+                boolean map = isMap(ctx);
+                RgdBus.note(new StringBuffer("context ").append(lastCtx).append(" -> ").append(ctx)
+                    .append(map ? " (map)" : "").append(" small ").append(ZoomGate.small()).toString());
+                lastCtx = ctx;
+                if (map != mapShowing) {
+                    mapShowing = map;
+                    de.audi.tghu.navi.app.cluster.TtRgi.viewChanged();
+                    String t = lastTurn;
+                    if (t != null && (liveShown || kdkPanelUp)) {
+                        post(t, false);
+                    }
+                    burst(2000L);
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+        if (kdkAlpha != -2 || !kdkPanelUp) {
+            return "idle";
         }
         try {
             int o = d.getOpacity(KDK, 0);
@@ -1359,20 +1410,25 @@ public final class TtPanel {
             return "grid off";
         }
         IWrappedNode3D front = parent(m);
-        gridRoot = m.createNode3D(front, "ttGrid", (float) GRID_W, (float) GRID_H);
+        // v33: "grid full" covers the whole screen (where does our layer show over the map?).
+        int gx = gridFull ? 0 : GRID_X;
+        int gy = gridFull ? 0 : GRID_Y;
+        int gw = gridFull ? 1440 : GRID_W;
+        int gh = gridFull ? 540 : GRID_H;
+        gridRoot = m.createNode3D(front, "ttGrid", (float) gw, (float) gh);
         if (gridRoot == null) {
             return "grid node failed";
         }
-        gridRoot.setPosition((float) GRID_X, (float) GRID_Y, 0f);
-        PanelArt g = new PanelArt(GRID_W, GRID_H);
-        g.grid(GRID_X, GRID_Y);
-        image(m, gridRoot, g.rgba(), GRID_W, GRID_H);
+        gridRoot.setPosition((float) gx, (float) gy, 0f);
+        PanelArt g = new PanelArt(gw, gh);
+        g.grid(gx, gy);
+        image(m, gridRoot, g.rgba(), gw, gh);
         int n = 0;
-        for (int x = 1000; x <= 1400; x += 100) {
-            for (int y = 100; y <= 400; y += 100) {
+        for (int x = gridFull ? 100 : 1000; x <= 1400; x += 100) {
+            for (int y = 100; y <= (gridFull ? 500 : 400); y += 100) {
                 String t = new StringBuffer().append(x).append(',').append(y).toString();
                 IWrappedNode3DText tx = setText(m, gridRoot, null, "ttGridLabel", t, 2, 16,
-                    (float) (x - GRID_X + 3), base(y - GRID_Y + 3, 16), 0);
+                    (float) (x - gx + 3), base(y - gy + 3, 16), 0);
                 if (tx != null) {
                     tx.setColor(rgba(0xFF40FF40));
                     n++;

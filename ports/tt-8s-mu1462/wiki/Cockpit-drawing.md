@@ -60,7 +60,11 @@ The banner spot shows only while the stock banner (KDK displayable 20) is on.
   8 times at route start, then never again.
 - Under the banner sits the EAL `G24_KDK_BACKGROUND` viewport (220, `show/hideKDKBackground`),
   above the main viewport (210). Our viewport 225 is above both.
-- Display context: 89 or 79 in the small view, 10 on the large-view map tab. It
-  does not tell the car tab from the map tab.
+- Display context: the map is context 10 (both views). While the stock banner is
+  up the cluster adds 79 (cluster type 4 "KDK remap"): the map becomes 89, the
+  car page 79. In context 89 the stock map covers the CarPlay map, which is why a
+  route with the banner on lost the CarPlay map (v32 drive test). v33 watches the
+  context and keeps the banner off while the map shows (`/tmp/tt-rgi-kdk-map`
+  brings the old behaviour back).
 - `IDisplayManagerKombiControl.createImageDisplayable(ResourceLocator, id)` exists;
   an untried way to add an image layer.
