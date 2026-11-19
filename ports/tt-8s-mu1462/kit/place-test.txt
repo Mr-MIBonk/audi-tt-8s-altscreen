@@ -1,0 +1,14 @@
+# Panel placement test (tt-zoom v33), driven by `sh tt.sh test`, which moves the panel
+# between candidate spots (/tmp/tt-panel-pos). Redraws every 3 s so each move shows.
+say placement test
+active 1
+panel parent top
+panel layout kdk
+panel kdkbg show
+panel kdk alpha auto
+panel grid off
+panel turn 15,192,-1 400 180 0:0/0:0/45:2 4500 420 12A Spring Cypress Rd
+wait 3000
+panel turn 15,192,-1 390 175 0:0/0:0/45:2 4490 420 12A Spring Cypress Rd
+wait 3000
+loop

@@ -21,6 +21,7 @@ login folder:
 | Command | Does |
 |---|---|
 | `sh tt.sh report` | What is installed and running |
+| `sh tt.sh test` | The full guided test in one session (about 7 min): parked map test, small-view placement, new pictures, live Google and Apple routes; saves the logs at the end |
 | `sh tt.sh use vNN` | Install a stored jar (sha-checked); then restart the MMI |
 | `sh tt.sh play new\|fit\|win\|kdk\|panel\|komo\|stock\|arrows` | Parked test scripts |
 | `sh tt.sh stop` | End playback |

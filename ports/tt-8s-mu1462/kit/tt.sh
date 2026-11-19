@@ -45,7 +45,7 @@ setup)
     test -f /tmp/tt-zoom-v33.jar || { say 'Copy the kit files to /tmp first.'; exit 1; }
     rw
     mkdir -p "$K/logs"
-    for f in altscreen-sha256 tt-zoom-v33.jar stock-replay.txt catalogue.txt komo-test.txt panel-test.txt kdk-test.txt fit-test.txt win-test.txt new-test.txt map-test.txt; do
+    for f in altscreen-sha256 tt-zoom-v33.jar stock-replay.txt catalogue.txt komo-test.txt panel-test.txt kdk-test.txt fit-test.txt win-test.txt new-test.txt map-test.txt place-test.txt; do
         cp "/tmp/$f" "$K/$f" || { say "missing /tmp/$f"; ro; exit 1; }
     done
     for f in tt-zoom-v12.jar tt-zoom-v14.jar tt-zoom-v15.jar tt-zoom-v16.jar tt-zoom-v17.jar tt-zoom-v18.jar tt-zoom-v19.jar tt-zoom-v20.jar tt-zoom-v21.jar tt-zoom-v22.jar tt-zoom-v23.jar tt-zoom-v24.jar tt-zoom-v25.jar tt-zoom-v26.jar tt-zoom-v27.jar tt-zoom-v28.jar tt-zoom-v29.jar tt-zoom-v30.jar tt-zoom-v31.jar tt-zoom-v32.jar; do
@@ -93,13 +93,65 @@ stop)
     rm -f /tmp/tt-rgi-play.txt; say 'Playback stopped; iPhone feed resumes in a few seconds.'
     ;;
 test)
-    # One command for a whole test round: map test once (M1..M4, 20 s each), then stop and save.
-    cp "$K/map-test.txt" /tmp/tt-rgi-play.txt || exit 1
-    say 'Test running, about 85 s. Every 20 s: M1 large view MAP tab, M2 large view CAR tab,'
-    say 'M3 small view with the MAP (grid), M4 small view trip computer. One photo each.'
-    i=0; while test $i -lt 85; do sleep 5; i=$((i+5)); say "... ${i} s"; done
-    rm -f /tmp/tt-rgi-play.txt
+    # One session, one SSH connection: parked map test, small-view placement candidates, the new
+    # pictures with our own frame, then live Google and Apple Maps routes, then save. About 7 min.
+    # Keep this SSH window open; if it drops, run it again (it starts over).
+    P=/tmp/tt-panel-pos
+    PL=/tmp/tt-rgi-play.txt
+    wait_s(){ n=$1; while test "$n" -gt 0; do sleep 5; n=$((n-5)); say "      ... $n s"; done; }
+    step(){ say ''; say "== $1"; }
+    rm -f "$P"
+    say 'Full test, about 7 minutes. iPhone plugged in, CarPlay running, parked. Photos where it says PHOTO.'
+    step 'PART 1: parked demo (no route needed). Starting in 10 s.'
+    sleep 10
+    cp "$K/map-test.txt" "$PL" || exit 1
+    step 'M1 (20 s) LARGE view, MAP tab: CarPlay map + our framed panel? PHOTO'
+    wait_s 20
+    step 'M2 (20 s) LARGE view, CAR tab: panel inside the stock frame? PHOTO'
+    wait_s 20
+    step 'M3 (20 s) SMALL view with the MAP: full-screen grid. PHOTO'
+    wait_s 20
+    step 'M4 (20 s) SMALL view, trip computer page: panel as before? PHOTO'
+    wait_s 20
+    cp "$K/place-test.txt" "$PL"
+    step 'P1 (15 s) SMALL view with the MAP: panel at the stock spot (991,160). PHOTO'
+    echo 'kdk-small 991 160 1' > "$P"; wait_s 15
+    step 'P2 (15 s) SMALL view with the MAP: panel left, middle (80,160). PHOTO'
+    echo 'kdk-small 80 160 1' > "$P"; wait_s 15
+    step 'P3 (15 s) SMALL view with the MAP: panel left, top (80,40). PHOTO'
+    echo 'kdk-small 80 40 1' > "$P"; wait_s 15
+    rm -f "$P"
+    cp "$K/new-test.txt" "$PL"
+    step 'N (75 s) LARGE view, MAP tab: all new pictures with our own frame. PHOTO only if one looks wrong.'
+    wait_s 75
+    rm -f "$PL"
+    step 'PART 2: live routes.'
+    step 'G0 (30 s) Start a GOOGLE MAPS route now, somewhere a few miles away.'
+    wait_s 30
+    step 'G1 (15 s) LARGE view, MAP tab. PHOTO'
+    wait_s 15
+    step 'G2 (15 s) LARGE view, CAR tab. PHOTO'
+    wait_s 15
+    step 'G3 (15 s) SMALL view with the MAP. PHOTO'
+    wait_s 15
+    step 'G4 (15 s) SMALL view, trip computer. PHOTO'
+    wait_s 15
+    step 'G5 (15 s) Back to LARGE view, MAP tab: does the CarPlay map come back? PHOTO'
+    wait_s 15
+    step 'A0 (30 s) End the Google route. Start an APPLE MAPS route now.'
+    wait_s 30
+    step 'A1 (15 s) LARGE view, MAP tab. PHOTO'
+    wait_s 15
+    step 'A2 (15 s) LARGE view, CAR tab. PHOTO'
+    wait_s 15
+    step 'A3 (15 s) SMALL view with the MAP. PHOTO'
+    wait_s 15
+    step 'A4 (15 s) SMALL view, trip computer. PHOTO'
+    wait_s 15
+    step 'END (10 s) End the Apple route. Saving the logs.'
+    wait_s 10
     sh "$0" save
+    say 'Done. Send the photos (named by step) and the newest logs folder.'
     ;;
 mode)
     case "${2:-}" in
@@ -166,7 +218,7 @@ save)
     say 'sh tt.sh use v33             switch version (v33 ... v12), then restart the MMI'
     say 'sh tt.sh play map|new|fit|win|kdk|panel|komo|stock  parked tests'
     say 'sh tt.sh play arrows | stop  arrow catalogue / stop playback'
-    say 'sh tt.sh test                one test round: map test, then saves the logs'
+    say 'sh tt.sh test                the full guided test (about 7 min), then saves the logs'
     say 'sh tt.sh seen                what the iPhone sent so far (maneuver types, lanes)'
     say 'sh tt.sh mode default|nokdk|kdk|nopanel|noactive|nopad|off|on'
     say 'sh tt.sh panel kdk-small|kdk-large X Y [S]  move/resize the panel live (reset | show)'
