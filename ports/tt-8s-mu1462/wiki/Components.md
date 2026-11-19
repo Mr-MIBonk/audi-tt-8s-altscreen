@@ -78,7 +78,9 @@ Run38 (v3 installed): still dropped on the first flip test. The drop came 12 ms 
 renderer had just started (v2/v3 start it 1 s after the car gets the screen back): the CarPlay
 tab opened while the renderer was still setting up its video output on the same display. A
 flip at 101.9 s, with the renderer running for 2 s and stopped cleanly, did not drop.
-Supervisor v4 starts the renderer only after the car has held the screen 4 s
+With v3 the Classic and Sport map views also lost the CarPlay map and the banner: the jar's
+layer lists alone do not bring CarPlay onto the plain map, v2's switch to 901 does (and it
+was not the crash cause). Supervisor v4 is therefore v2 plus: it starts the renderer only after the car has held the screen 4 s
 (`/tmp/mu1462-start-delay`), so quick flips never start it; test switch
 `/tmp/mu1462-keep-renderer` keeps it running on the CarPlay tab (do both fit on one display?).
 `sh tt.sh crash` now tests quick flips, long stays and the keep switch; each `c` also stores a
