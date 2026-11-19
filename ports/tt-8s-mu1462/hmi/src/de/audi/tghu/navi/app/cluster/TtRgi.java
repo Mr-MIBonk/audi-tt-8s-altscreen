@@ -150,7 +150,9 @@ public final class TtRgi {
         if (!KDK_OFF.exists()) {
             // v33 (car test): the banner moves the map's context 10 to 89, where the stock map
             // covers the CarPlay map. On the map the banner stays off; our panel brings its frame.
-            return KDK_ONMAP.exists() || !local.tt.TtPanel.mapShowing();
+            // v37: with the CarPlay layer lists (local.tt.Layers) the map keeps CarPlay with the
+            // banner up, so the banner comes back on the map in both views.
+            return KDK_ONMAP.exists() || local.tt.Layers.on() || !local.tt.TtPanel.mapShowing();
         }
         return KDK_ALLOW.exists() || (local.tt.ZoomGate.small() && !KDK_NOSMALL.exists());
     }

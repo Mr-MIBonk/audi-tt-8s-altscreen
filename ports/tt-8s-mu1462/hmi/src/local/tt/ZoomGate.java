@@ -102,6 +102,7 @@ public final class ZoomGate {
         }
         apply("skin ", skin);
         RgdBus.start();
+        Layers.start();
     }
 
     /**

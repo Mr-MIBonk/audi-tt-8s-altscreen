@@ -1,0 +1,168 @@
+package local.tt;
+
+import java.io.File;
+import java.io.InputStream;
+
+/**
+ * v37: cockpit layer lists while the CarPlay map is drawn.
+ *
+ * The stock lists (DisplayManagerMIB2High.defineContextsForG24) are map 10 = {16 HMI, 19 stock
+ * map} and map + banner 89 = {20 banner, 16, 19}. The v36b layer test (sh tt.sh layers) showed
+ * that the CarPlay picture (layer 60) only shows with the banner when 60 is in the list:
+ * {20 16} and {16 19 20} gave an empty map area, {20 16 60}, {16 60 20} and {20 60 16} gave the
+ * CarPlay map with the banner window, in both views. After 60 had been in a list, the plain map
+ * {16 19} showed the stock map again, so 10 gets 60 too.
+ *
+ * While the renderer's heartbeat (/tmp/mu1438-cluster-active) is fresh: 10 = {16 60},
+ * 89 = {20 16 60}, and the stock banner may come up on the map (TtRgi.kdkWanted). When it has
+ * been stale for 10 s (iPhone gone), the stock lists come back, so the stock map works without
+ * a phone. The lists live in the display manager's memory only (dmdt dc); nothing is written to
+ * flash. touch /tmp/tt-layer-off restores the stock lists and the v36 behaviour.
+ *
+ * Java 1.4 class library: no StringBuilder, no anonymous classes needed.
+ */
+public final class Layers implements Runnable {
+    private static final File ACTIVE = new File("/tmp/mu1438-cluster-active");
+    private static final File OFF = new File("/tmp/tt-layer-off");
+    private static final String DMDT = "/eso/bin/apps/dmdt";
+    private static final String[] ENV = {
+        "LD_LIBRARY_PATH=/eso/lib:/mnt/app/root/lib-target:/mnt/app/usr/lib:/mnt/app/armle/lib:/mnt/app/armle/lib/dll:/mnt/app/armle/usr/lib",
+        "IPL_CONFIG_DIR=/etc/eso/production",
+    };
+    private static final Object LOCK = new Object();
+    private static boolean started;
+    /** CarPlay lists in place. */
+    private static volatile boolean on;
+    /** False until the first apply: the lists may be left over from an earlier HMI run. */
+    private static boolean known;
+    private static long lastFresh;
+    private static long retryAt;
+    private static int fails;
+
+    private Layers() {
+    }
+
+    /** True while the CarPlay lists are in place (banner allowed on the map). */
+    public static boolean on() {
+        return on;
+    }
+
+    /** ZoomGate.skin (MMI start): starts the 2 s check thread once. */
+    public static void start() {
+        synchronized (LOCK) {
+            if (started) {
+                return;
+            }
+            started = true;
+        }
+        try {
+            Thread t = new Thread(new Layers(), "ttLayers");
+            t.setDaemon(true);
+            t.start();
+        } catch (Throwable t) {
+            RgdBus.note(new StringBuffer("layers: thread failed ").append(String.valueOf(t)).toString());
+        }
+    }
+
+    public void run() {
+        try {
+            Thread.sleep(5000L);
+        } catch (Throwable ignored) {
+        }
+        while (true) {
+            try {
+                tick();
+            } catch (Throwable t) {
+                RgdBus.note(new StringBuffer("layers: ").append(String.valueOf(t)).toString());
+            }
+            try {
+                Thread.sleep(2000L);
+            } catch (Throwable ignored) {
+            }
+        }
+    }
+
+    private static void tick() {
+        long now = System.currentTimeMillis();
+        long stamp = ACTIVE.lastModified();
+        boolean fresh = stamp > 0 && now >= stamp && now - stamp < 3000L;
+        if (fresh) {
+            lastFresh = now;
+        }
+        boolean want;
+        if (OFF.exists()) {
+            want = false;
+        } else if (fresh) {
+            want = true;
+        } else {
+            // Short gaps (view change, renderer restart) keep the CarPlay lists.
+            want = on && lastFresh > 0 && now - lastFresh < 10000L;
+        }
+        if (known && want == on) {
+            return;
+        }
+        if (now < retryAt) {
+            return;
+        }
+        boolean ok = want
+            ? dc("10", "16 60") && dc("89", "20 16 60")
+            : dc("10", "16 19") && dc("89", "20 16 19");
+        if (!ok) {
+            fails++;
+            retryAt = now + (fails < 5 ? 10000L : 60000L);
+            RgdBus.note(new StringBuffer("layers: dmdt failed (").append(fails).append(")").toString());
+            return;
+        }
+        fails = 0;
+        known = true;
+        on = want;
+        RgdBus.note(want ? "layers: carplay lists (10 = 16 60, 89 = 20 16 60)"
+            : "layers: stock lists (10 = 16 19, 89 = 20 16 19)");
+        // The display manager uses a new list at the next switch into that context. The banner
+        // stays off the map until the lists are in place, and turning it on (re-declaring the
+        // route, TtRgi.kdkWanted) is a real switch 10 -> 89, so the new list applies.
+        TtPanel.layersChanged();
+        try {
+            de.audi.tghu.navi.app.cluster.TtRgi.viewChanged();
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /** dmdt dc ID LIST; true when it ran and exited 0. */
+    private static boolean dc(String id, String list) {
+        try {
+            String[] cmd = new String[] {DMDT, "dc", id, "", "", ""};
+            int n = 3;
+            int i = 0;
+            while (i < list.length() && n < cmd.length) {
+                int j = list.indexOf(' ', i);
+                if (j < 0) {
+                    j = list.length();
+                }
+                cmd[n++] = list.substring(i, j);
+                i = j + 1;
+            }
+            String[] args = new String[n];
+            System.arraycopy(cmd, 0, args, 0, n);
+            Process p = Runtime.getRuntime().exec(args, ENV);
+            drain(p.getInputStream());
+            drain(p.getErrorStream());
+            int r = p.waitFor();
+            return r == 0;
+        } catch (Throwable t) {
+            RgdBus.note(new StringBuffer("layers: dc ").append(id).append(' ').append(String.valueOf(t)).toString());
+            return false;
+        }
+    }
+
+    private static void drain(InputStream in) {
+        try {
+            byte[] b = new byte[256];
+            while (in.read(b) > 0) {
+                // discard
+            }
+            in.close();
+        } catch (Throwable ignored) {
+        }
+    }
+}

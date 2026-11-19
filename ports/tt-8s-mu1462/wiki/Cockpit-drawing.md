@@ -83,6 +83,15 @@ The banner spot shows only while the stock banner (KDK displayable 20) is on.
   Candidate cause: with the banner, layer 19 (stock map) is composed above layer 60.
   On MU0678 `dmdt dc` redeclared an existing context in memory, so `sh tt.sh layers`
   tries other lists for 89 without touching flash.
+- Layer test result (v36b, `dmdt dc` works on the TT; changes apply at the next switch
+  into the context): the CarPlay map shows with the banner only when layer 60 is in the
+  list. {20 16} and {16 19 20}: map area empty, panel in the window. {20 16 60},
+  {16 60 20}, {20 60 16}: CarPlay map plus the banner window, both views, same look. After
+  60 had been in a list, the plain map {16 19} showed the stock map again, so v37 sets both:
+  10 = {16 60}, 89 = {20 16 60} while CarPlay draws, the stock lists otherwise
+  (`local.tt.Layers`). The display manager keeps its lists across an HMI-only restart.
+  The HMI skips a switch to the context it is already in, so a new list cannot be forced
+  from Java without a real switch.
 - Contexts logged by v33 (both views): map 10; map with banner 89; car page with
   banner 79. Every tab switch passes through 78 and 157 (78 + 79) for under a
   second: map to car is 10, 78, 157, 79; car to map is 79, 157, 89, 10.

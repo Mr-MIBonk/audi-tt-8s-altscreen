@@ -574,7 +574,8 @@ public final class TtPanel {
         // v28: the small view's window is wider (328x180), so it gets the wide panel.
         // v33: on the large view's map the stock banner is off (it hides the CarPlay map), so
         // the panel brings its own frame.
-        if (mapShowing && !ZoomGate.small() && !kdkDirect()) {
+        // v37: with the CarPlay layer lists (Layers) the stock banner stays on the map too.
+        if (mapShowing && !ZoomGate.small() && !kdkDirect() && !Layers.on()) {
             return TurnSpec.KDK_MAP;
         }
         return ZoomGate.small() ? TurnSpec.KDK_WIDE : TurnSpec.KDK;
@@ -645,7 +646,7 @@ public final class TtPanel {
         boolean kdkMode = mode == TurnSpec.KDK || mode == TurnSpec.KDK_WIDE || mode == TurnSpec.KDK_MAP;
         // v35: in the small view the banner window is gone while the map shows (banner off), so the
         // panel moves over the map, left of the tach (v33 grid photo).
-        String spot = kdkMode ? (mode == TurnSpec.KDK_WIDE ? (mapShowing && !kdkDirect() ? "kdk-smallmap" : "kdk-small") : "kdk-large")
+        String spot = kdkMode ? (mode == TurnSpec.KDK_WIDE ? (mapShowing && !kdkDirect() && !Layers.on() ? "kdk-smallmap" : "kdk-small") : "kdk-large")
             : (mode == TurnSpec.FULL ? "small" : (mode == TurnSpec.FLAP ? "flap" : "left"));
         StringBuffer b = new StringBuffer(spot).append(' ');
         IWrappedNode3D front = parent(m);
@@ -1291,6 +1292,15 @@ public final class TtPanel {
 
     public static boolean kdkDirect() {
         return KDK_DIRECT.exists();
+    }
+
+    /** v37 Layers: the layer lists changed; redraw in the new mode (banner frame or own frame). */
+    static void layersChanged() {
+        String t = lastTurn;
+        if (t != null && (liveShown || kdkPanelUp)) {
+            post(t, false);
+        }
+        burst(2000L);
     }
 
     /** TtRgi.kdkWanted: is the map showing? Reads the context now when the watcher is not running. */
