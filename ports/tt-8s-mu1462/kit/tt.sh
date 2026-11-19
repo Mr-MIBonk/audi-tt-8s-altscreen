@@ -34,14 +34,18 @@ V37=9b20688cbc8d74991c7075746de6c30fe8686e0247bba62387aa7e1d9b5c66c4
 V38=c3ad31212c5c364030be092dff941e7ffd39f02003cd7857d858f9684683822c
 V39=0a7636fc436d53426f2684d08116172c0410651b9416914f69009ef611ef7d9f
 HOOK=/mnt/app/root/lib-target/libaltscreen111.so
-HOOK_OLD=9a8c01ec8323d5de7695e212ff6168b0bb7df99d8554c9971f5449c5a21d6256
-HOOK_NEW=9e4b13c12895c8bddc36586661ecd82bde71666e15a847b617993d7fcb8f0dee
+# CarPlay hook builds: shipped, h320 safe-area preset (what the TT runs), and their fix1 versions
+HOOK_STOCK=9a8c01ec8323d5de7695e212ff6168b0bb7df99d8554c9971f5449c5a21d6256
+HOOK_H320=36aedadb8e0680ad03a9a511f3844e629ca3b2ffaaf40c9745298f730fc0b3f8
+FIX_STOCK=9e4b13c12895c8bddc36586661ecd82bde71666e15a847b617993d7fcb8f0dee
+FIX_H320=64f700f5fffb8f91a0e5ee0fedfa9e132eb2c6fb65da3c16a063e832421792e8
 T=$K/altscreen-sha256
 
 say(){ echo "$*"; }
 dm(){ LD_LIBRARY_PATH=/eso/lib:/mnt/app/root/lib-target:/mnt/app/usr/lib:/mnt/app/armle/lib:/mnt/app/armle/lib/dll:/mnt/app/armle/usr/lib IPL_CONFIG_DIR=/etc/eso/production /eso/bin/apps/dmdt "$@"; }
 # Dump the display manager state into /tmp/tt-dmdt.txt with a label.
-mark(){ for f in /tmp/tt-rgd.log /tmp/altscreen111.log /tmp/mu1438-cluster-runtime.log; do echo "===== MARK $* =====" >> $f; done; say "Marked: $*"; }
+slog(){ logger -p user.info "tt: $*" 2>/dev/null || slogger -c 19 "tt: $*" 2>/dev/null; }
+mark(){ for f in /tmp/tt-rgd.log /tmp/altscreen111.log /tmp/mu1438-cluster-runtime.log; do echo "===== MARK $* =====" >> $f; done; slog "MARK $*"; say "Marked: $*"; }
 dmdump(){ { echo "===== $1"; echo '--- gs'; dm gs; echo '--- gc'; dm gc; echo '--- gd'; dm gd; } >> /tmp/tt-dmdt.txt 2>&1; }
 # Displayables of one context, from the newest gc dump.
 ctxlist(){ dm gc 2>/dev/null | awk -v c="$1" '$1==c && $2=="|" {f=1; next} f && /^[ \t]*-+/ {next} f && NF==0 {exit} f && $1 ~ /^-?[0-9]+$/ {printf "%s ", $1}'; }
@@ -63,7 +67,7 @@ setup)
     for f in altscreen-sha256 tt-zoom-v39.jar stock-replay.txt catalogue.txt komo-test.txt panel-test.txt kdk-test.txt fit-test.txt win-test.txt new-test.txt map-test.txt place-test.txt; do
         cp "/tmp/$f" "$K/$f" || { say "missing /tmp/$f"; ro; exit 1; }
     done
-    for f in tt-zoom-v12.jar tt-zoom-v14.jar tt-zoom-v15.jar tt-zoom-v16.jar tt-zoom-v17.jar tt-zoom-v18.jar tt-zoom-v19.jar tt-zoom-v20.jar tt-zoom-v21.jar tt-zoom-v22.jar tt-zoom-v23.jar tt-zoom-v24.jar tt-zoom-v25.jar tt-zoom-v26.jar tt-zoom-v27.jar tt-zoom-v28.jar tt-zoom-v29.jar tt-zoom-v30.jar tt-zoom-v31.jar tt-zoom-v32.jar tt-zoom-v33.jar tt-zoom-v34.jar tt-zoom-v35.jar tt-zoom-v36.jar tt-zoom-v37.jar tt-zoom-v38.jar libaltscreen111-fix1.so; do
+    for f in tt-zoom-v12.jar tt-zoom-v14.jar tt-zoom-v15.jar tt-zoom-v16.jar tt-zoom-v17.jar tt-zoom-v18.jar tt-zoom-v19.jar tt-zoom-v20.jar tt-zoom-v21.jar tt-zoom-v22.jar tt-zoom-v23.jar tt-zoom-v24.jar tt-zoom-v25.jar tt-zoom-v26.jar tt-zoom-v27.jar tt-zoom-v28.jar tt-zoom-v29.jar tt-zoom-v30.jar tt-zoom-v31.jar tt-zoom-v32.jar tt-zoom-v33.jar tt-zoom-v34.jar tt-zoom-v35.jar tt-zoom-v36.jar tt-zoom-v37.jar tt-zoom-v38.jar libaltscreen111-fix1.so libaltscreen111-h320-fix1.so; do
         test -f "/tmp/$f" && cp "/tmp/$f" "$K/$f"
     done
     # Optional panel background picture (made with scripts/mkbg.py; kept on the car, not in git).
@@ -272,24 +276,53 @@ check)
 hookfix)
     # CarPlay hook fix1 (scripts/patch_hook.py): a busy renderer port no longer blocks CarPlay.
     # Writes one file on flash, keeps the original next to the kit. Takes effect after an MMI restart.
+    cur=$("$T" "$HOOK" 2>/dev/null)
     case "${2:-}" in
-        undo) src="$K/libaltscreen111.so.orig"; want=$HOOK_OLD;;
-        "") src="$K/libaltscreen111-fix1.so"; want=$HOOK_NEW;;
+        undo)
+            src="$K/libaltscreen111.so.orig"; test -f "$src" || { say 'Nothing to undo.'; exit 1; }
+            want=$("$T" "$src" 2>/dev/null)
+            case "$want" in $HOOK_STOCK|$HOOK_H320) ;; *) say 'Saved original is damaged - nothing changed.'; exit 1;; esac;;
+        "")
+            case "$cur" in
+                $HOOK_STOCK) src="$K/libaltscreen111-fix1.so"; want=$FIX_STOCK;;
+                $HOOK_H320) src="$K/libaltscreen111-h320-fix1.so"; want=$FIX_H320;;
+                $FIX_STOCK|$FIX_H320) say 'Already in place.'; exit 0;;
+                *) say "Unknown hook on the car ($cur) - nothing changed."; exit 1;;
+            esac
+            test -f "$src" || { say "missing $src - copy the kit and run setup again."; exit 1; }
+            "$T" $want "$src" || { say "$src is damaged - nothing changed."; exit 1; };;
         *) say 'Usage: sh tt.sh hookfix   |   sh tt.sh hookfix undo'; exit 2;;
     esac
-    test -f "$src" || { say "missing $src (run setup with the kit, or nothing to undo)"; exit 1; }
-    "$T" $want "$src" || { say "$src is damaged - nothing changed."; exit 1; }
-    cur=$("$T" "$HOOK" 2>/dev/null)
     test "$cur" = "$want" && { say 'Already in place.'; exit 0; }
-    test "$cur" = "$HOOK_OLD" -o "$cur" = "$HOOK_NEW" || { say "Unknown hook on the car ($cur) - nothing changed."; exit 1; }
     rw
-    test -f "$K/libaltscreen111.so.orig" || cp "$HOOK" "$K/libaltscreen111.so.orig"
-    "$T" $HOOK_OLD "$K/libaltscreen111.so.orig" || { say 'Backup check failed - nothing changed.'; ro; exit 1; }
+    case "$cur" in $HOOK_STOCK|$HOOK_H320) test -f "$K/libaltscreen111.so.orig" || cp "$HOOK" "$K/libaltscreen111.so.orig";; esac
     # new file + rename: the running process keeps the old file, the next start loads the new one
     cp "$src" "$HOOK.new" && chmod 755 "$HOOK.new" && mv "$HOOK.new" "$HOOK"
     "$T" $want "$HOOK" && r=0 || r=1
     ro
     test $r = 0 && say 'Done. Restart the MMI (hold the MMI knob) to load it.' || say 'Copy failed - check with: sh tt.sh report'
+    ;;
+crash)
+    # CarPlay-tab crash, A/B: is it our cockpit renderer holding the video hardware?
+    finish(){ rm -f /tmp/mu1438-cluster-disable; slog 'crash test end'; say ''; say '== Saving the logs.'; sh "$0" save
+              say 'Done. The cockpit CarPlay map comes back after the next replug or MMI restart. Send the newest logs folder.'; }
+    next(){ while :; do echo "      [Enter] next step, c = it went black / crashed now, q = stop and save"; read a; case "$a" in q|Q) finish; exit 0;; c|C) mark "crash (step $S)";; *) return;; esac; done; }
+    step(){ S=${1%%:*}; S=${S%% *}; say ''; say "== $1"; mark "step $S"; }
+    slog 'crash test start'
+    say 'CarPlay-tab crash test. Parked, CarPlay connected, no route needed. About 6 steps.'
+    say 'Each time it goes black: type c and Enter at once, then note how many seconds until it crashed.'
+    step 'A1: our cockpit renderer ON. Flip CAR tab -> CarPlay tab -> wait 10 s -> CAR tab. Do it 5 times.'
+    next
+    step 'A2: same, but stay on the CarPlay tab until it either shows or crashes (up to 30 s).'
+    next
+    touch /tmp/mu1438-cluster-disable
+    step 'B0: our cockpit renderer is now OFF (the cockpit map tab shows the stock map). Wait 5 s.'
+    next
+    step 'B1: renderer OFF. Flip CAR tab -> CarPlay tab -> wait 10 s -> CAR tab. Do it 5 times.'
+    next
+    step 'B2: renderer OFF. Stay on the CarPlay tab up to 30 s. Did it ever go black or crash?'
+    next
+    finish
     ;;
 diag)
     # When the CarPlay icon only flickers: who holds the hook's ports? Added to the logs.
@@ -349,7 +382,7 @@ report)
     say "== jar: $(which_jar)    (v39 is the current one)"
     say "== layers: map 10 = $(ctxlist 10)  map+banner 89 = $(ctxlist 89)  (v37 with CarPlay: 16 60 / 20 16 60)"
     grep "layers:" /tmp/tt-rgd.log 2>/dev/null | tail -3
-    h=$("$T" "$HOOK" 2>/dev/null); case "$h" in $HOOK_OLD) say '== CarPlay hook: original';; $HOOK_NEW) say '== CarPlay hook: fix1 (busy port no longer blocks CarPlay)';; *) say "== CarPlay hook: unknown ($h)";; esac
+    h=$("$T" "$HOOK" 2>/dev/null); case "$h" in $HOOK_STOCK) say '== CarPlay hook: original';; $HOOK_H320) say '== CarPlay hook: original (h320 preset)';; $FIX_STOCK|$FIX_H320) say '== CarPlay hook: fix1 (busy port no longer blocks CarPlay)';; *) say "== CarPlay hook: unknown ($h)";; esac
     test -f "$K/panel-bg.a8" && say '== panel background: installed' || say '== panel background: none'
     say '== switches:'
     ls /tmp/tt-rgi-* 2>/dev/null || say '(none)'
@@ -374,8 +407,9 @@ seen)
     ;;
 save)
     n=1; while test -e "$K/logs/run$n"; do n=$((n+1)); done
+    sloginfo 2>/dev/null | tail -4000 > /tmp/tt-slog.txt
     rw; mkdir -p "$K/logs/run$n"
-    for f in /tmp/tt-rgd.log /tmp/tt-rgd.log.1 /tmp/tt-nav.log /tmp/tt-zoom.log /tmp/tt-rgd.txt /tmp/tt-rgd-cat.txt /tmp/tt-route.txt /tmp/tt-dmdt.txt /tmp/altscreen111.log /tmp/mu1438-cluster-runtime.log /tmp/mibr-alt111-gen2.status /tmp/mibr-carplay111.state /tmp/tt-diag.txt; do test -f "$f" && cp "$f" "$K/logs/run$n/"; done
+    for f in /tmp/tt-rgd.log /tmp/tt-rgd.log.1 /tmp/tt-nav.log /tmp/tt-zoom.log /tmp/tt-rgd.txt /tmp/tt-rgd-cat.txt /tmp/tt-route.txt /tmp/tt-dmdt.txt /tmp/altscreen111.log /tmp/mu1438-cluster-runtime.log /tmp/mibr-alt111-gen2.status /tmp/mibr-carplay111.state /tmp/tt-diag.txt /tmp/tt-slog.txt; do test -f "$f" && cp "$f" "$K/logs/run$n/"; done
     ro
     say "Saved to $K/logs/run$n (kept across MMI restarts). On the Mac:"
     say "scp -O -r -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedAlgorithms=+ssh-rsa root@10.173.189.1:$K/logs ~/Downloads/tt-logs"
@@ -388,6 +422,7 @@ save)
     say 'sh tt.sh test                the full guided test, Enter for each step, then saves the logs'
     say 'sh tt.sh check               v38 guided check (Enter for each step, c marks a CarPlay crash)'
     say 'sh tt.sh hookfix [undo]      CarPlay hook fix1: a busy port no longer blocks CarPlay (flash, then MMI restart)'
+    say 'sh tt.sh crash               CarPlay-tab crash test: our renderer on, then off (no flash)'
     say 'sh tt.sh diag                when the CarPlay icon only flickers: record who holds the ports'
     say 'sh tt.sh mark [text]         put a marker line into all logs (e.g. right after a crash)'
     say 'sh tt.sh layers              parked layer test for the map + banner (context 89)'

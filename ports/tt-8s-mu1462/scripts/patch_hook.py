@@ -20,7 +20,12 @@ import hashlib
 import struct
 import sys
 
-SRC_SHA = "9a8c01ec8323d5de7695e212ff6168b0bb7df99d8554c9971f5449c5a21d6256"
+# The shipped build, and the h320 safe-area preset the TT runs (13 bytes differ, all in the
+# safe-area table; the patched instruction is the same).
+SRC_SHA = {
+    "9a8c01ec8323d5de7695e212ff6168b0bb7df99d8554c9971f5449c5a21d6256": "shipped",
+    "36aedadb8e0680ad03a9a511f3844e629ca3b2ffaaf40c9745298f730fc0b3f8": "h320",
+}
 OFF_MOV = 0xb494     # mov r3, r6   (allow_ephemeral = 0)  ->  mov r3, #1
 OFF_BL = 0xb4a0      # bl bind_listener_ipv4 (first call in altscreen111_init: the tee)
 OLD = 0xe1a03006
@@ -28,7 +33,7 @@ NEW = 0xe3a03001
 
 src, dst = sys.argv[1], sys.argv[2]
 b = bytearray(open(src, "rb").read())
-assert hashlib.sha256(b).hexdigest() == SRC_SHA, "not the shipped libaltscreen111.so"
+assert hashlib.sha256(b).hexdigest() in SRC_SHA, "not a known libaltscreen111.so build"
 assert struct.unpack_from("<I", b, OFF_MOV)[0] == OLD
 assert struct.unpack_from("<I", b, OFF_MOV - 4)[0] == 0xe3a02001          # mov r2, #1 (loopback)
 assert struct.unpack_from("<I", b, OFF_BL)[0] == 0xebffdee1               # bl bind_listener_ipv4

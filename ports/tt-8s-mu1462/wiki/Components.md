@@ -48,3 +48,16 @@ still connects to 19820, so the cockpit map waits for the old holder to go. Inst
 `sh tt.sh hookfix` (keeps the original, `sh tt.sh hookfix undo`), then restart the MMI.
 Open: which process keeps 19820 (`sh tt.sh diag` records it). Likely related: the hook
 spawns `cluster_supervisor.sh` without close-on-exec on its listening sockets.
+
+The TT runs the h320 safe-area preset of the hook (`36aedadb...`, 13 bytes in the safe-area
+table differ from the shipped build); `patch_hook.py` and `sh tt.sh hookfix` handle both.
+
+## CarPlay-tab crash (open)
+
+Run33: each new session first works (main screen stream 110 set up, cockpit renderer attached),
+then the whole session drops with no request (`GEN2 TEARDOWN entry request=NULL reason=0`,
+then `reason=-6753`). The 378 s drop came 8 s after the CarPlay tab was opened (110 set up at
+365 s, left at 370 s), matching "CarPlay tab black, then crash". Suspect: the cockpit renderer
+keeps an NvSS decoder open on display 0, the same display the stock CarPlay main screen uses.
+`sh tt.sh crash` flips to the CarPlay tab with the renderer on, then off
+(`/tmp/mu1438-cluster-disable`); `save` now keeps `sloginfo` (stock decoder messages).
