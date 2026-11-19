@@ -60,7 +60,7 @@ public final class RgdBus implements Runnable {
     private static final File RGI_OFF = new File("/tmp/tt-rgi-off");
     private static final File RGI_NOACTIVE = new File("/tmp/tt-rgi-noactive");
     private static final File RGI_NOPAD = new File("/tmp/tt-rgi-nopad");
-    private static final long OFF_DELAY = 6000L;
+    private static final long OFF_DELAY = 3000L;
     private static boolean started;
     private static Socket current;
     /** Accumulated key -> value of the current hook connection (deltas arrive). */

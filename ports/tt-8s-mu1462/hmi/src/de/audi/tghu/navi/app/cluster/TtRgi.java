@@ -74,6 +74,8 @@ public final class TtRgi {
     private static long eta = Long.MIN_VALUE;
     private static String street;
     private static String turnTo;
+    /** v38: the iPhone has sent a turn for this route; until then the stock banner stays off. */
+    private static boolean turnSeen;
 
     private TtRgi() {
     }
@@ -145,6 +147,9 @@ public final class TtRgi {
         // v36 experiment: the banner window is opened directly (TtPanel, setKDKVisible); the nav
         // engine is never asked for its guidance view.
         if (local.tt.TtPanel.kdkDirect()) {
+            return false;
+        }
+        if (!turnSeen) {
             return false;
         }
         if (!KDK_OFF.exists()) {
@@ -481,6 +486,7 @@ public final class TtRgi {
                         return null;
                     }
                     carplayRg = false;
+                    turnSeen = false;
                     boolean wasDeclared = declared;
                     declared = false;
                     reset();
@@ -495,6 +501,7 @@ public final class TtRgi {
                 }
                 if (!carplayRg) {
                     carplayRg = true;
+                    turnSeen = false;
                     reset();
                     b.append(" on");
                 }
@@ -523,6 +530,15 @@ public final class TtRgi {
                         }
                         reset();
                         b.append(" inactive");
+                    }
+                }
+                if (icon != null && !turnSeen) {
+                    // v38 (car test): the banner came up with the route and showed the stock
+                    // "go straight" picture until the first turn arrived. Ask for it now.
+                    turnSeen = true;
+                    if (declared) {
+                        cs.updateRgActive(true);
+                        b.append(" first turn").append(showKomo(cs, true));
                     }
                 }
                 String k = key(icon);

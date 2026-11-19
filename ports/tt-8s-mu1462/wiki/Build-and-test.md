@@ -24,6 +24,7 @@ login folder:
 | `sh tt.sh test` | The full guided test in one session, paced by Enter (q stops and saves): parked demo, new pictures, live Google and Apple routes, experiments; saves the logs at the end |
 | `sh tt.sh use vNN` | Install a stored jar (sha-checked); then restart the MMI |
 | `sh tt.sh check` | v37 guided check, 8 steps: route in both views and tabs, route end, iPhone unplugged (stock map) and back |
+| `sh tt.sh mark [text]` | Writes a marker line into `tt-rgd.log`, `/tmp/altscreen111.log` (hook) and `/tmp/mu1438-cluster-runtime.log` (renderer), so a crash moment lines up in all three; `save` keeps all of them |
 | `sh tt.sh layer89 stock\|LIST` | Set the map + banner layer list by hand (memory only) |
 | `sh tt.sh layers` | Parked layer test: opens the banner window, then tries five layer lists for context 89 in the display manager's memory (`dmdt dc`), one photo per view each; the stock list comes back at the end, on `q`, or at an MMI restart |
 | `sh tt.sh dm [label]` | Adds `dmdt gs/gc/gd` output to `/tmp/tt-dmdt.txt` (saved with the logs) |

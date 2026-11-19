@@ -31,11 +31,13 @@ V34=5b0e22986b3a4aa923784b49e27eb35a0b471e33e4a7f619941a848e82bd498f
 V35=3d07121dae29006e3825c3b61520a5310212bc02dfab5245b6d0a00e614f9fe2
 V36=03994ca30aeb49c99c10297ae991ce905477db76fc50007c7f300d8cbb2caab4
 V37=9b20688cbc8d74991c7075746de6c30fe8686e0247bba62387aa7e1d9b5c66c4
+V38=c3ad31212c5c364030be092dff941e7ffd39f02003cd7857d858f9684683822c
 T=$K/altscreen-sha256
 
 say(){ echo "$*"; }
 dm(){ LD_LIBRARY_PATH=/eso/lib:/mnt/app/root/lib-target:/mnt/app/usr/lib:/mnt/app/armle/lib:/mnt/app/armle/lib/dll:/mnt/app/armle/usr/lib IPL_CONFIG_DIR=/etc/eso/production /eso/bin/apps/dmdt "$@"; }
 # Dump the display manager state into /tmp/tt-dmdt.txt with a label.
+mark(){ for f in /tmp/tt-rgd.log /tmp/altscreen111.log /tmp/mu1438-cluster-runtime.log; do echo "===== MARK $* =====" >> $f; done; say "Marked: $*"; }
 dmdump(){ { echo "===== $1"; echo '--- gs'; dm gs; echo '--- gc'; dm gc; echo '--- gd'; dm gd; } >> /tmp/tt-dmdt.txt 2>&1; }
 # Displayables of one context, from the newest gc dump.
 ctxlist(){ dm gc 2>/dev/null | awk -v c="$1" '$1==c && $2=="|" {f=1; next} f && /^[ \t]*-+/ {next} f && NF==0 {exit} f && $1 ~ /^-?[0-9]+$/ {printf "%s ", $1}'; }
@@ -44,20 +46,20 @@ ro(){ sync; mount -ur /mnt/app 2>/dev/null; }
 which_jar(){
     h=$("$T" "$JAR" 2>/dev/null)
     case "$h" in
-        $V12) echo v12;; $V14) echo v14;; $V15) echo v15;; $V16) echo v16;; $V17) echo v17;; $V18) echo v18;; $V19) echo v19;; $V20) echo v20;; $V21) echo v21;; $V22) echo v22;; $V23) echo v23;; $V24) echo v24;; $V25) echo v25;; $V26) echo v26;; $V27) echo v27;; $V28) echo v28;; $V29) echo v29;; $V30) echo v30;; $V31) echo v31;; $V32) echo v32;; $V33) echo v33;; $V34) echo v34;; $V35) echo v35;; $V36) echo v36;; $V37) echo v37;; "") echo none;; *) echo "unknown ($h)";;
+        $V12) echo v12;; $V14) echo v14;; $V15) echo v15;; $V16) echo v16;; $V17) echo v17;; $V18) echo v18;; $V19) echo v19;; $V20) echo v20;; $V21) echo v21;; $V22) echo v22;; $V23) echo v23;; $V24) echo v24;; $V25) echo v25;; $V26) echo v26;; $V27) echo v27;; $V28) echo v28;; $V29) echo v29;; $V30) echo v30;; $V31) echo v31;; $V32) echo v32;; $V33) echo v33;; $V34) echo v34;; $V35) echo v35;; $V36) echo v36;; $V37) echo v37;; $V38) echo v38;; "") echo none;; *) echo "unknown ($h)";;
     esac
 }
 
 case "${1:-help}" in
 setup)
     # Run from /tmp after copying the kit there. Safe to run again for a kit update.
-    test -f /tmp/tt-zoom-v37.jar || { say 'Copy the kit files to /tmp first.'; exit 1; }
+    test -f /tmp/tt-zoom-v38.jar || { say 'Copy the kit files to /tmp first.'; exit 1; }
     rw
     mkdir -p "$K/logs"
-    for f in altscreen-sha256 tt-zoom-v37.jar stock-replay.txt catalogue.txt komo-test.txt panel-test.txt kdk-test.txt fit-test.txt win-test.txt new-test.txt map-test.txt place-test.txt; do
+    for f in altscreen-sha256 tt-zoom-v38.jar stock-replay.txt catalogue.txt komo-test.txt panel-test.txt kdk-test.txt fit-test.txt win-test.txt new-test.txt map-test.txt place-test.txt; do
         cp "/tmp/$f" "$K/$f" || { say "missing /tmp/$f"; ro; exit 1; }
     done
-    for f in tt-zoom-v12.jar tt-zoom-v14.jar tt-zoom-v15.jar tt-zoom-v16.jar tt-zoom-v17.jar tt-zoom-v18.jar tt-zoom-v19.jar tt-zoom-v20.jar tt-zoom-v21.jar tt-zoom-v22.jar tt-zoom-v23.jar tt-zoom-v24.jar tt-zoom-v25.jar tt-zoom-v26.jar tt-zoom-v27.jar tt-zoom-v28.jar tt-zoom-v29.jar tt-zoom-v30.jar tt-zoom-v31.jar tt-zoom-v32.jar tt-zoom-v33.jar tt-zoom-v34.jar tt-zoom-v35.jar tt-zoom-v36.jar; do
+    for f in tt-zoom-v12.jar tt-zoom-v14.jar tt-zoom-v15.jar tt-zoom-v16.jar tt-zoom-v17.jar tt-zoom-v18.jar tt-zoom-v19.jar tt-zoom-v20.jar tt-zoom-v21.jar tt-zoom-v22.jar tt-zoom-v23.jar tt-zoom-v24.jar tt-zoom-v25.jar tt-zoom-v26.jar tt-zoom-v27.jar tt-zoom-v28.jar tt-zoom-v29.jar tt-zoom-v30.jar tt-zoom-v31.jar tt-zoom-v32.jar tt-zoom-v33.jar tt-zoom-v34.jar tt-zoom-v35.jar tt-zoom-v36.jar tt-zoom-v37.jar; do
         test -f "/tmp/$f" && cp "/tmp/$f" "$K/$f"
     done
     # Optional panel background picture (made with scripts/mkbg.py; kept on the car, not in git).
@@ -65,14 +67,14 @@ setup)
     cp /tmp/tt.sh /mnt/app/root/tt.sh
     chmod 755 "$T" /mnt/app/root/tt.sh
     ok=1
-    "$T" $V37 "$K/tt-zoom-v37.jar" || ok=0
+    "$T" $V38 "$K/tt-zoom-v38.jar" || ok=0
     ro
     if test $ok = 1; then say 'Kit installed. From now on just type:  sh tt.sh help'
     else say 'A kit file is damaged - copy the kit again and rerun setup.'; exit 1; fi
     ;;
 use)
     v=${2:-}
-    case "$v" in v12) h=$V12;; v14) h=$V14;; v15) h=$V15;; v16) h=$V16;; v17) h=$V17;; v18) h=$V18;; v19) h=$V19;; v20) h=$V20;; v21) h=$V21;; v22) h=$V22;; v23) h=$V23;; v24) h=$V24;; v25) h=$V25;; v26) h=$V26;; v27) h=$V27;; v28) h=$V28;; v29) h=$V29;; v30) h=$V30;; v31) h=$V31;; v32) h=$V32;; v33) h=$V33;; v34) h=$V34;; v35) h=$V35;; v36) h=$V36;; v37) h=$V37;; *) say 'Usage: sh tt.sh use v37   (or v36 ... v12)'; exit 2;; esac
+    case "$v" in v12) h=$V12;; v14) h=$V14;; v15) h=$V15;; v16) h=$V16;; v17) h=$V17;; v18) h=$V18;; v19) h=$V19;; v20) h=$V20;; v21) h=$V21;; v22) h=$V22;; v23) h=$V23;; v24) h=$V24;; v25) h=$V25;; v26) h=$V26;; v27) h=$V27;; v28) h=$V28;; v29) h=$V29;; v30) h=$V30;; v31) h=$V31;; v32) h=$V32;; v33) h=$V33;; v34) h=$V34;; v35) h=$V35;; v36) h=$V36;; v37) h=$V37;; v38) h=$V38;; *) say 'Usage: sh tt.sh use v38   (or v37 ... v12)'; exit 2;; esac
     test -f "$K/tt-zoom-$v.jar" || { say "$v is not in the kit on the car."; exit 1; }
     "$T" $h "$K/tt-zoom-$v.jar" || { say "Stored $v jar is damaged."; exit 1; }
     rw
@@ -229,16 +231,17 @@ layers)
 check)
     # v37 guided check, paced by Enter (q stops and saves).
     finish(){ dmdump 'check end'; say ''; say '== Saving the logs.'; sh "$0" save; say 'Done. Send the photos (named by step) and the newest logs folder.'; }
-    next(){ echo "      [Enter] next step, q = stop and save"; read a; case "$a" in q|Q) finish; exit 0;; esac; }
-    step(){ say ''; say "== $1"; }
+    next(){ while :; do echo "      [Enter] next step, c = mark a CarPlay crash now, q = stop and save"; read a; case "$a" in q|Q) finish; exit 0;; c|C) mark "crash (step $S)";; *) return;; esac; done; }
+    step(){ S=${1%%:*}; S=${S%% *}; say ''; say "== $1"; }
     rm -f /tmp/tt-rgi-play.txt /tmp/tt-kdk-direct /tmp/tt-layer-off /tmp/tt-rgi-kdk-map /tmp/tt-panel-pos
-    say "v37 check. jar: $(which_jar). Parked, iPhone plugged in, CarPlay running."
+    say "v38 check. jar: $(which_jar). Parked, iPhone plugged in, CarPlay running."
+    say '   If the CarPlay tab goes black at any time: type c and Enter right away (marks the logs).'
     say "   layer lists now: map 10 = $(ctxlist 10)   map+banner 89 = $(ctxlist 89)"
     grep 'layers:' /tmp/tt-rgd.log 2>/dev/null | tail -2
     step 'P0: start a route on the iPhone (Google or Apple, parked is fine). Then Enter.'
     next
     dmdump 'P0 route on'
-    step 'P1 LARGE view, MAP tab: CarPlay map + panel in the stock frame? PHOTO'
+    step 'P1 LARGE view, MAP tab: no stock straight-arrow before the first turn; then CarPlay map + panel in the stock frame? PHOTO'
     next
     step 'P2 LARGE view, CAR tab: panel in the stock frame. PHOTO'
     next
@@ -247,17 +250,22 @@ check)
     step 'P4 SMALL view, trip computer: panel on the right. PHOTO'
     next
     dmdump 'P4'
-    step 'P5: END the route. LARGE view, MAP tab: CarPlay map still there, banner gone? PHOTO'
+    step 'P5: END the route. LARGE view, MAP tab: banner gone within about 3 s, CarPlay map still there? PHOTO'
     next
-    step 'P6: UNPLUG the iPhone, wait 15 s. MAP tab: STOCK map (not black)? PHOTO'
+    step 'P6: UNPLUG the iPhone, wait 15 s, do NOT touch the tabs. MAP tab: STOCK map (not black)? PHOTO'
     next
     dmdump 'P6 phone off'
     say "   layer lists now: map 10 = $(ctxlist 10)   map+banner 89 = $(ctxlist 89)"
-    step 'P7: PLUG the iPhone back in, wait for CarPlay. MAP tab: CarPlay map back? (tap CAR, then MAP if not) PHOTO'
+    step 'P7: PLUG the iPhone back in, wait for CarPlay, do NOT touch the tabs. MAP tab: CarPlay map back by itself? PHOTO'
+    next
+    step 'P8: flip CAR tab -> CarPlay tab -> CAR tab a few times. If CarPlay goes black: type c, then note how long you waited.'
     next
     dmdump 'P7 phone back'
     say "   layer lists now: map 10 = $(ctxlist 10)   map+banner 89 = $(ctxlist 89)"
     finish
+    ;;
+mark)
+    shift; mark "${*:-crash}"
     ;;
 layer89)
     # Set the map + banner layer list by hand (memory only; an MMI restart restores it).
@@ -301,7 +309,7 @@ panel)
     esac
     ;;
 report)
-    say "== jar: $(which_jar)    (v37 is the current one)"
+    say "== jar: $(which_jar)    (v38 is the current one)"
     say "== layers: map 10 = $(ctxlist 10)  map+banner 89 = $(ctxlist 89)  (v37 with CarPlay: 16 60 / 20 16 60)"
     grep "layers:" /tmp/tt-rgd.log 2>/dev/null | tail -3
     test -f "$K/panel-bg.a8" && say '== panel background: installed' || say '== panel background: none'
@@ -329,18 +337,19 @@ seen)
 save)
     n=1; while test -e "$K/logs/run$n"; do n=$((n+1)); done
     rw; mkdir -p "$K/logs/run$n"
-    for f in /tmp/tt-rgd.log /tmp/tt-rgd.log.1 /tmp/tt-nav.log /tmp/tt-zoom.log /tmp/tt-rgd.txt /tmp/tt-rgd-cat.txt /tmp/tt-route.txt /tmp/tt-dmdt.txt; do test -f "$f" && cp "$f" "$K/logs/run$n/"; done
+    for f in /tmp/tt-rgd.log /tmp/tt-rgd.log.1 /tmp/tt-nav.log /tmp/tt-zoom.log /tmp/tt-rgd.txt /tmp/tt-rgd-cat.txt /tmp/tt-route.txt /tmp/tt-dmdt.txt /tmp/altscreen111.log /tmp/mu1438-cluster-runtime.log /tmp/mibr-alt111-gen2.status /tmp/mibr-carplay111.state; do test -f "$f" && cp "$f" "$K/logs/run$n/"; done
     ro
     say "Saved to $K/logs/run$n (kept across MMI restarts). On the Mac:"
     say "scp -O -r -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedAlgorithms=+ssh-rsa root@10.173.189.1:$K/logs ~/Downloads/tt-logs"
     ;;
 *)
     say 'sh tt.sh report              what is installed and what it is doing (paste this)'
-    say 'sh tt.sh use v37             switch version (v37 ... v12), then restart the MMI'
+    say 'sh tt.sh use v38             switch version (v38 ... v12), then restart the MMI'
     say 'sh tt.sh play map|new|fit|win|kdk|panel|komo|stock  parked tests'
     say 'sh tt.sh play arrows | stop  arrow catalogue / stop playback'
     say 'sh tt.sh test                the full guided test, Enter for each step, then saves the logs'
-    say 'sh tt.sh check               v37 guided check (8 steps, Enter for each)'
+    say 'sh tt.sh check               v38 guided check (Enter for each step, c marks a CarPlay crash)'
+    say 'sh tt.sh mark [text]         put a marker line into all logs (e.g. right after a crash)'
     say 'sh tt.sh layers              parked layer test for the map + banner (context 89)'
     say 'sh tt.sh layer89 stock|LIST  set the map + banner layers by hand (memory only)'
     say 'sh tt.sh dm [label]          add the display manager state to the logs'

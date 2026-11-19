@@ -1294,8 +1294,12 @@ public final class TtPanel {
         return KDK_DIRECT.exists();
     }
 
+    /** v38: new layer lists wait for a real context switch (guardCheck does one on the plain map). */
+    private static volatile boolean relayer;
+
     /** v37 Layers: the layer lists changed; redraw in the new mode (banner frame or own frame). */
     static void layersChanged() {
+        relayer = true;
         String t = lastTurn;
         if (t != null && (liveShown || kdkPanelUp)) {
             post(t, false);
@@ -1360,7 +1364,7 @@ public final class TtPanel {
                 if (!watch && now > burstUntil) {
                     break;
                 }
-                if (watch) {
+                if (watch || relayer) {
                     post("kdkguard", false);
                 }
                 Thread.sleep(now < burstUntil ? 30L : 100L);
@@ -1395,6 +1399,28 @@ public final class TtPanel {
                 }
             }
         } catch (Throwable ignored) {
+        }
+        if (relayer) {
+            // v38 (car test): after the iPhone went, the map stayed black until a tab switch, and
+            // after it came back the stock map stayed. The display manager only uses a new list
+            // when it switches into the context, and the HMI skips a switch to the current one,
+            // so go to 89 and straight back. Only on the plain map without the banner.
+            relayer = false;
+            try {
+                int ctx = d.getCurrentContextID(0);
+                boolean banner = d instanceof de.audi.tghu.fwhmi.IDisplayManagerKombiControl
+                    && ((de.audi.tghu.fwhmi.IDisplayManagerKombiControl) d).getVisibleKDK(0) == KDK;
+                if (ctx == 10 && !banner) {
+                    d.switchContext(89, 0, null);
+                    d.switchContext(10, 0, null);
+                    RgdBus.note("layers: re-applied on the map (10 -> 89 -> 10)");
+                } else {
+                    RgdBus.note(new StringBuffer("layers: re-apply skipped, context ").append(ctx)
+                        .append(banner ? " (banner up)" : "").toString());
+                }
+            } catch (Throwable t) {
+                RgdBus.note(new StringBuffer("layers: re-apply failed ").append(String.valueOf(t)).toString());
+            }
         }
         try {
             boolean want = kdkDirect() && (liveShown || kdkPanelUp)
