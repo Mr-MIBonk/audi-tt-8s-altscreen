@@ -52,7 +52,7 @@ spawns `cluster_supervisor.sh` without close-on-exec on its listening sockets.
 The TT runs the h320 safe-area preset of the hook (`36aedadb...`, 13 bytes in the safe-area
 table differ from the shipped build); `patch_hook.py` and `sh tt.sh hookfix` handle both.
 
-## CarPlay-tab crash (open)
+## CarPlay-tab crash
 
 Run33: each new session first works (main screen stream 110 set up, cockpit renderer attached),
 then the whole session drops with no request (`GEN2 TEARDOWN entry request=NULL reason=0`,
@@ -61,3 +61,15 @@ then `reason=-6753`). The 378 s drop came 8 s after the CarPlay tab was opened (
 keeps an NvSS decoder open on display 0, the same display the stock CarPlay main screen uses.
 `sh tt.sh crash` flips to the CarPlay tab with the renderer on, then off
 (`/tmp/mu1438-cluster-disable`); `save` now keeps `sloginfo` (stock decoder messages).
+
+Runs 35-37 (renderer off from the start): 55 CarPlay-tab openings, no session drop. The
+installed supervisor (4776 bytes, `9175a6de...`) already ran the renderer only while
+`mode_screen=2` (in all logs `mode_screen=1` comes about 10 ms before the CarPlay tab's stream
+110 is set up, `2` just before it is torn down). But while the renderer drew it also switched
+the display to its own context 901 with `dmdt sc 0 901` whenever it saw the stock map context
+10, behind the HMI; a tab flip between its `gs` and its `sc` leaves the display on 901 while the
+HMI shows the CarPlay tab. Fix: supervisor v3 (`scripts/mksup.py`, generated from the installed
+one, not committed) without that switch, since tt-zoom v37+ puts layer 60 into context 10
+itself; it also checks that `sleep 0.2` really sleeps and logs its version. Install with
+`sh tt.sh sup` (keeps v2, `sh tt.sh sup undo`), then replug. The supervisor's own log is
+`/tmp/mu1462-supervisor.log` (kept by `save` since v40).

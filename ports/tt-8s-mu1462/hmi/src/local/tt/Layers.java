@@ -24,6 +24,7 @@ import java.io.InputStream;
 public final class Layers implements Runnable {
     private static final File ACTIVE = new File("/tmp/mu1438-cluster-active");
     private static final File OFF = new File("/tmp/tt-layer-off");
+    private static final File STATUS = new File("/tmp/mibr-alt111-gen2.status");
     private static final String DMDT = "/eso/bin/apps/dmdt";
     private static final String[] ENV = {
         "LD_LIBRARY_PATH=/eso/lib:/mnt/app/root/lib-target:/mnt/app/usr/lib:/mnt/app/armle/lib:/mnt/app/armle/lib/dll:/mnt/app/armle/usr/lib",
@@ -94,6 +95,11 @@ public final class Layers implements Runnable {
             want = false;
         } else if (fresh) {
             want = true;
+        } else if (on && carplayTab()) {
+            // v40: the supervisor pauses the renderer while the CarPlay tab has the screen; keep
+            // the CarPlay lists so the map is back as soon as the renderer is.
+            want = true;
+            lastFresh = now;
         } else if (stamp <= 0) {
             // v39 (car test): the renderer deletes its heartbeat when the iPhone has really gone
             // ("renderer heartbeat withdrawn"); waiting 10 s more only kept the map black.
@@ -129,6 +135,30 @@ public final class Layers implements Runnable {
         try {
             de.audi.tghu.navi.app.cluster.TtRgi.viewChanged();
         } catch (Throwable ignored) {
+        }
+    }
+
+    /** The hook's status file: session up and the iPhone's main screen shown (CarPlay tab). */
+    private static boolean carplayTab() {
+        java.io.FileInputStream in = null;
+        try {
+            if (!STATUS.exists()) {
+                return false;
+            }
+            in = new java.io.FileInputStream(STATUS);
+            byte[] b = new byte[2048];
+            int n = in.read(b);
+            String s = n > 0 ? new String(b, 0, n) : "";
+            return s.indexOf("control_session=1") >= 0 && s.indexOf("mode_screen=1") >= 0;
+        } catch (Throwable t) {
+            return false;
+        } finally {
+            try {
+                if (in != null) {
+                    in.close();
+                }
+            } catch (Throwable ignored) {
+            }
         }
     }
 

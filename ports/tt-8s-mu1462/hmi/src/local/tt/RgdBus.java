@@ -69,6 +69,16 @@ public final class RgdBus implements Runnable {
     private static boolean wantOn;
     private static boolean lastOn;
     private static String lastSummary = "";
+    // v40 bar glide: the iPhone sends rounded distances (0.2 mi, 0.1 mi, 50 ft steps), so the
+    // bar jumped. Between changes it now slides at the speed the changes imply.
+    private static String gKey;
+    private static int gRaw = -1;
+    private static long gRawAt;
+    private static long gChangeEvery;
+    private static int gStep;
+    private static double gEst = -1;
+    private static double gSpeed;
+    private static long gEstAt;
 
     private final Socket socket;
     private final boolean tick;
@@ -111,7 +121,7 @@ public final class RgdBus implements Runnable {
     public void run() {
         if (tick) {
             while (true) {
-                sleep(2000);
+                sleep(wantOn ? 250 : 2000);
                 feed(false);
             }
         } else if (socket == null) {
@@ -382,6 +392,7 @@ public final class RgdBus implements Runnable {
         short[] icon = null;
         int mState = 0;
         int bar = -1;
+        int glideBar = -1;
         String lanes = "-";
         String exit = "";
         long now = System.currentTimeMillis();
@@ -468,6 +479,8 @@ public final class RgdBus implements Runnable {
                 int[] ph = phase(main, turn);
                 mState = ph[0];
                 bar = ph[1];
+                int g = glide(new StringBuffer(first).append('/').append(main).toString(), turn, now);
+                glideBar = bar < 0 ? -1 : phase(main, g)[1];
                 if (mState == 1) {
                     icon = new short[] { 11, 255 };
                 } else if (mState == 2) {
@@ -495,7 +508,7 @@ public final class RgdBus implements Runnable {
         try {
             String result = TtRgi.update(on, declare, stockSafe(icon), mState, turn, bar, dest, eta, road, next);
             // Lanes only while approaching the turn, like stock.
-            TtPanel.live(on, icon, turn, bar, mState >= 3 ? lanes : "-", dest, eta, exit, next);
+            TtPanel.live(on, icon, turn, glideBar, mState >= 3 ? lanes : "-", dest, eta, exit, next);
             if (result != null) {
                 log(result);
             }
@@ -558,6 +571,62 @@ public final class RgdBus implements Runnable {
             return new short[] { 11, 255 };
         }
         return new short[] { 13, icon[1] };
+    }
+
+    /**
+     * v40: distance to the turn for the bar, between the iPhone's rounded values. When the
+     * rounded value changes, the real distance is about halfway between old and new; from there
+     * it moves at the speed of the last changes (10 m/s until the first change), never more than
+     * half a step below the current value (the iPhone keeps sending the same value while the car
+     * stands, so the bar can lead by at most that much). A jump up (reroute) or another maneuver
+     * starts again from the iPhone's value.
+     */
+    static int glide(String key, int raw, long now) {
+        if (raw < 0) {
+            gKey = null;
+            return raw;
+        }
+        if (gKey == null || !gKey.equals(key) || raw > gRaw + Math.max(gStep, 30)) {
+            gKey = key;
+            gRaw = raw;
+            gRawAt = now;
+            gChangeEvery = 0;
+            gStep = 0;
+            gEst = raw;
+            gSpeed = 10;
+            gEstAt = now;
+            return raw;
+        }
+        if (raw != gRaw) {
+            long dt = now - gRawAt;
+            int step = gRaw - raw;
+            if (dt > 300 && step > 0) {
+                double v = step * 1000.0 / dt;
+                gSpeed = v < 0.5 ? 0.5 : (v > 70 ? 70 : v);
+                gChangeEvery = dt;
+            }
+            gStep = step > 0 ? step : gStep;
+            double boundary = (gRaw + raw) / 2.0;
+            gEst = Math.min(gEst, boundary);
+            gRaw = raw;
+            gRawAt = now;
+            gEstAt = now;
+        } else {
+            gEst -= gSpeed * (now - gEstAt) / 1000.0;
+            gEstAt = now;
+        }
+        double lo = gStep > 0 ? raw - gStep / 2.0 : raw - Math.min(raw / 4.0, 80.0);
+        double hi = gStep > 0 ? raw + gStep / 2.0 : raw;
+        if (gEst < lo) {
+            gEst = lo;
+        }
+        if (gEst > hi) {
+            gEst = hi;
+        }
+        if (gEst < 0) {
+            gEst = 0;
+        }
+        return (int) (gEst + 0.5);
     }
 
     /**

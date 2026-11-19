@@ -491,7 +491,8 @@ public final class TtPanel {
             for (int i = 0; i < icon.length; i++) {
                 ic[i] = icon[i];
             }
-            int q = bar < 0 ? -1 : (bar / 16) * 16;
+            // v40: 64 bar levels (the bar glides between the iPhone's rounded distances).
+            int q = bar < 0 ? -1 : (bar / 4) * 4;
             // Destination distance in 0.1 mi steps, so it does not redraw every metre.
             int dq = destM < 0 ? -1 : (int) ((destM / 160) * 160);
             String k = rebuildArg(ic, metres, q, lanes, dq, etaUtc, exit, street);

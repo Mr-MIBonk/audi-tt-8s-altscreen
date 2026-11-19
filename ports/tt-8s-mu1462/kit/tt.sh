@@ -33,6 +33,10 @@ V36=03994ca30aeb49c99c10297ae991ce905477db76fc50007c7f300d8cbb2caab4
 V37=9b20688cbc8d74991c7075746de6c30fe8686e0247bba62387aa7e1d9b5c66c4
 V38=c3ad31212c5c364030be092dff941e7ffd39f02003cd7857d858f9684683822c
 V39=0a7636fc436d53426f2684d08116172c0410651b9416914f69009ef611ef7d9f
+V40=799e2cf291bfb05a728875c6c227dc5b9e93fd317796bcc1d20527dce7ac8c14
+SUP=/mnt/app/root/mu1438-cluster/cluster_supervisor.sh
+SUP_V2=9175a6deaff6acf2c4f35b61b245476ba8827e7f4b74977b48cdafc2c7c6f57c
+SUP_V3=4c37a375954a387e4938fbabcad868bb2fcc4207a97bcbe599421974e75f06bd
 HOOK=/mnt/app/root/lib-target/libaltscreen111.so
 # CarPlay hook builds: shipped, h320 safe-area preset (what the TT runs), and their fix1 versions
 HOOK_STOCK=9a8c01ec8323d5de7695e212ff6168b0bb7df99d8554c9971f5449c5a21d6256
@@ -54,20 +58,20 @@ ro(){ sync; mount -ur /mnt/app 2>/dev/null; }
 which_jar(){
     h=$("$T" "$JAR" 2>/dev/null)
     case "$h" in
-        $V12) echo v12;; $V14) echo v14;; $V15) echo v15;; $V16) echo v16;; $V17) echo v17;; $V18) echo v18;; $V19) echo v19;; $V20) echo v20;; $V21) echo v21;; $V22) echo v22;; $V23) echo v23;; $V24) echo v24;; $V25) echo v25;; $V26) echo v26;; $V27) echo v27;; $V28) echo v28;; $V29) echo v29;; $V30) echo v30;; $V31) echo v31;; $V32) echo v32;; $V33) echo v33;; $V34) echo v34;; $V35) echo v35;; $V36) echo v36;; $V37) echo v37;; $V38) echo v38;; $V39) echo v39;; "") echo none;; *) echo "unknown ($h)";;
+        $V12) echo v12;; $V14) echo v14;; $V15) echo v15;; $V16) echo v16;; $V17) echo v17;; $V18) echo v18;; $V19) echo v19;; $V20) echo v20;; $V21) echo v21;; $V22) echo v22;; $V23) echo v23;; $V24) echo v24;; $V25) echo v25;; $V26) echo v26;; $V27) echo v27;; $V28) echo v28;; $V29) echo v29;; $V30) echo v30;; $V31) echo v31;; $V32) echo v32;; $V33) echo v33;; $V34) echo v34;; $V35) echo v35;; $V36) echo v36;; $V37) echo v37;; $V38) echo v38;; $V39) echo v39;; $V40) echo v40;; "") echo none;; *) echo "unknown ($h)";;
     esac
 }
 
 case "${1:-help}" in
 setup)
     # Run from /tmp after copying the kit there. Safe to run again for a kit update.
-    test -f /tmp/tt-zoom-v39.jar || { say 'Copy the kit files to /tmp first.'; exit 1; }
+    test -f /tmp/tt-zoom-v40.jar || { say 'Copy the kit files to /tmp first.'; exit 1; }
     rw
     mkdir -p "$K/logs"
-    for f in altscreen-sha256 tt-zoom-v39.jar stock-replay.txt catalogue.txt komo-test.txt panel-test.txt kdk-test.txt fit-test.txt win-test.txt new-test.txt map-test.txt place-test.txt; do
+    for f in altscreen-sha256 tt-zoom-v40.jar stock-replay.txt catalogue.txt komo-test.txt panel-test.txt kdk-test.txt fit-test.txt win-test.txt new-test.txt map-test.txt place-test.txt; do
         cp "/tmp/$f" "$K/$f" || { say "missing /tmp/$f"; ro; exit 1; }
     done
-    for f in tt-zoom-v12.jar tt-zoom-v14.jar tt-zoom-v15.jar tt-zoom-v16.jar tt-zoom-v17.jar tt-zoom-v18.jar tt-zoom-v19.jar tt-zoom-v20.jar tt-zoom-v21.jar tt-zoom-v22.jar tt-zoom-v23.jar tt-zoom-v24.jar tt-zoom-v25.jar tt-zoom-v26.jar tt-zoom-v27.jar tt-zoom-v28.jar tt-zoom-v29.jar tt-zoom-v30.jar tt-zoom-v31.jar tt-zoom-v32.jar tt-zoom-v33.jar tt-zoom-v34.jar tt-zoom-v35.jar tt-zoom-v36.jar tt-zoom-v37.jar tt-zoom-v38.jar libaltscreen111-fix1.so libaltscreen111-h320-fix1.so; do
+    for f in tt-zoom-v12.jar tt-zoom-v14.jar tt-zoom-v15.jar tt-zoom-v16.jar tt-zoom-v17.jar tt-zoom-v18.jar tt-zoom-v19.jar tt-zoom-v20.jar tt-zoom-v21.jar tt-zoom-v22.jar tt-zoom-v23.jar tt-zoom-v24.jar tt-zoom-v25.jar tt-zoom-v26.jar tt-zoom-v27.jar tt-zoom-v28.jar tt-zoom-v29.jar tt-zoom-v30.jar tt-zoom-v31.jar tt-zoom-v32.jar tt-zoom-v33.jar tt-zoom-v34.jar tt-zoom-v35.jar tt-zoom-v36.jar tt-zoom-v37.jar tt-zoom-v38.jar tt-zoom-v39.jar libaltscreen111-fix1.so libaltscreen111-h320-fix1.so cluster_supervisor-v3.sh; do
         test -f "/tmp/$f" && cp "/tmp/$f" "$K/$f"
     done
     # Optional panel background picture (made with scripts/mkbg.py; kept on the car, not in git).
@@ -75,14 +79,14 @@ setup)
     cp /tmp/tt.sh /mnt/app/root/tt.sh
     chmod 755 "$T" /mnt/app/root/tt.sh
     ok=1
-    "$T" $V39 "$K/tt-zoom-v39.jar" || ok=0
+    "$T" $V40 "$K/tt-zoom-v40.jar" || ok=0
     ro
     if test $ok = 1; then say 'Kit installed. From now on just type:  sh tt.sh help'
     else say 'A kit file is damaged - copy the kit again and rerun setup.'; exit 1; fi
     ;;
 use)
     v=${2:-}
-    case "$v" in v12) h=$V12;; v14) h=$V14;; v15) h=$V15;; v16) h=$V16;; v17) h=$V17;; v18) h=$V18;; v19) h=$V19;; v20) h=$V20;; v21) h=$V21;; v22) h=$V22;; v23) h=$V23;; v24) h=$V24;; v25) h=$V25;; v26) h=$V26;; v27) h=$V27;; v28) h=$V28;; v29) h=$V29;; v30) h=$V30;; v31) h=$V31;; v32) h=$V32;; v33) h=$V33;; v34) h=$V34;; v35) h=$V35;; v36) h=$V36;; v37) h=$V37;; v38) h=$V38;; v39) h=$V39;; *) say 'Usage: sh tt.sh use v39   (or v38 ... v12)'; exit 2;; esac
+    case "$v" in v12) h=$V12;; v14) h=$V14;; v15) h=$V15;; v16) h=$V16;; v17) h=$V17;; v18) h=$V18;; v19) h=$V19;; v20) h=$V20;; v21) h=$V21;; v22) h=$V22;; v23) h=$V23;; v24) h=$V24;; v25) h=$V25;; v26) h=$V26;; v27) h=$V27;; v28) h=$V28;; v29) h=$V29;; v30) h=$V30;; v31) h=$V31;; v32) h=$V32;; v33) h=$V33;; v34) h=$V34;; v35) h=$V35;; v36) h=$V36;; v37) h=$V37;; v38) h=$V38;; v39) h=$V39;; v40) h=$V40;; *) say 'Usage: sh tt.sh use v40   (or v39 ... v12)'; exit 2;; esac
     test -f "$K/tt-zoom-$v.jar" || { say "$v is not in the kit on the car."; exit 1; }
     "$T" $h "$K/tt-zoom-$v.jar" || { say "Stored $v jar is damaged."; exit 1; }
     rw
@@ -302,6 +306,25 @@ hookfix)
     ro
     test $r = 0 && say 'Done. Restart the MMI (hold the MMI knob) to load it.' || say 'Copy failed - check with: sh tt.sh report'
     ;;
+sup)
+    # Supervisor v3 (scripts/mksup.py): no "dmdt sc 0 901" behind the HMI's back (it raced tab
+    # flips and left the CarPlay tab black). One file on flash, original kept; next replug.
+    cur=$("$T" "$SUP" 2>/dev/null)
+    case "${2:-}" in
+        undo) src="$K/cluster_supervisor.sh.v2"; want=$SUP_V2; test -f "$src" || { say 'Nothing to undo.'; exit 1; };;
+        "") src="$K/cluster_supervisor-v3.sh"; want=$SUP_V3
+            test "$cur" = "$SUP_V2" -o "$cur" = "$SUP_V3" || { say "Unknown supervisor on the car ($cur) - nothing changed."; exit 1; };;
+        *) say 'Usage: sh tt.sh sup   |   sh tt.sh sup undo'; exit 2;;
+    esac
+    test "$cur" = "$want" && { say 'Already in place.'; exit 0; }
+    "$T" $want "$src" || { say "$src is missing or damaged - nothing changed."; exit 1; }
+    rw
+    test "$cur" = "$SUP_V2" -a ! -f "$K/cluster_supervisor.sh.v2" && cp "$SUP" "$K/cluster_supervisor.sh.v2"
+    cp "$src" "$SUP.new" && chmod 755 "$SUP.new" && mv "$SUP.new" "$SUP"
+    "$T" $want "$SUP" && r=0 || r=1
+    ro
+    test $r = 0 && say 'Done. Unplug the iPhone, wait 10 s, plug it back in.' || say 'Copy failed - check with: sh tt.sh report'
+    ;;
 crash)
     # CarPlay-tab crash, A/B: is it our cockpit renderer holding the video hardware?
     finish(){ rm -f /tmp/mu1438-cluster-disable; slog 'crash test end'; say ''; say '== Saving the logs.'; sh "$0" save
@@ -379,10 +402,12 @@ panel)
     esac
     ;;
 report)
-    say "== jar: $(which_jar)    (v39 is the current one)"
+    say "== jar: $(which_jar)    (v40 is the current one)"
     say "== layers: map 10 = $(ctxlist 10)  map+banner 89 = $(ctxlist 89)  (v37 with CarPlay: 16 60 / 20 16 60)"
     grep "layers:" /tmp/tt-rgd.log 2>/dev/null | tail -3
     h=$("$T" "$HOOK" 2>/dev/null); case "$h" in $HOOK_STOCK) say '== CarPlay hook: original';; $HOOK_H320) say '== CarPlay hook: original (h320 preset)';; $FIX_STOCK|$FIX_H320) say '== CarPlay hook: fix1 (busy port no longer blocks CarPlay)';; *) say "== CarPlay hook: unknown ($h)";; esac
+    h=$("$T" "$SUP" 2>/dev/null); case "$h" in $SUP_V2) say '== supervisor: v2 (switches the display to 901)';; $SUP_V3) say '== supervisor: v3 (no display switch)';; *) say "== supervisor: unknown ($h)";; esac
+    tail -3 /tmp/mu1462-supervisor.log 2>/dev/null
     test -f "$K/panel-bg.a8" && say '== panel background: installed' || say '== panel background: none'
     say '== switches:'
     ls /tmp/tt-rgi-* 2>/dev/null || say '(none)'
@@ -409,19 +434,20 @@ save)
     n=1; while test -e "$K/logs/run$n"; do n=$((n+1)); done
     sloginfo 2>/dev/null | tail -4000 > /tmp/tt-slog.txt
     rw; mkdir -p "$K/logs/run$n"
-    for f in /tmp/tt-rgd.log /tmp/tt-rgd.log.1 /tmp/tt-nav.log /tmp/tt-zoom.log /tmp/tt-rgd.txt /tmp/tt-rgd-cat.txt /tmp/tt-route.txt /tmp/tt-dmdt.txt /tmp/altscreen111.log /tmp/mu1438-cluster-runtime.log /tmp/mibr-alt111-gen2.status /tmp/mibr-carplay111.state /tmp/tt-diag.txt /tmp/tt-slog.txt; do test -f "$f" && cp "$f" "$K/logs/run$n/"; done
+    for f in /tmp/tt-rgd.log /tmp/tt-rgd.log.1 /tmp/tt-nav.log /tmp/tt-zoom.log /tmp/tt-rgd.txt /tmp/tt-rgd-cat.txt /tmp/tt-route.txt /tmp/tt-dmdt.txt /tmp/altscreen111.log /tmp/mu1438-cluster-runtime.log /tmp/mibr-alt111-gen2.status /tmp/mibr-carplay111.state /tmp/tt-diag.txt /tmp/tt-slog.txt /tmp/mu1462-supervisor.log; do test -f "$f" && cp "$f" "$K/logs/run$n/"; done
     ro
     say "Saved to $K/logs/run$n (kept across MMI restarts). On the Mac:"
     say "scp -O -r -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedAlgorithms=+ssh-rsa root@10.173.189.1:$K/logs ~/Downloads/tt-logs"
     ;;
 *)
     say 'sh tt.sh report              what is installed and what it is doing (paste this)'
-    say 'sh tt.sh use v39             switch version (v39 ... v12), then restart the MMI'
+    say 'sh tt.sh use v40             switch version (v40 ... v12), then restart the MMI'
     say 'sh tt.sh play map|new|fit|win|kdk|panel|komo|stock  parked tests'
     say 'sh tt.sh play arrows | stop  arrow catalogue / stop playback'
     say 'sh tt.sh test                the full guided test, Enter for each step, then saves the logs'
     say 'sh tt.sh check               v38 guided check (Enter for each step, c marks a CarPlay crash)'
     say 'sh tt.sh hookfix [undo]      CarPlay hook fix1: a busy port no longer blocks CarPlay (flash, then MMI restart)'
+    say 'sh tt.sh sup [undo]          supervisor v3: fixes the CarPlay-tab crash (flash, then replug)'
     say 'sh tt.sh crash               CarPlay-tab crash test: our renderer on, then off (no flash)'
     say 'sh tt.sh diag                when the CarPlay icon only flickers: record who holds the ports'
     say 'sh tt.sh mark [text]         put a marker line into all logs (e.g. right after a crash)'
