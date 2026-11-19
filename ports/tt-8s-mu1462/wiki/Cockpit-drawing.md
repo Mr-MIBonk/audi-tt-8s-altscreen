@@ -67,6 +67,12 @@ The banner spot shows only while the stock banner (KDK displayable 20) is on.
   route with the banner on lost the CarPlay map (v32 drive test). v33 watches the
   context and keeps the banner off while the map shows (`/tmp/tt-rgi-kdk-map`
   brings the old behaviour back).
+- Stock `DisplayManagerMIB2High.defineContextsForG24`: every context N below 79 gets a
+  twin N + 79 with exactly the same displayables plus the banner (20) on top. So
+  context 89 is not a different layout; what paints the stock map over CarPlay must
+  be something the banner request triggers (likely the nav engine's guidance view).
+  v36 experiment `/tmp/tt-kdk-direct` opens the window with `setKDKVisible(20, 0)`
+  and never asks for the guidance view.
 - Contexts logged by v33 (both views): map 10; map with banner 89; car page with
   banner 79. Every tab switch passes through 78 and 157 (78 + 79) for under a
   second: map to car is 10, 78, 157, 79; car to map is 79, 157, 89, 10.

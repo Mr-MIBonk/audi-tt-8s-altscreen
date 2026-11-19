@@ -574,7 +574,7 @@ public final class TtPanel {
         // v28: the small view's window is wider (328x180), so it gets the wide panel.
         // v33: on the large view's map the stock banner is off (it hides the CarPlay map), so
         // the panel brings its own frame.
-        if (mapShowing && !ZoomGate.small()) {
+        if (mapShowing && !ZoomGate.small() && !kdkDirect()) {
             return TurnSpec.KDK_MAP;
         }
         return ZoomGate.small() ? TurnSpec.KDK_WIDE : TurnSpec.KDK;
@@ -645,7 +645,7 @@ public final class TtPanel {
         boolean kdkMode = mode == TurnSpec.KDK || mode == TurnSpec.KDK_WIDE || mode == TurnSpec.KDK_MAP;
         // v35: in the small view the banner window is gone while the map shows (banner off), so the
         // panel moves over the map, left of the tach (v33 grid photo).
-        String spot = kdkMode ? (mode == TurnSpec.KDK_WIDE ? (mapShowing ? "kdk-smallmap" : "kdk-small") : "kdk-large")
+        String spot = kdkMode ? (mode == TurnSpec.KDK_WIDE ? (mapShowing && !kdkDirect() ? "kdk-smallmap" : "kdk-small") : "kdk-large")
             : (mode == TurnSpec.FULL ? "small" : (mode == TurnSpec.FLAP ? "flap" : "left"));
         StringBuffer b = new StringBuffer(spot).append(' ');
         IWrappedNode3D front = parent(m);
@@ -1280,6 +1280,19 @@ public final class TtPanel {
     private static int lastCtx = -1;
     private static boolean gridFull;
 
+    /**
+     * v36 experiment (/tmp/tt-kdk-direct): context 89 is context 10 plus the banner layer and
+     * nothing else (stock defineContextsForG24), so maybe it is the nav engine's guidance view,
+     * not the banner window, that paints the stock map over CarPlay. In this mode the window is
+     * opened directly with setKDKVisible(20) and the guidance view is never requested.
+     */
+    private static final java.io.File KDK_DIRECT = new java.io.File("/tmp/tt-kdk-direct");
+    private static boolean directOn;
+
+    public static boolean kdkDirect() {
+        return KDK_DIRECT.exists();
+    }
+
     /** TtRgi.kdkWanted: is the map showing? Reads the context now when the watcher is not running. */
     public static boolean mapShowing() {
         // v34: always the live context (v33 trusted a stale flag while the watcher ran, so a
@@ -1372,6 +1385,26 @@ public final class TtPanel {
                 }
             }
         } catch (Throwable ignored) {
+        }
+        try {
+            boolean want = kdkDirect() && (liveShown || kdkPanelUp)
+                && de.audi.tghu.navi.app.cluster.TtRgi.rgActive(false);
+            if (d instanceof de.audi.tghu.fwhmi.IDisplayManagerKombiControl) {
+                de.audi.tghu.fwhmi.IDisplayManagerKombiControl k = (de.audi.tghu.fwhmi.IDisplayManagerKombiControl) d;
+                if (want && k.getVisibleKDK(0) != KDK) {
+                    k.setKDKVisible(KDK, 0);
+                    if (!directOn) {
+                        RgdBus.note("kdk direct: window opened (setKDKVisible 20)");
+                    }
+                    directOn = true;
+                } else if (!want && directOn) {
+                    k.setKDKVisible(-1, 0);
+                    directOn = false;
+                    RgdBus.note("kdk direct: window closed");
+                }
+            }
+        } catch (Throwable t) {
+            RgdBus.note(new StringBuffer("kdk direct failed ").append(String.valueOf(t)).toString());
         }
         if (kdkAlpha != -2 || !kdkPanelUp) {
             return "idle";

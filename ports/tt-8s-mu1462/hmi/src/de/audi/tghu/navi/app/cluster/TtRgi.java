@@ -142,6 +142,11 @@ public final class TtRgi {
      * behaviour: only with /tmp/tt-rgi-kdk, or in the small view unless /tmp/tt-rgi-nokdk-small).
      */
     private static boolean kdkWanted() {
+        // v36 experiment: the banner window is opened directly (TtPanel, setKDKVisible); the nav
+        // engine is never asked for its guidance view.
+        if (local.tt.TtPanel.kdkDirect()) {
+            return false;
+        }
         if (!KDK_OFF.exists()) {
             // v33 (car test): the banner moves the map's context 10 to 89, where the stock map
             // covers the CarPlay map. On the map the banner stays off; our panel brings its frame.
