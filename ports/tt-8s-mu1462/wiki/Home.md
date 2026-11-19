@@ -36,6 +36,7 @@ Everything marked "works" was checked on one car (US TT, MU1462), November 2026.
 **Working on it**
 - [Build and test](Build-and-test.md): build, `tt.sh` toolkit, parked tests, logs
 - [Credits and exclusions](Credits.md): third-party code, what is never committed
+- [Working with Claude](Working-with-Claude.md): how this was built with Claude Code, prompts and tips
 
 ## Next
 

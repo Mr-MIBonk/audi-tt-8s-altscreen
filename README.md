@@ -21,6 +21,7 @@ Fork of [aberbic's MU1438 AltScreen](https://github.com/aberbic/Audi-MHI2-Virtua
 | Android Auto | Not ported to the TT |
 
 Details, the dead ends and what is next: **[the TT wiki](ports/tt-8s-mu1462/wiki/Home.md)**.
+Built with Claude Code; how, and how to start on your own car: [Working with Claude](ports/tt-8s-mu1462/wiki/Working-with-Claude.md).
 
 ![Turn panel pictures](ports/tt-8s-mu1462/docs/panel-preview-v32.png)
 
