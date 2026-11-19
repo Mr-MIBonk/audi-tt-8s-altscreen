@@ -35,10 +35,14 @@
 | Maneuvers sent | Current and next only (list "0,1" of 12-19) | Current only (list "0" of 22) |
 | Lane sets | Up to 6 upcoming | Up to 6 upcoming |
 | Junction angles (`exit_angle`, `turn_angle`) | Not sent (1000) | Not sent (1000) |
-| Distance to the next turn | Not sent while parked | `dist_maneuver_m` and `mN_distance` sent |
+| Distance to the next turn | Only while moving; rounded as displayed (0.2 mi, 0.1 mi, then 50 ft steps) | `dist_maneuver_m` and `mN_distance` sent |
 | Text language | Chinese on this phone ("W Copper Lakes Ct方面") | English ("Start on W Copper Lakes Dr") |
 
-So routes planned while parked capture only the first maneuvers; the research
+First drive (v32, Google Maps, about 10 min): start, three left turns, a U-turn and the
+arrival all mapped and counted down correctly; distances arrive in display steps, so the
+bar moves in steps too.
+
+Routes planned while parked capture only the first maneuvers; the research
 log fills from normal drives. Real junction shapes are not possible from this
 data. Exit numbers from non-English instructions need their own patterns.
 

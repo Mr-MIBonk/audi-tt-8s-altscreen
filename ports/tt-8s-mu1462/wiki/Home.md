@@ -14,7 +14,7 @@ Everything marked "works" was checked on one car (US TT, MU1462), November 2026.
 | Large/small view (tach-centred) layout | Works | [CarPlay map](CarPlay-map.md#small-view-layout) |
 | Steering-wheel scroll zoom | Works | [CarPlay map](CarPlay-map.md#steering-wheel-zoom) |
 | iPhone turn-by-turn data on the head unit | Works | [Turn-by-turn data](Turn-by-turn-data.md) |
-| Turn panel on the cockpit (arrows, lanes, exit badge) | Works parked; live drive pending | [Turn panel](Turn-panel.md) |
+| Turn panel on the cockpit (arrows, lanes, exit badge) | Works; first short drive done (Google Maps) | [Turn panel](Turn-panel.md) |
 | Stock guidance display fed with iPhone turns | Not possible | [Stock guidance dead ends](Stock-guidance-dead-ends.md) |
 
 ## Pages
@@ -45,7 +45,6 @@ Everything marked "works" was checked on one car (US TT, MU1462), November 2026.
 - Small view with the map: the stock banner hides the CarPlay map there too; the
   panel needs another place (grid photo decides).
 - Chinese phone language: exit numbers from Chinese instructions (need a sample).
-- Distance to the next turn: none arrived while parked; check on a drive.
 - Live drive with Google and Apple Maps.
 - Try the iPhone's own maneuver card (hook switches `/mnt/app/root/mibr-carplay111-nav*`).
 - Refresh the installer `package/` with the final jar; SD-card (M.I.B.) installer.
