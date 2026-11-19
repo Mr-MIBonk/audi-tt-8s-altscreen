@@ -8,6 +8,7 @@ import java.io.FileOutputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Enumeration;
 import java.util.Hashtable;
 
 import de.audi.tghu.navi.app.cluster.TtRgi;
@@ -191,6 +192,7 @@ public final class RgdBus implements Runnable {
                         writeLast(payload);
                         logUpdate(updates, payload);
                         merge(payload);
+                        catalogue();
                         feed(true);
                     }
                 } else if (frames <= 30) {
@@ -215,6 +217,102 @@ public final class RgdBus implements Runnable {
                 }
                 feed(true);
             }
+        }
+    }
+
+    private static final File CAT = new File("/tmp/tt-rgd-cat.txt");
+    private static final File ROUTE = new File("/tmp/tt-route.txt");
+    private static final java.util.HashSet SEEN = new java.util.HashSet();
+    private static String lastList = "";
+
+    /**
+     * v32 research log, so maneuvers need not be driven: every distinct maneuver (mN_*) and lane
+     * set (lgN_*) the iPhone sends is appended once to /tmp/tt-rgd-cat.txt (all its keys, sorted,
+     * distances and times left out of the comparison), and the whole merged route is written to
+     * /tmp/tt-route.txt whenever the maneuver list changes. Both are capped at 512 KB.
+     */
+    private static void catalogue() {
+        try {
+            Hashtable groups = new Hashtable();
+            String list;
+            String dest;
+            synchronized (STATE) {
+                list = str("maneuver_list");
+                dest = str("destination");
+                Enumeration e = STATE.keys();
+                while (e.hasMoreElements()) {
+                    String k = (String) e.nextElement();
+                    int u = k.indexOf('_');
+                    boolean m = k.length() > 1 && k.charAt(0) == 'm' && Character.isDigit(k.charAt(1));
+                    boolean lg = k.startsWith("lg") && k.length() > 2 && Character.isDigit(k.charAt(2));
+                    if (u < 0 || !(m || lg)) {
+                        continue;
+                    }
+                    String g = k.substring(0, u);
+                    java.util.Vector v = (java.util.Vector) groups.get(g);
+                    if (v == null) {
+                        v = new java.util.Vector();
+                        groups.put(g, v);
+                    }
+                    v.addElement(new StringBuffer(k.substring(u + 1)).append('=').append(STATE.get(k)).toString());
+                }
+            }
+            StringBuffer out = new StringBuffer();
+            Enumeration ge = groups.keys();
+            while (ge.hasMoreElements()) {
+                String g = (String) ge.nextElement();
+                java.util.Vector v = (java.util.Vector) groups.get(g);
+                Object[] items = v.toArray();
+                java.util.Arrays.sort(items);
+                StringBuffer all = new StringBuffer();
+                StringBuffer sig = new StringBuffer(g.startsWith("lg") ? "lg" : "m");
+                for (int i = 0; i < items.length; i++) {
+                    String it = (String) items[i];
+                    all.append(' ').append(it);
+                    String key = it.substring(0, it.indexOf('='));
+                    if (key.indexOf("dist") < 0 && key.indexOf("time") < 0 && key.indexOf("eta") < 0
+                        && !key.equals("index")) {
+                        sig.append(' ').append(it);
+                    }
+                }
+                String sg = sig.toString();
+                if (!SEEN.contains(sg) && SEEN.size() < 4000) {
+                    SEEN.add(sg);
+                    out.append(System.currentTimeMillis() % 100000000L).append(' ').append(g).append(all).append('\n');
+                }
+            }
+            if (out.length() > 0 && CAT.length() < 524288L) {
+                if (CAT.length() == 0L) {
+                    out.insert(0, "# maneuvers and lane sets as sent by the iPhone, each once\n");
+                }
+                append(CAT, new StringBuffer("# route to ").append(dest).append('\n').append(out).toString(), true);
+            }
+            if (!list.equals(lastList)) {
+                lastList = list;
+                StringBuffer r = new StringBuffer();
+                synchronized (STATE) {
+                    Object[] keys = new java.util.Vector(STATE.keySet()).toArray();
+                    java.util.Arrays.sort(keys);
+                    for (int i = 0; i < keys.length; i++) {
+                        r.append(keys[i]).append('=').append(STATE.get(keys[i])).append('\n');
+                    }
+                }
+                append(ROUTE, r.toString(), false);
+            }
+        } catch (Throwable t) {
+            log(new StringBuffer("catalogue failed ").append(String.valueOf(t)).toString());
+        }
+    }
+
+    private static void append(File f, String text, boolean add) {
+        try {
+            FileOutputStream o = new FileOutputStream(f.getPath(), add);
+            try {
+                o.write(text.getBytes("UTF-8"));
+            } finally {
+                o.close();
+            }
+        } catch (Throwable ignored) {
         }
     }
 
@@ -341,7 +439,7 @@ public final class RgdBus implements Runnable {
                         int[] m = ManeuverMapper.map(type, angle, junction, side, anglePresent);
                         main = m[0];
                         dir = m[1];
-                        int[] o = stockCode(type, angle);
+                        int[] o = stockCode(type, angle, side);
                         if (o != null) {
                             main = o[0];
                             dir = o[1];
@@ -395,7 +493,7 @@ public final class RgdBus implements Runnable {
             return;
         }
         try {
-            String result = TtRgi.update(on, declare, icon, mState, turn, bar, dest, eta, road, next);
+            String result = TtRgi.update(on, declare, stockSafe(icon), mState, turn, bar, dest, eta, road, next);
             // Lanes only while approaching the turn, like stock.
             TtPanel.live(on, icon, turn, bar, mState >= 3 ? lanes : "-", dest, eta, exit, next);
             if (result != null) {
@@ -414,8 +512,28 @@ public final class RgdBus implements Runnable {
      * 13 keep left, 14 keep right, 22/23 motorway off ramp left/right.
      * Returns null to keep the mapper's code.
      */
-    static int[] stockCode(int type, int angle) {
+    static int[] stockCode(int type, int angle, int side) {
+        boolean lht = side == 1;
+        boolean leftAngle = angle < 0 && angle > -180;
         switch (type) {
+            // v32 pictures (TT-local codes, see PanelArt.TT_*; never sent to the stock cluster).
+            case 7:
+                return lht ? new int[] { 27, 64 } : new int[] { 26, 192 };
+            case 9:
+                return new int[] { 40, leftAngle ? 32 : 224 };
+            case 11:
+                return new int[] { 42, ManeuverMapper.map(type, angle, -1, side, angle != 1000)[1] };
+            case 15:
+            case 17:
+                return new int[] { 44, 0 };
+            case 20:
+                return new int[] { 41, 64 };
+            case 21:
+                return new int[] { 41, 192 };
+            case 52:
+                return new int[] { 43, 64 };
+            case 53:
+                return new int[] { 43, 192 };
             case 8:
                 return angle < 0 && angle > -180 ? new int[] { 16, 64 } : new int[] { 15, 192 };
             case 13:
@@ -429,6 +547,17 @@ public final class RgdBus implements Runnable {
             default:
                 return null;
         }
+    }
+
+    /** The icon for the stock cluster: TT-local picture codes (40+) become a plain turn / follow road. */
+    static short[] stockSafe(short[] icon) {
+        if (icon == null || icon.length < 2 || icon[0] < 40) {
+            return icon;
+        }
+        if (icon[0] == 44) {
+            return new short[] { 11, 255 };
+        }
+        return new short[] { 13, icon[1] };
     }
 
     /**
@@ -449,7 +578,7 @@ public final class RgdBus implements Runnable {
         if (turn < 0) {
             return new int[] { 3, -1 };
         }
-        boolean motorway = main >= 14 && main <= 20;
+        boolean motorway = main >= 14 && main <= 20 || main == 40 || main == 43;
         int prepare = motorway ? 3200 : 1250;
         int approach = motorway ? 1750 : 430;
         int last = motorway ? 150 : 100;

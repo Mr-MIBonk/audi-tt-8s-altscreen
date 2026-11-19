@@ -1,0 +1,68 @@
+# New turn pictures (tt-zoom v32), parked: each picture for 6 s, about 75 s, repeats.
+say new pictures test start
+active 1
+panel parent top
+panel layout kdk
+panel kdkbg show
+panel kdk alpha auto
+panel grid off
+say N1 change lanes left
+panel turn 43,64 800 200 - 13500 420 - I-45 S
+wait 3000
+panel turn 43,64 600 150 - 13300 420 - I-45 S
+wait 3000
+say N2 change lanes right
+panel turn 43,192 800 200 - 13000 420 - I-45 S
+wait 3000
+panel turn 43,192 600 150 - 12800 420 - I-45 S
+wait 3000
+say N3 leave the roundabout
+panel turn 26,192 120 120 - 12500 420 - Main St
+wait 3000
+panel turn 26,192 60 60 - 12450 420 - Main St
+wait 3000
+say N4 arrive, destination on the left
+panel turn 3,64 200 200 - 200 420 - 1200 Main St
+wait 3000
+panel turn 3,64 100 100 - 100 420 - 1200 Main St
+wait 3000
+say N5 arrive, destination on the right
+panel turn 3,192 200 200 - 200 420 - 1200 Main St
+wait 3000
+panel turn 3,192 100 100 - 100 420 - 1200 Main St
+wait 3000
+say N6 end of road, turn left
+panel turn 41,64 400 200 - 9000 420 - Oak Ave
+wait 3000
+panel turn 41,64 200 100 - 8800 420 - Oak Ave
+wait 3000
+say N7 on-ramp, merge left
+panel turn 40,32 800 200 - 8500 420 - I-45 N
+wait 3000
+panel turn 40,32 500 120 - 8200 420 - I-45 N
+wait 3000
+say N8 ferry
+panel turn 44,0 1900 -1 - 8000 420 - Galveston Ferry
+wait 3000
+panel turn 44,0 300 150 - 6400 420 - Galveston Ferry
+wait 3000
+say N9 start of route
+panel turn 42,0 300 200 - 6000 420 - Spring Cypress Rd
+wait 3000
+panel turn 42,0 150 100 - 5850 420 - Spring Cypress Rd
+wait 3000
+say N10 U-turn at a roundabout
+panel turn 21,128 300 200 - 5500 420 - Main St
+wait 3000
+panel turn 21,128 150 100 - 5350 420 - Main St
+wait 3000
+say N11 end of road, turn right
+panel turn 41,192 300 200 - 5000 420 - Elm St
+wait 3000
+panel turn 41,192 150 100 - 4850 420 - Elm St
+wait 3000
+panel kdk info
+say end, repeating in 5 s
+panel off
+wait 5000
+loop

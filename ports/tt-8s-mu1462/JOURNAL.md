@@ -470,6 +470,29 @@ v31 fixes both:
 - **Top line:** a two-space gap, then up to 4 px smaller, then without AM/PM;
   "..." only as a last resort.
 
+v32: more turn pictures, and a research log so maneuvers need not be driven.
+- **Inputs checked online:** both apps reach the car through Apple's 54
+  maneuver types (`CPManeuverType`, the iAP2 list `ManeuverMapper` already
+  decodes). Google's own 66 types (merges, ramp variants, ferry train) are
+  folded into those 54 before CarPlay. Per maneuver iOS can also send the exit
+  angle, the other roads' angles, the traffic side, lanes and a highway exit
+  label (`CPManeuver`), not all of which the hook may pass on.
+- **New pictures** (TT-local codes in `PanelArt`, never sent to stock; `RgdBus.stockSafe`):
+  change lanes left/right (43; iAP2 52/53, was drawn as a 90 degree turn),
+  leave the roundabout (26/27; iAP2 7, was a plain turn), arrive with the
+  destination left/right (3 with dir 64/192; iAP2 24/25), end of road T (41;
+  iAP2 20/21), on-ramp merge (40; iAP2 9), ferry (44; iAP2 15/17), start of
+  route (42; iAP2 11). Off-ramps keep the exit picture. The U-turn at a
+  roundabout now enters on one side and leaves on the other.
+- Code 12 stays stock's "prepare" icon, which is why lane change got its own code.
+  On-ramp and lane change use the motorway distances.
+- **Research log:** every distinct maneuver (`mN_*`) and lane set (`lgN_*`)
+  is appended once to `/tmp/tt-rgd-cat.txt`; the full merged route goes to
+  `/tmp/tt-route.txt` when the maneuver list changes. `sh tt.sh seen` shows
+  the counts by type; `sh tt.sh save` keeps both.
+- `sh tt.sh play new` steps through the new pictures (N1-N11).
+- Preview: [docs/panel-preview-v32.png](docs/panel-preview-v32.png) (without the background picture).
+
 Offline previews of the panel: [docs/panel-preview.png](docs/panel-preview.png),
 [docs/panel-preview-lanes.png](docs/panel-preview-lanes.png), [docs/panel-preview-compact.png](docs/panel-preview-compact.png) (text there is
 rendered by the PC; the car uses its own fonts).
@@ -515,6 +538,7 @@ iPhone data on top of it.
 ## 13. Open items
 
 - v31 check (`play fit`): grey texts and shadows, top line not cut. Map tab and car tab photos.
+- v32: `play new` photos; parked routes in both apps, then `seen` and `save` (does iOS send the whole route's maneuvers up front?).
 - Live drive with Google/Apple Maps once the panel fits.
 - Try the iPhone's own maneuver card (hook switches `/mnt/app/root/mibr-carplay111-nav*`, see the MHI2Q comparison).
 - Refresh the installer package (`package/`) with the final jar.

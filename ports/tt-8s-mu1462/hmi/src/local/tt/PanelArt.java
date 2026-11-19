@@ -18,6 +18,16 @@ public final class PanelArt {
     public static final int BG = 0xE0101418;
     public static final int ROUTE = 0xFFFFFFFF;
     public static final int ARM = 0xFF6E757D;
+
+    /**
+     * TT-local picture codes (not BAP; RgdBus maps iAP2 types to them and TtRgi never passes them
+     * to the stock cluster). 44 is the ferry code of the MHI3 renderer.
+     */
+    public static final int TT_ON_RAMP = 40;
+    public static final int TT_END_OF_ROAD = 41;
+    public static final int TT_START_ROUTE = 42;
+    public static final int TT_LANE_CHANGE = 43;
+    public static final int TT_FERRY = 44;
     public static final int BAR_ON = 0xFFFFFFFF;
     public static final int BAR_OFF = 0xFF3A4048;
 
@@ -687,6 +697,37 @@ public final class PanelArt {
         float len = s * 0.38f;
         float route = s * 0.11f;
         float arm = s * 0.07f;
+        int d0 = dir & 0xff;
+        boolean toLeft = d0 > 0 && d0 < 128;
+        if (main == 3 && (d0 == 64 || d0 == 192)) {
+            arriveSide(cx, y, s, d0 == 64);
+            return;
+        }
+        if (main == TT_LANE_CHANGE) {
+            laneChange(cx, y, s, toLeft);
+            return;
+        }
+        if (main == 26 || main == 27) {
+            roundaboutExit(cx, jy, s, d0, main == 27);
+            return;
+        }
+        if (main == TT_ON_RAMP) {
+            onRamp(cx, y, s, toLeft);
+            return;
+        }
+        if (main == TT_FERRY) {
+            ferry(cx, y, s);
+            return;
+        }
+        boolean dashed = main == TT_START_ROUTE;
+        if (dashed) {
+            main = 13;
+        }
+        if (main == TT_END_OF_ROAD) {
+            // A T: the road ahead ends, the other branch is grey.
+            arms = new int[] { toLeft ? 192 : 64 };
+            main = 13;
+        }
         if (main == 3 || main == 4 || main == 5 || main == 38) {
             flag(cx, y + s * 0.5f, s);
             return;
@@ -727,7 +768,15 @@ public final class PanelArt {
             d = left ? 30 : 226;
             thick(cx, jy, cx, y + s * 0.04f, route * 0.9f, ARM);
         }
-        thick(cx, bottom, cx, jy, route, ROUTE);
+        if (dashed) {
+            // Start of route: a start ring (where you are), a gap, then the route.
+            float rr = route * 0.95f;
+            float ry = bottom - rr;
+            ring(cx, ry, rr, route * 0.5f, ROUTE);
+            thick(cx, ry - rr - route * 1.1f, cx, jy, route, ROUTE);
+        } else {
+            thick(cx, bottom, cx, jy, route, ROUTE);
+        }
         float[] e = endpoint(cx, jy, d, len * 0.78f);
         thick(cx, jy, e[0], e[1], route, ROUTE);
         head(e[0], e[1], d, s * 0.20f);
@@ -807,6 +856,118 @@ public final class PanelArt {
             bx - px1 * size * 0.75f, by - py1 * size * 0.75f, ROUTE);
     }
 
+    /** Destination on the left/right: the road goes on in grey, a pin where to stop, the flag beside. */
+    private void arriveSide(float cx, float y, float s, boolean left) {
+        float route = s * 0.11f;
+        float bottom = y + s * 0.97f;
+        float stop = y + s * 0.46f;
+        thick(cx, stop, cx, y + s * 0.06f, route * 0.9f, ARM);
+        thick(cx, bottom, cx, stop, route, ROUTE);
+        disc(cx, stop, route * 0.85f, ROUTE);
+        float fs = s * 0.62f;
+        float fx = left ? cx - s * 0.17f - fs * 0.25f - s * 0.04f : cx + s * 0.17f + fs * 0.12f;
+        flag(fx, y + s * 0.40f, fs);
+    }
+
+    /** Change lanes (highway change left/right): a lane divider and an S from one lane to the next. */
+    private void laneChange(float cx, float y, float s, boolean left) {
+        float route = s * 0.11f;
+        float off = s * 0.17f;
+        float sign = left ? -1f : 1f;
+        float x0 = cx - sign * off;
+        float x1 = cx + sign * off;
+        float bottom = y + s * 0.97f;
+        for (float yy = y + s * 0.05f; yy < bottom; yy += s * 0.15f) {
+            thick(cx, yy, cx, Math.min(yy + s * 0.07f, bottom), s * 0.04f, ARM);
+        }
+        thick(cx - off * 2f, y + s * 0.05f, cx - off * 2f, bottom, s * 0.04f, ARM);
+        thick(cx + off * 2f, y + s * 0.05f, cx + off * 2f, bottom, s * 0.04f, ARM);
+        float ya = y + s * 0.72f;
+        float yb = y + s * 0.40f;
+        thick(x0, bottom, x0, ya, route, ROUTE);
+        curve(x0, ya, x1, yb, route);
+        thick(x1, yb, x1, y + s * 0.26f, route, ROUTE);
+        head(x1, y + s * 0.26f, 0, s * 0.20f);
+    }
+
+    /** Smooth S from (x0, y0) to (x1, y1), vertical at both ends. */
+    private void curve(float x0, float y0, float x1, float y1, float width) {
+        int steps = 24;
+        float lx = x0;
+        float ly = y0;
+        for (int i = 1; i <= steps; i++) {
+            float t = i / (float) steps;
+            float e = t * t * (3f - 2f * t);
+            float nx = x0 + (x1 - x0) * e;
+            float ny = y0 + (y1 - y0) * t;
+            thick(lx, ly, nx, ny, width, ROUTE);
+            lx = nx;
+            ly = ny;
+        }
+    }
+
+    /** On-ramp: a wide grey highway on one side, the route curves in and joins it. */
+    private void onRamp(float cx, float y, float s, boolean left) {
+        float route = s * 0.11f;
+        float sign = left ? -1f : 1f;
+        float hx = cx + sign * s * 0.12f;
+        float bottom = y + s * 0.97f;
+        thick(hx, bottom, hx, y + s * 0.04f, s * 0.22f, ARM);
+        float sx = cx - sign * s * 0.26f;
+        float jy = y + s * 0.40f;
+        curve(sx, bottom, hx, jy, route);
+        thick(hx, jy, hx, y + s * 0.24f, route, ROUTE);
+        head(hx, y + s * 0.24f, 0, s * 0.20f);
+    }
+
+    /** Ferry: a boat on two grey waves. */
+    private void ferry(float cx, float y, float s) {
+        float wy = y + s * 0.66f;
+        float hw = s * 0.36f;
+        float hb = s * 0.25f;
+        triangle(cx - hw, wy - s * 0.13f, cx + hw, wy - s * 0.13f, cx + hb, wy, ROUTE);
+        triangle(cx - hw, wy - s * 0.13f, cx + hb, wy, cx - hb, wy, ROUTE);
+        roundRect((int) (cx - s * 0.20f), (int) (wy - s * 0.30f), (int) (s * 0.32f), (int) (s * 0.14f),
+            (int) (s * 0.03f), ROUTE);
+        roundRect((int) (cx + s * 0.03f), (int) (wy - s * 0.43f), (int) (s * 0.08f), (int) (s * 0.12f),
+            Math.max(1, (int) (s * 0.015f)), ROUTE);
+        for (int k = 0; k < 2; k++) {
+            float yy = wy + s * 0.10f + k * s * 0.11f;
+            float lx = cx - s * 0.38f;
+            float ly = yy;
+            for (int i = 1; i <= 32; i++) {
+                float nx = cx - s * 0.38f + s * 0.76f * i / 32f;
+                float ny = yy + (float) Math.sin(i * Math.PI / 4.0) * s * 0.025f;
+                thick(lx, ly, nx, ny, s * 0.04f, ARM);
+                lx = nx;
+                ly = ny;
+            }
+        }
+    }
+
+    /** Leaving a roundabout: the route is already on the ring and turns out at the exit. */
+    private void roundaboutExit(float cx, float cy, float s, int d, boolean clockwise) {
+        float r = s * 0.21f;
+        float route = s * 0.10f;
+        ring(cx, cy, r, s * 0.07f, ARM);
+        double a = d * Math.PI * 2.0 / 256.0;
+        double start = clockwise ? a + 2.2 : a - 2.2;
+        int steps = 24;
+        float lx = (float) (cx - Math.sin(start) * r);
+        float ly = (float) (cy - Math.cos(start) * r);
+        for (int i = 1; i <= steps; i++) {
+            double t = start + (a - start) * i / steps;
+            float nx = (float) (cx - Math.sin(t) * r);
+            float ny = (float) (cy - Math.cos(t) * r);
+            thick(lx, ly, nx, ny, route, ROUTE);
+            lx = nx;
+            ly = ny;
+        }
+        float[] e = endpoint(lx, ly, d, s * 0.14f);
+        thick(lx, ly, e[0], e[1], route, ROUTE);
+        head(e[0], e[1], d, s * 0.18f);
+    }
+
     private void uturn(float cx, float bottom, float s, boolean left) {
         float r = s * 0.17f;
         float route = s * 0.11f;
@@ -836,8 +997,31 @@ public final class PanelArt {
         float route = s * 0.10f;
         float bottom = y0(cy, s);
         ring(cx, cy, r, s * 0.07f, ARM);
-        thick(cx, bottom, cx, cy + r, route, ROUTE);
         int d = dir & 0xff;
+        if (d == 128) {
+            // U-turn: enter on one side of the bottom, go all the way round, leave on the other.
+            double off = 0.5;
+            double st = clockwise ? Math.PI - off : Math.PI + off;
+            double en = clockwise ? -Math.PI + off : 3.0 * Math.PI - off;
+            float ex0 = (float) (cx - Math.sin(st) * r);
+            float ey0 = (float) (cy - Math.cos(st) * r);
+            thick(ex0, bottom, ex0, ey0, route, ROUTE);
+            float ux = ex0;
+            float uy = ey0;
+            for (int i = 1; i <= 40; i++) {
+                double t = st + (en - st) * i / 40;
+                float nx = (float) (cx - Math.sin(t) * r);
+                float ny = (float) (cy - Math.cos(t) * r);
+                thick(ux, uy, nx, ny, route, ROUTE);
+                ux = nx;
+                uy = ny;
+            }
+            float tail = bottom - s * 0.16f;
+            thick(ux, uy, ux, tail, route, ROUTE);
+            head(ux, tail, 128, s * 0.18f);
+            return;
+        }
+        thick(cx, bottom, cx, cy + r, route, ROUTE);
         // Right-hand traffic goes round anti-clockwise on screen (bottom -> right -> top);
         // the ring position at angle a matches endpoint(), so travel from pi to the exit angle.
         double a = d * Math.PI * 2.0 / 256.0;
