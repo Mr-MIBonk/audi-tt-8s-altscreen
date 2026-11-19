@@ -174,6 +174,217 @@ public final class PanelArt {
         }
     }
 
+    // ---- v29: TT style (frame, gradient, 3D shapes with drop shadow) ------------------------
+    public static final int TT_RED = 0xFFE0001E;
+    public static final int EXIT_GREEN = 0xFF0E7B3E;
+    private static final int TOP_BG = 0xF2262C33;
+    private static final int BOTTOM_BG = 0xF20A0D11;
+
+    /**
+     * v29 (user): framed, Audi TT styled, modern 3D look. framed = our own chamfered frame with a
+     * light border and a red accent (tach-centred view, where nothing else frames us); otherwise
+     * only the gradient (large view, where the stock frame already surrounds the window).
+     */
+    public void kdkStyled(int main, int dir, int[] arms, int bar, int[][] laneAngles, int[] laneStatus,
+                          String exit, boolean framed) {
+        boolean hasLanes = laneAngles != null && laneAngles.length > 0;
+        KdkLayout l = new KdkLayout(w, h, hasLanes);
+        ttBackground(framed);
+        // Flat parts (no shadow): bar track, lane separators.
+        int barTop = 12;
+        int barH = h - 24;
+        roundRect(9, barTop, 6, barH, 3, 0xFF2C3238);
+        if (hasLanes) {
+            laneSeparators(laneAngles.length, 20, h - 60, w - 28, 56);
+        }
+        // 3D parts go to their own layer first, then get shadow, shading and bevel.
+        PanelArt fg = new PanelArt(w, h);
+        fg.maneuver(main, dir, arms, 20, 4, l.square);
+        if (hasLanes) {
+            fg.laneArrows(laneAngles, laneStatus, 20, h - 60, w - 28, 56);
+        }
+        if (bar >= 0) {
+            int filled = (int) ((long) barH * Math.min(255, bar) / 255);
+            if (filled > 0) {
+                fg.roundRect(9, barTop + barH - filled, 6, filled, 3, BAR_ON);
+            }
+        }
+        String label = KdkLayout.badgeLabel(exit);
+        if (label.length() > 0) {
+            int bw = l.badgeW(label);
+            fg.roundRect(l.col, l.badgeTop, bw, l.badgeH, 5, 0xFFFFFFFF);
+            fg.roundRect(l.col + 2, l.badgeTop + 2, bw - 4, l.badgeH - 4, 4, EXIT_GREEN);
+        }
+        compose3d(fg);
+    }
+
+    private void ttBackground(boolean framed) {
+        java.util.Arrays.fill(px, 0);
+        int cut = framed ? 18 : 0;
+        for (int y = 0; y < h; y++) {
+            float t = h <= 1 ? 0f : (float) y / (h - 1);
+            int c = lerp(TOP_BG, BOTTOM_BG, t);
+            for (int x = 0; x < w; x++) {
+                float cov = 1f;
+                if (cut > 0) {
+                    // Chamfered top-right corner like the stock TT banner frame.
+                    float d = ((w - cut + y) - (x + 0.5f)) * 0.7071f;
+                    cov = clamp(d + 0.5f);
+                }
+                blend(x, y, c, cov);
+            }
+        }
+        if (framed) {
+            int edge = 0xA0B4BEC8;
+            thick(0.75f, 0.75f, w - cut - 0.75f, 0.75f, 1.5f, edge);
+            thick(w - cut - 0.75f, 0.75f, w - 0.75f, cut + 0.75f, 1.5f, edge);
+            thick(w - 0.75f, cut + 0.75f, w - 0.75f, h - 0.75f, 1.5f, edge);
+            thick(0.75f, h - 0.75f, w - 0.75f, h - 0.75f, 1.5f, 0x60B4BEC8);
+            thick(0.75f, 0.75f, 0.75f, h - 0.75f, 1.5f, edge);
+            // Red accent along the top-left edge.
+            thick(1.5f, 1.5f, w * 0.38f, 1.5f, 3f, TT_RED);
+        } else {
+            thick(0f, 0.5f, w, 0.5f, 1f, 0x40FFFFFF);
+        }
+    }
+
+    /** Shadow (blurred, offset), vertical shading and a 1 px bevel for the shapes in fg. */
+    private void compose3d(PanelArt fg) {
+        int[] f = fg.px;
+        int n = w * h;
+        float[] a = new float[n];
+        for (int i = 0; i < n; i++) {
+            a[i] = (f[i] >>> 24) / 255f;
+        }
+        float[] s = blur(blur(a, w, h, 3), w, h, 3);
+        int ox = 2;
+        int oy = 3;
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                int sx = x - ox;
+                int sy = y - oy;
+                if (sx >= 0 && sy >= 0) {
+                    float v = s[sy * w + sx] * 0.85f;
+                    if (v > 0.01f) {
+                        blend(x, y, 0xFF000000, v);
+                    }
+                }
+            }
+        }
+        for (int y = 0; y < h; y++) {
+            float shade = 1.04f - 0.22f * y / h;
+            for (int x = 0; x < w; x++) {
+                int i = y * w + x;
+                int c = f[i];
+                float ca = a[i];
+                if (ca <= 0f) {
+                    continue;
+                }
+                float up = y > 0 ? a[i - w] : 0f;
+                float dn = y < h - 1 ? a[i + w] : 0f;
+                float lift = 0f;
+                if (ca - up > 0.3f) {
+                    lift = 45f * (ca - up);
+                } else if (ca - dn > 0.3f) {
+                    lift = -60f * (ca - dn);
+                }
+                int r = chan(((c >> 16) & 0xff) * shade + lift);
+                int g = chan(((c >> 8) & 0xff) * shade + lift);
+                int b = chan((c & 0xff) * shade + lift);
+                blend(x, y, 0xFF000000 | (r << 16) | (g << 8) | b, ca);
+            }
+        }
+    }
+
+    private static int chan(float v) {
+        return v < 0f ? 0 : (v > 255f ? 255 : (int) (v + 0.5f));
+    }
+
+    /** Separable box blur of an alpha map. */
+    private static float[] blur(float[] src, int w, int h, int r) {
+        float[] tmp = new float[w * h];
+        float[] out = new float[w * h];
+        float norm = 1f / (2 * r + 1);
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                float sum = 0f;
+                for (int k = -r; k <= r; k++) {
+                    int xx = x + k;
+                    if (xx >= 0 && xx < w) {
+                        sum += src[y * w + xx];
+                    }
+                }
+                tmp[y * w + x] = sum * norm;
+            }
+        }
+        for (int y = 0; y < h; y++) {
+            for (int x = 0; x < w; x++) {
+                float sum = 0f;
+                for (int k = -r; k <= r; k++) {
+                    int yy = y + k;
+                    if (yy >= 0 && yy < h) {
+                        sum += tmp[yy * w + x];
+                    }
+                }
+                out[y * w + x] = sum * norm;
+            }
+        }
+        return out;
+    }
+
+    private static int lerp(int c0, int c1, float t) {
+        int a = (int) (((c0 >>> 24) & 0xff) * (1f - t) + ((c1 >>> 24) & 0xff) * t);
+        int r = (int) (((c0 >> 16) & 0xff) * (1f - t) + ((c1 >> 16) & 0xff) * t);
+        int g = (int) (((c0 >> 8) & 0xff) * (1f - t) + ((c1 >> 8) & 0xff) * t);
+        int b = (int) ((c0 & 0xff) * (1f - t) + (c1 & 0xff) * t);
+        return (a << 24) | (r << 16) | (g << 8) | b;
+    }
+
+    /** v29: solid, opaque dashes (v28's thin translucent ones showed colour fringes on the car). */
+    private void laneSeparators(int n, int x, int y, int rw, int rh) {
+        int cell = Math.min(54, rw / n);
+        int start = x + (rw - n * cell) / 2;
+        for (int i = 1; i < n; i++) {
+            float sx = start + cell * i;
+            for (float yy = y + 6; yy < y + rh - 4; yy += 11f) {
+                thick(sx, yy, sx, Math.min(yy + 6f, y + rh - 4), 2.5f, 0xFF7C858E);
+            }
+        }
+    }
+
+    /**
+     * v29 lane arrows: like lanes() without separators; a lane with several directions shares one
+     * stem and branches lower, so the heads no longer overlap.
+     */
+    void laneArrows(int[][] angles, int[] status, int x, int y, int rw, int rh) {
+        int n = angles.length;
+        int cell = Math.min(54, rw / n);
+        int start = x + (rw - n * cell) / 2;
+        float base = y + rh - 3;
+        for (int i = 0; i < n; i++) {
+            int st = status == null || i >= status.length ? 0 : status[i];
+            int c = st >= 2 ? LANE_PREFERRED : (st == 1 ? LANE_GOOD : LANE_OTHER);
+            float cx = start + cell * i + cell / 2f;
+            float t = Math.max(3.5f, cell * 0.15f);
+            int[] a = angles[i];
+            if (a == null || a.length == 0) {
+                a = new int[] { 0 };
+            }
+            boolean multi = a.length > 1;
+            float mid = y + rh * (multi ? 0.62f : 0.55f);
+            thick(cx, base, cx, mid, t, c);
+            for (int k = 0; k < a.length; k++) {
+                int d = laneDir(a[k]);
+                boolean straight = d == 0;
+                float from = multi && !straight ? mid + rh * 0.08f : mid;
+                float len = rh * (multi ? (straight ? 0.30f : 0.20f) : 0.22f);
+                float[] e = endpoint(cx, from, d, len);
+                thick(cx, from, e[0], e[1], t, c);
+                laneHead(e[0], e[1], d, rh * (multi ? 0.22f : 0.26f), c);
+            }
+        }
+    }
+
     /**
      * Calibration grid whose top-left pixel sits at screen (ox, oy): lines on every absolute
      * multiple of 10 px (faint), 50 px (yellow) and 100 px (red), transparent elsewhere.

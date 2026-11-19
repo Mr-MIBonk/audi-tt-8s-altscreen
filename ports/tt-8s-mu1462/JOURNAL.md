@@ -401,6 +401,31 @@ names. Large view unchanged. Layout sizes now follow the panel height
 [docs/panel-preview-v28.png](docs/panel-preview-v28.png). Test: `sh tt.sh play fit`
 (panel steps only).
 
+**v28 result (photos):** the wide panel sits under the trim line and fits the
+window; the large-view panel fits the stock frame on the car tab and map tab.
+Remaining issues: the plain near-black slab looks pasted on; distances such as
+"1.2 mi" were cut to "1..."; a black box (the stock banner's empty picture)
+showed for a few seconds after our panel went away.
+
+**v29 (user: framed, Audi TT styled, modern 3D):**
+- **TT-style panel** (`PanelArt.kdkStyled`): gradient background. In the
+  tach-centred view it has our own frame, with a chamfered top-right corner like
+  the stock banner, a light border and a red accent. In the large view the
+  stock frame already surrounds the window, so only the gradient is drawn there.
+- **3D look:** arrows, lanes and the bar are drawn on their own layer, then get
+  a blurred drop shadow, vertical shading and a 1 px bevel.
+- **Exit badge:** a green US-style "EXIT 12A" badge.
+- **Lanes:** solid lane dashes. A lane with two directions shares one stem.
+- **Texts** (`KdkLayout`, shared with the picture): a big bold number with a
+  small unit, shrunk instead of cut. Every text gets a dark shadow node.
+- **No black box:** the stock banner stays transparent after our panel goes.
+  Stock navigation fades its own banner back in.
+- **Window test:** `sh tt.sh play win` moves the stock banner (991,152 then
+  991,192 then 951,232) with the grid on. It shows whether the window follows,
+  which would allow a lower or taller panel in the tach-centred view.
+
+Preview: [docs/panel-preview-v29.png](docs/panel-preview-v29.png).
+
 Offline previews of the panel: [docs/panel-preview.png](docs/panel-preview.png),
 [docs/panel-preview-lanes.png](docs/panel-preview-lanes.png), [docs/panel-preview-compact.png](docs/panel-preview-compact.png) (text there is
 rendered by the PC; the car uses its own fonts).
@@ -445,7 +470,7 @@ iPhone data on top of it.
 
 ## 13. Open items
 
-- v28 parked check of the wide small-view panel; car tab photo.
+- v29 look check (`play fit`) and window-move test (`play win`).
 - Live drive with Google/Apple Maps once the panel fits.
 - Try the iPhone's own maneuver card (hook switches `/mnt/app/root/mibr-carplay111-nav*`, see the MHI2Q comparison).
 - Refresh the installer package (`package/`) with the final jar.

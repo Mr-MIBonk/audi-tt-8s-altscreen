@@ -22,6 +22,7 @@ V25=5ea2b40ec7f48cb62c0f0ce3f0b2dbb28ed74adec2264dddc5ae8afe3b981573
 V26=42bb2f9cc16ef62c904fb9542ec0dedb86361062ea7388bcda0d16689bdc2f38
 V27=f980ba096d9805ebd9d8245974a99525e0d1f48cd3f68534c892bff3cf356adf
 V28=76c5cfb667ce9160724ef8cfa0732630ee6f00acdfe35069c07337ef7282d8ad
+V29=f2a3405ec73b3e2325bbfb950c2bf7321ac72f0668a288cf02c3db8eb8dbbf5a
 T=$K/altscreen-sha256
 
 say(){ echo "$*"; }
@@ -30,33 +31,33 @@ ro(){ sync; mount -ur /mnt/app 2>/dev/null; }
 which_jar(){
     h=$("$T" "$JAR" 2>/dev/null)
     case "$h" in
-        $V12) echo v12;; $V14) echo v14;; $V15) echo v15;; $V16) echo v16;; $V17) echo v17;; $V18) echo v18;; $V19) echo v19;; $V20) echo v20;; $V21) echo v21;; $V22) echo v22;; $V23) echo v23;; $V24) echo v24;; $V25) echo v25;; $V26) echo v26;; $V27) echo v27;; $V28) echo v28;; "") echo none;; *) echo "unknown ($h)";;
+        $V12) echo v12;; $V14) echo v14;; $V15) echo v15;; $V16) echo v16;; $V17) echo v17;; $V18) echo v18;; $V19) echo v19;; $V20) echo v20;; $V21) echo v21;; $V22) echo v22;; $V23) echo v23;; $V24) echo v24;; $V25) echo v25;; $V26) echo v26;; $V27) echo v27;; $V28) echo v28;; $V29) echo v29;; "") echo none;; *) echo "unknown ($h)";;
     esac
 }
 
 case "${1:-help}" in
 setup)
     # Run from /tmp after copying the kit there. Safe to run again for a kit update.
-    test -f /tmp/tt-zoom-v28.jar || { say 'Copy the kit files to /tmp first.'; exit 1; }
+    test -f /tmp/tt-zoom-v29.jar || { say 'Copy the kit files to /tmp first.'; exit 1; }
     rw
     mkdir -p "$K/logs"
-    for f in altscreen-sha256 tt-zoom-v28.jar stock-replay.txt catalogue.txt komo-test.txt panel-test.txt kdk-test.txt fit-test.txt; do
+    for f in altscreen-sha256 tt-zoom-v29.jar stock-replay.txt catalogue.txt komo-test.txt panel-test.txt kdk-test.txt fit-test.txt win-test.txt; do
         cp "/tmp/$f" "$K/$f" || { say "missing /tmp/$f"; ro; exit 1; }
     done
-    for f in tt-zoom-v12.jar tt-zoom-v14.jar tt-zoom-v15.jar tt-zoom-v16.jar tt-zoom-v17.jar tt-zoom-v18.jar tt-zoom-v19.jar tt-zoom-v20.jar tt-zoom-v21.jar tt-zoom-v22.jar tt-zoom-v23.jar tt-zoom-v24.jar tt-zoom-v25.jar tt-zoom-v26.jar tt-zoom-v27.jar; do
+    for f in tt-zoom-v12.jar tt-zoom-v14.jar tt-zoom-v15.jar tt-zoom-v16.jar tt-zoom-v17.jar tt-zoom-v18.jar tt-zoom-v19.jar tt-zoom-v20.jar tt-zoom-v21.jar tt-zoom-v22.jar tt-zoom-v23.jar tt-zoom-v24.jar tt-zoom-v25.jar tt-zoom-v26.jar tt-zoom-v27.jar tt-zoom-v28.jar; do
         test -f "/tmp/$f" && cp "/tmp/$f" "$K/$f"
     done
     cp /tmp/tt.sh /mnt/app/root/tt.sh
     chmod 755 "$T" /mnt/app/root/tt.sh
     ok=1
-    "$T" $V28 "$K/tt-zoom-v28.jar" || ok=0
+    "$T" $V29 "$K/tt-zoom-v29.jar" || ok=0
     ro
     if test $ok = 1; then say 'Kit installed. From now on just type:  sh tt.sh help'
     else say 'A kit file is damaged - copy the kit again and rerun setup.'; exit 1; fi
     ;;
 use)
     v=${2:-}
-    case "$v" in v12) h=$V12;; v14) h=$V14;; v15) h=$V15;; v16) h=$V16;; v17) h=$V17;; v18) h=$V18;; v19) h=$V19;; v20) h=$V20;; v21) h=$V21;; v22) h=$V22;; v23) h=$V23;; v24) h=$V24;; v25) h=$V25;; v26) h=$V26;; v27) h=$V27;; v28) h=$V28;; *) say 'Usage: sh tt.sh use v28   (or v27 ... v12)'; exit 2;; esac
+    case "$v" in v12) h=$V12;; v14) h=$V14;; v15) h=$V15;; v16) h=$V16;; v17) h=$V17;; v18) h=$V18;; v19) h=$V19;; v20) h=$V20;; v21) h=$V21;; v22) h=$V22;; v23) h=$V23;; v24) h=$V24;; v25) h=$V25;; v26) h=$V26;; v27) h=$V27;; v28) h=$V28;; v29) h=$V29;; *) say 'Usage: sh tt.sh use v29   (or v28 ... v12)'; exit 2;; esac
     test -f "$K/tt-zoom-$v.jar" || { say "$v is not in the kit on the car."; exit 1; }
     "$T" $h "$K/tt-zoom-$v.jar" || { say "Stored $v jar is damaged."; exit 1; }
     rw
@@ -71,12 +72,13 @@ remove)
 play)
     case "${2:-stock}" in
         stock) cp "$K/stock-replay.txt" /tmp/tt-rgi-play.txt && say 'Stock-nav replay playing (about 2 min, repeats). Stop: sh tt.sh stop';;
+        win) cp "$K/win-test.txt" /tmp/tt-rgi-play.txt && say 'Window test playing (about 65 s, repeats): stay in the TACH-CENTRED view, one photo per step (W1, W2, W3). Stop: sh tt.sh stop';;
         fit) cp "$K/fit-test.txt" /tmp/tt-rgi-play.txt && say 'Panel test playing (about 65 s, repeats): switch views and tabs while it runs. Stop: sh tt.sh stop';;
         kdk) cp "$K/kdk-test.txt" /tmp/tt-rgi-play.txt && say 'Banner-spot test 2 playing (about 110 s, repeats). Stop: sh tt.sh stop';;
         panel) cp "$K/panel-test.txt" /tmp/tt-rgi-play.txt && say 'Turn panel demo playing (about 2 min, repeats). Stop: sh tt.sh stop';;
         komo) cp "$K/komo-test.txt" /tmp/tt-rgi-play.txt && say 'KOMO test playing (about 100 s, repeats). Stop: sh tt.sh stop';;
         arrows) cp "$K/catalogue.txt" /tmp/tt-rgi-play.txt && say 'Arrow catalogue playing (about 3 min). Stop: sh tt.sh stop';;
-        *) say 'Usage: sh tt.sh play fit | kdk | panel | komo | stock | arrows'; exit 2;;
+        *) say 'Usage: sh tt.sh play fit | win | kdk | panel | komo | stock | arrows'; exit 2;;
     esac
     ;;
 stop)
@@ -110,7 +112,7 @@ panel)
     esac
     ;;
 report)
-    say "== jar: $(which_jar)    (v28 is the current one)"
+    say "== jar: $(which_jar)    (v29 is the current one)"
     say '== switches:'
     ls /tmp/tt-rgi-* 2>/dev/null || say '(none)'
     say '== iPhone and cockpit (last 8):'
@@ -135,8 +137,8 @@ save)
     ;;
 *)
     say 'sh tt.sh report              what is installed and what it is doing (paste this)'
-    say 'sh tt.sh use v28             switch version (v28 ... v12), then restart the MMI'
-    say 'sh tt.sh play fit|kdk|panel|komo|stock  parked tests'
+    say 'sh tt.sh use v29             switch version (v29 ... v12), then restart the MMI'
+    say 'sh tt.sh play fit|win|kdk|panel|komo|stock  parked tests'
     say 'sh tt.sh play arrows | stop  arrow catalogue / stop playback'
     say 'sh tt.sh mode default|nokdk|kdk|nopanel|noactive|nopad|off|on'
     say 'sh tt.sh panel kdk-small|kdk-large X Y [S]  move/resize the panel live (reset | show)'

@@ -303,16 +303,9 @@ public final class TtPanel {
         if (op.equals("off")) {
             clearTurn(m);
             lastTurn = null;
-            if (kdkAlpha == -2) {
-                // The route ended: give stock navigation its banner back.
-                try {
-                    de.audi.atip.hmi.view.IDisplayManager d = dm(m);
-                    if (d != null) {
-                        d.setOpacity(KDK, 0, 100);
-                    }
-                } catch (Throwable ignored) {
-                }
-            }
+            // v29: the stock banner stays transparent after our panel goes (v28 showed its empty black
+            // picture for a few seconds at the end of a route). Stock navigation is unaffected: every
+            // time it shows the banner it sets opacity 0 and fades it in itself.
             m.fireRenderEvent();
             return "turn panel off";
         }
@@ -683,6 +676,10 @@ public final class TtPanel {
             raise(mainRoot, text2);
             raise(mainRoot, text3);
             raise(mainRoot, text4);
+            for (int i = 0; i < TN; i++) {
+                raise(mainRoot, shd[i]);
+                raise(mainRoot, tn[i]);
+            }
             if (verbose) {
                 b.append(pre ? "art pre " : "art ").append(System.currentTimeMillis() - t0).append(" ms ");
             }
@@ -692,29 +689,7 @@ public final class TtPanel {
         String sub = exit.length() > 0 ? new StringBuffer("Exit ").append(exit).toString() : street;
         String destLine = destText(m, t.destM, t.eta);
         if (kdkMode) {
-            // v27: texts are anchored at their baseline (v26 photos), hence base(top, size).
-            boolean lanes = t.hasLanes();
-            int col = PanelArt.kdkCol(ph, lanes);
-            int cw = pw - col - 6;
-            boolean wide = mode == TurnSpec.KDK_WIDE;
-            int big = wide ? 32 : 28;
-            int small = wide ? 20 : 18;
-            String first = exit.length() > 0 ? new StringBuffer("Exit ").append(exit).toString() : street;
-            if (lanes) {
-                // Square on the left, then time / distance / exit in a column, lanes across the bottom.
-                text1 = setText(m, mainRoot, text1, "ttTurnDist", distance(t.metres), 2, big, (float) col, base(30, big), cw);
-                text2 = setText(m, mainRoot, text2, "ttTurnSub", first, 1, small, (float) col, base(36 + big, small), cw);
-            } else {
-                text1 = setText(m, mainRoot, text1, "ttTurnDist", distance(t.metres), 2, big, 20f,
-                    base(ph - big - 12, big), pw - 26);
-                text2 = setText(m, mainRoot, text2, "ttTurnSub", first, 1, small, (float) col, base(40, small), cw);
-            }
-            // The wide panel has room for the remaining distance next to the arrival time.
-            String top = wide ? destLine : clock(m, t.eta);
-            text3 = setText(m, mainRoot, text3, "ttTurnDest", top, 1, small, (float) col, base(6, small), cw);
-            String second = !lanes && exit.length() > 0 ? street : "";
-            text4 = setText(m, mainRoot, text4, "ttTurnStreet", second, 1, small - 2, (float) col,
-                base(46 + small, small - 2), cw);
+            kdkTexts(m, t, new KdkLayout(pw, ph, t.hasLanes()), destLine);
             if (destRoot != null) {
                 destRoot.setVisible(false);
             }
@@ -776,7 +751,7 @@ public final class TtPanel {
         m.fireRenderEvent();
         if (verbose) {
             b.append("at ").append((int) mainRoot.getX()).append(',').append((int) mainRoot.getY())
-                .append(" parent ").append(parentMode).append(" t1 ").append(dump(text1));
+                .append(" parent ").append(parentMode).append(" t1 ").append(dump(text1 != null ? text1 : tn[0]));
         }
         return b.toString();
     }
@@ -1115,6 +1090,10 @@ public final class TtPanel {
         text2 = null;
         text3 = null;
         text4 = null;
+        for (int i = 0; i < TN; i++) {
+            tn[i] = null;
+            shd[i] = null;
+        }
         kdkPanelUp = false;
         destRoot = null;
         destImage = null;
@@ -1341,6 +1320,9 @@ public final class TtPanel {
                 guardFixes++;
                 guardLastOpacity = o;
             }
+            if (kdkPX != Integer.MIN_VALUE) {
+                d.setPosition(KDK, 0, kdkPX, kdkPY);
+            }
         } catch (Throwable ignored) {
         }
         return "ok";
@@ -1409,6 +1391,84 @@ public final class TtPanel {
                 topVp.setVisible(true);
             } catch (Throwable ignored) {
             }
+        }
+    }
+
+    // ---- v29: TT-style texts (shadowed, big number + small unit, exit badge label) ------------
+    private static final int TN = 5;
+    private static final IWrappedNode3DText[] tn = new IWrappedNode3DText[TN];
+    private static final IWrappedNode3DText[] shd = new IWrappedNode3DText[TN];
+    private static final int WHITE = 0xFFFFFFFF;
+    private static final int SOFT = 0xFFB9C3CD;
+
+    private static de.esolutions.hmi.widgets.audi.base.eal.IWrappedFont font(int style, int size) {
+        Object f = HMITerminalImpl.fontLoader == null ? null : HMITerminalImpl.fontLoader.getFont(style, size);
+        return f instanceof de.esolutions.hmi.widgets.audi.base.eal.IWrappedFont
+            ? (de.esolutions.hmi.widgets.audi.base.eal.IWrappedFont) f : null;
+    }
+
+    private static int textW(EALManager m, String s, int style, int size) {
+        de.esolutions.hmi.widgets.audi.base.eal.IWrappedFont f = font(style, size);
+        if (f == null || s.length() == 0) {
+            return 0;
+        }
+        try {
+            return m.getTextWidth(s, f);
+        } catch (Throwable t) {
+            return (int) (s.length() * size * 0.6f);
+        }
+    }
+
+    /** One text with a soft dark shadow under it (two nodes; the shadow is created first). */
+    private static void tx(EALManager m, int i, String name, String text, int style, int size, float x, float y,
+                           int maxW, int color) {
+        shd[i] = setText(m, mainRoot, shd[i], name, text, style, size, x + 1.5f, y + 2f, maxW);
+        if (shd[i] != null) {
+            shd[i].setColor(0x99000000);
+        }
+        tn[i] = setText(m, mainRoot, tn[i], name, text, style, size, x, y, maxW);
+        if (tn[i] != null) {
+            tn[i].setColor(color);
+        }
+    }
+
+    /**
+     * v29 texts for the kdk panels (positions from KdkLayout, like the picture). The distance is a
+     * big bold number with a small unit; it shrinks instead of being cut ("1.2..." in v28).
+     */
+    private static void kdkTexts(EALManager m, TurnSpec t, KdkLayout l, String destLine) {
+        String d = distance(t.metres);
+        int sp = d.indexOf(' ');
+        String num = sp < 0 ? d : d.substring(0, sp);
+        String unit = sp < 0 ? "" : d.substring(sp + 1);
+        int ns = l.numSize;
+        int nw = textW(m, num, 2, ns);
+        int uw = textW(m, unit, 1, l.unitSize);
+        while (ns > 22 && nw + 6 + uw > l.cw) {
+            ns -= 2;
+            nw = textW(m, num, 2, ns);
+        }
+        // Number and unit share the baseline of the full-size number.
+        float baseY = base(l.numTop, l.numSize);
+        tx(m, 0, "ttNum", num, 2, ns, (float) l.col, baseY, 0, WHITE);
+        tx(m, 1, "ttUnit", unit, 1, l.unitSize, (float) (l.col + nw + 6), baseY, 0, SOFT);
+        String top = l.wide ? destLine : clock(m, t.eta);
+        tx(m, 2, "ttTop", top, 1, l.topSize, (float) l.col, base(l.topY, l.topSize), l.cw, SOFT);
+        String label = KdkLayout.badgeLabel(t.exit);
+        if (label.length() > 0) {
+            int bw = l.badgeW(label);
+            int lw = textW(m, label, 2, l.badgeText);
+            float lx = l.col + Math.max(4, (bw - lw) / 2);
+            float ly = base(l.badgeTop + (l.badgeH - l.badgeText) / 2 - 1, l.badgeText);
+            tx(m, 3, "ttBadge", label, 2, l.badgeText, lx, ly, bw - 8, WHITE);
+            String street = l.lanes ? "" : t.street;
+            tx(m, 4, "ttStreet", street, 1, l.streetSize, (float) l.col, base(l.streetTop, l.streetSize), l.cw, SOFT);
+        } else {
+            // No exit number: the street takes the badge row, in white.
+            tx(m, 3, "ttBadge", t.street, 1, l.streetSize + 2, (float) l.col,
+                base(l.badgeTop + 2, l.streetSize + 2), l.cw, WHITE);
+            tx(m, 4, "ttStreet", "", 1, l.streetSize, (float) l.col, base(l.streetTop < 0 ? 0 : l.streetTop,
+                l.streetSize), l.cw, SOFT);
         }
     }
 }

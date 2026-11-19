@@ -1,0 +1,32 @@
+# Window-move test (tt-zoom v29), parked, TACH-CENTRED VIEW the whole time.
+# Does the cockpit's window for the head-unit picture follow the stock banner when it moves?
+say v29 window test start
+active 1
+panel layout kdk
+panel off
+panel grid on
+panel kdk alpha 0
+say W1 (20 s) banner at its stock place 991,152
+panel kdk pos stock
+wait 3000
+panel kdk alpha 0
+wait 17000
+panel kdk info
+say W2 (20 s) banner moved down 40 px: 991,192
+panel kdk pos 991 192
+wait 3000
+panel kdk alpha 0
+wait 17000
+panel kdk info
+say W3 (20 s) banner moved down 80 px and left 40 px: 951,232
+panel kdk pos 951 232
+wait 3000
+panel kdk alpha 0
+wait 17000
+panel kdk info
+say end, back to stock, repeating in 5 s
+panel kdk pos stock
+panel grid off
+panel kdk alpha auto
+wait 5000
+loop

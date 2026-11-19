@@ -126,7 +126,7 @@ final class TurnSpec {
     String artKey(int mode) {
         StringBuffer b = new StringBuffer();
         b.append(mode == FLAP ? FULL : mode).append(',').append(main).append(',').append(dir).append(',')
-            .append(bar).append(',').append(lanes);
+            .append(bar).append(',').append(lanes).append(',').append(exit);
         for (int i = 0; arms != null && i < arms.length; i++) {
             b.append(',').append(arms[i]);
         }
@@ -136,7 +136,8 @@ final class TurnSpec {
     PanelArt render(int mode) {
         PanelArt art = new PanelArt(width(mode), height(mode));
         if (mode == KDK || mode == KDK_WIDE) {
-            art.kdk(main, dir, arms, bar, laneAngles, laneStatus);
+            // v29: TT style; our own frame only in the tach-centred view (no stock frame there).
+            art.kdkStyled(main, dir, arms, bar, laneAngles, laneStatus, exit, mode == KDK_WIDE);
         } else if (mode == BANNER) {
             art.banner(main, dir, arms, bar, laneAngles, laneStatus);
         } else {
