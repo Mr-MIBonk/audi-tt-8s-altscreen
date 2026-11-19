@@ -353,7 +353,7 @@ public final class TtPanel {
         } else if (mode.equals("text")) {
             label = text(m, parent, text.toString(), 40);
             if (label != null) {
-                label.setColor(0xFF000000 | rgb);
+                label.setColor(rgba(0xFF000000 | rgb));
                 label.setPosition((float) x, (float) y, 0f);
             }
         } else if (mode.equals("lines")) {
@@ -1374,7 +1374,7 @@ public final class TtPanel {
                 IWrappedNode3DText tx = setText(m, gridRoot, null, "ttGridLabel", t, 2, 16,
                     (float) (x - GRID_X + 3), base(y - GRID_Y + 3, 16), 0);
                 if (tx != null) {
-                    tx.setColor(0xFF40FF40);
+                    tx.setColor(rgba(0xFF40FF40));
                     n++;
                 }
             }
@@ -1402,6 +1402,14 @@ public final class TtPanel {
     private static final int WHITE = 0xFFFFFFFF;
     private static final int SOFT = 0xFFB9C3CD;
 
+    /**
+     * Text nodes take their colour as 0xRRGGBBAA, not 0xAARRGGBB (v30 photos: grey text came out
+     * pink and the green grid labels faint magenta). Colours here are written ARGB and converted.
+     */
+    private static int rgba(int argb) {
+        return (argb << 8) | (argb >>> 24);
+    }
+
     private static de.esolutions.hmi.widgets.audi.base.eal.IWrappedFont font(int style, int size) {
         Object f = HMITerminalImpl.fontLoader == null ? null : HMITerminalImpl.fontLoader.getFont(style, size);
         return f instanceof de.esolutions.hmi.widgets.audi.base.eal.IWrappedFont
@@ -1425,11 +1433,11 @@ public final class TtPanel {
                            int maxW, int color) {
         shd[i] = setText(m, mainRoot, shd[i], name, text, style, size, x + 1.5f, y + 2f, maxW);
         if (shd[i] != null) {
-            shd[i].setColor(0x99000000);
+            shd[i].setColor(rgba(0x99000000));
         }
         tn[i] = setText(m, mainRoot, tn[i], name, text, style, size, x, y, maxW);
         if (tn[i] != null) {
-            tn[i].setColor(color);
+            tn[i].setColor(rgba(color));
         }
     }
 
@@ -1454,8 +1462,22 @@ public final class TtPanel {
         int gx = l.centre(nw + 6 + uw);
         tx(m, 0, "ttNum", num, 2, ns, (float) gx, baseY, 0, WHITE);
         tx(m, 1, "ttUnit", unit, 1, l.unitSize, (float) (gx + nw + 6), baseY, 0, SOFT);
-        String top = fitText(m, l.wide ? destLine : clock(m, t.eta), 1, l.topSize, l.cw);
-        tx(m, 2, "ttTop", top, 1, l.topSize, (float) l.centre(textW(m, top, 1, l.topSize)),
+        // Top line: tighter gap, then a smaller font, then without AM/PM, and only then "...".
+        String topText = l.wide ? destLine : clock(m, t.eta);
+        int gap = topText.indexOf("   ");
+        if (gap >= 0) {
+            topText = new StringBuffer(topText.substring(0, gap)).append("  ")
+                .append(topText.substring(gap + 3)).toString();
+        }
+        int ts = l.topSize;
+        while (ts > l.topSize - 4 && textW(m, topText, 1, ts) > l.cw) {
+            ts--;
+        }
+        if (textW(m, topText, 1, ts) > l.cw && (topText.endsWith(" AM") || topText.endsWith(" PM"))) {
+            topText = topText.substring(0, topText.length() - 3);
+        }
+        String top = fitText(m, topText, 1, ts, l.cw);
+        tx(m, 2, "ttTop", top, 1, ts, (float) l.centre(textW(m, top, 1, ts)),
             base(l.topY, l.topSize), 0, SOFT);
         String label = KdkLayout.badgeLabel(t.exit);
         if (l.badgeTop >= 0) {

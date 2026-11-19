@@ -459,6 +459,16 @@ v30 on the car (parked, `play fit` then `play win`, logs 2026-11-18):
   the banner. In the tach-centred view the panel cannot go lower or taller than
   that window (991,152, 328x180); ours already uses 991,160 to 330.
 - The display context in these logs was 79, not 89, in the tach-centred view.
+- **Photos:** the panel fits the window, frame, background and badge look right.
+  Two faults: grey texts came out pink, and the top line was cut ("6:10 ...").
+
+v31 fixes both:
+- **Text colours:** text nodes take 0xRRGGBBAA, not 0xAARRGGBB. The proof was
+  the window-test grid: labels set to green 0xFF40FF40 showed as faint magenta
+  (R FF, G 40, B FF, alpha 40). So grey 0xFFB9C3CD showed pink, and the text
+  shadows (0x99000000) had alpha 0 and never showed. `rgba()` now converts.
+- **Top line:** a two-space gap, then up to 4 px smaller, then without AM/PM;
+  "..." only as a last resort.
 
 Offline previews of the panel: [docs/panel-preview.png](docs/panel-preview.png),
 [docs/panel-preview-lanes.png](docs/panel-preview-lanes.png), [docs/panel-preview-compact.png](docs/panel-preview-compact.png) (text there is
@@ -504,7 +514,7 @@ iPhone data on top of it.
 
 ## 13. Open items
 
-- v30 look check from the photos (window test done: the window is fixed).
+- v31 check (`play fit`): grey texts and shadows, top line not cut. Map tab and car tab photos.
 - Live drive with Google/Apple Maps once the panel fits.
 - Try the iPhone's own maneuver card (hook switches `/mnt/app/root/mibr-carplay111-nav*`, see the MHI2Q comparison).
 - Refresh the installer package (`package/`) with the final jar.

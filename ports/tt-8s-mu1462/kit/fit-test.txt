@@ -1,5 +1,5 @@
-# Panel test (tt-zoom v28), parked: the new panel in each view.
-say v28 panel test start
+# Panel test (tt-zoom v28+), parked: the new panel in each view.
+say panel test start
 active 1
 panel parent top
 panel layout kdk
