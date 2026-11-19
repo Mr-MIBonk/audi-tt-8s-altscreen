@@ -448,6 +448,18 @@ After five PC mockups (with the user's feedback each time) the design became v30
 - **Preview:** [docs/panel-preview-v30.png](docs/panel-preview-v30.png) is drawn
   by the car code, without a background picture.
 
+v30 on the car (parked, `play fit` then `play win`, logs 2026-11-18):
+- **Speed:** a new maneuver takes 10-15 ms to draw on the car (33 ms for the very
+  first one). Bar-only updates skip the drawing. Fast enough.
+- **Stock flash:** the opacity watcher fixed it 8 times when the route started,
+  then never again.
+- **Window test:** the stock banner really moved (the HMI reported 991,192 and
+  951,232), but W1, W2 and W3 looked the same on the cockpit. The cockpit's
+  window for the head-unit picture is fixed by the cluster and does not follow
+  the banner. In the tach-centred view the panel cannot go lower or taller than
+  that window (991,152, 328x180); ours already uses 991,160 to 330.
+- The display context in these logs was 79, not 89, in the tach-centred view.
+
 Offline previews of the panel: [docs/panel-preview.png](docs/panel-preview.png),
 [docs/panel-preview-lanes.png](docs/panel-preview-lanes.png), [docs/panel-preview-compact.png](docs/panel-preview-compact.png) (text there is
 rendered by the PC; the car uses its own fonts).
@@ -492,7 +504,7 @@ iPhone data on top of it.
 
 ## 13. Open items
 
-- v30 look check (`play fit`) and window-move test (`play win`).
+- v30 look check from the photos (window test done: the window is fixed).
 - Live drive with Google/Apple Maps once the panel fits.
 - Try the iPhone's own maneuver card (hook switches `/mnt/app/root/mibr-carplay111-nav*`, see the MHI2Q comparison).
 - Refresh the installer package (`package/`) with the final jar.
