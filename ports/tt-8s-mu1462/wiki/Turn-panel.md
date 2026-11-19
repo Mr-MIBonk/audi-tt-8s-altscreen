@@ -88,7 +88,8 @@ cluster. Code 12 stays stock's "prepare" icon, so lane change got its own code.
 | v29-v30 | TT-styled frame, 3D arrows, exit badge, background picture, centred layout (five PC mockups first) | Looked right; pink text, cut top line |
 | v31 | RGBA text colours, top-line fitting | |
 | v32 | Nine new pictures, fixed roundabout U-turn, research log | Pictures as previewed; live route: the stock banner hid the CarPlay map |
-| v33 | Banner off while the map shows (context 10/89), own frame on the map, full-screen grid | Parked test pending |
+| v33 | Banner off while the map shows (context 10/89), own frame on the map, full-screen grid | Map kept on live Google and Apple routes in every view; banner back on the car page. At a playback start the banner stayed up about 11 s |
+| v34 | Map check reads the live context; the watcher runs for as long as a route is declared | Test pending |
 
 Previews: [v27](../docs/panel-preview-v27.png), [v28](../docs/panel-preview-v28.png),
 [v29](../docs/panel-preview-v29.png), [v30](../docs/panel-preview-v30.png),

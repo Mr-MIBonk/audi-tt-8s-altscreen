@@ -66,5 +66,8 @@ The banner spot shows only while the stock banner (KDK displayable 20) is on.
   route with the banner on lost the CarPlay map (v32 drive test). v33 watches the
   context and keeps the banner off while the map shows (`/tmp/tt-rgi-kdk-map`
   brings the old behaviour back).
+- Contexts logged by v33 (both views): map 10; map with banner 89; car page with
+  banner 79. Every tab switch passes through 78 and 157 (78 + 79) for under a
+  second: map to car is 10, 78, 157, 79; car to map is 79, 157, 89, 10.
 - `IDisplayManagerKombiControl.createImageDisplayable(ResourceLocator, id)` exists;
   an untried way to add an image layer.

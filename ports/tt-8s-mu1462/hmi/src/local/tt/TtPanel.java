@@ -1275,15 +1275,16 @@ public final class TtPanel {
 
     /** TtRgi.kdkWanted: is the map showing? Reads the context now when the watcher is not running. */
     public static boolean mapShowing() {
-        if (!guardRunning) {
-            try {
-                EALManager m = manager();
-                de.audi.atip.hmi.view.IDisplayManager d = m == null ? null : dm(m);
-                if (d != null) {
-                    mapShowing = isMap(d.getCurrentContextID(0));
-                }
-            } catch (Throwable ignored) {
+        // v34: always the live context (v33 trusted a stale flag while the watcher ran, so a
+        // banner could stay up on the map until the next view change). The flag stays the
+        // watcher's, so it still sees the change and redraws.
+        try {
+            EALManager m = manager();
+            de.audi.atip.hmi.view.IDisplayManager d = m == null ? null : dm(m);
+            if (d != null) {
+                return isMap(d.getCurrentContextID(0));
             }
+        } catch (Throwable ignored) {
         }
         return mapShowing;
     }
@@ -1322,7 +1323,10 @@ public final class TtPanel {
         try {
             while (true) {
                 long now = System.currentTimeMillis();
-                boolean watch = (kdkAlpha == -2 && kdkPanelUp) || liveShown;
+                // v34: also for as long as a route is declared (playback included), so the map
+                // check never stops while the stock banner could come up.
+                boolean watch = (kdkAlpha == -2 && kdkPanelUp) || liveShown
+                    || de.audi.tghu.navi.app.cluster.TtRgi.rgActive(false);
                 if (!watch && now > burstUntil) {
                     break;
                 }
