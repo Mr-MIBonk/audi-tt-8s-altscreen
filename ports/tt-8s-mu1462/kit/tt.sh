@@ -35,7 +35,7 @@ T=$K/altscreen-sha256
 say(){ echo "$*"; }
 dm(){ LD_LIBRARY_PATH=/eso/lib:/mnt/app/root/lib-target:/mnt/app/usr/lib:/mnt/app/armle/lib:/mnt/app/armle/lib/dll:/mnt/app/armle/usr/lib IPL_CONFIG_DIR=/etc/eso/production /eso/bin/apps/dmdt "$@"; }
 # Dump the display manager state into /tmp/tt-dmdt.txt with a label.
-dmdump(){ { echo "===== $1  $(date)"; echo '--- gs'; dm gs; echo '--- gc'; dm gc; echo '--- gd'; dm gd; } >> /tmp/tt-dmdt.txt 2>&1; }
+dmdump(){ { echo "===== $1"; echo '--- gs'; dm gs; echo '--- gc'; dm gc; echo '--- gd'; dm gd; } >> /tmp/tt-dmdt.txt 2>&1; }
 # Displayables of one context, from the newest gc dump.
 ctxlist(){ dm gc 2>/dev/null | awk -v c="$1" '$1==c && $2=="|" {f=1; next} f && /^[ \t]*-+/ {next} f && NF==0 {exit} f && $1 ~ /^-?[0-9]+$/ {printf "%s ", $1}'; }
 rw(){ mount -uw /mnt/app || { say 'Cannot make /mnt/app writable.'; exit 1; }; }
@@ -182,7 +182,7 @@ layers)
         # $1 = name, rest = layer list for context 89
         n=$1; shift
         if dm dc 89 "$@" >/dev/null 2>&1; then
-            echo "$(date) 89 = $*" >> /tmp/tt-dmdt.txt
+            echo "89 = $*" >> /tmp/tt-dmdt.txt
             step "$n: context 89 is now: $* (stock: $S89)"
         else
             step "$n: dmdt refused '$*' - just press Enter"; next; return
@@ -204,9 +204,10 @@ layers)
     step 'L1: banner window opened (experiment mode). Stock map should now cover CarPlay. PHOTO'
     next
     dmdump 'L1 banner on (context 89)'
-    S89=$(ctxlist 89)
-    say "   context 10 = $(ctxlist 10)   context 89 = $S89   context 901 = $(ctxlist 901)"
-    test -n "$S89" || { say 'Could not read context 89 - stopping (nothing changed).'; S89=; finish; exit 1; }
+    # Stock list from the HMI (defineContextsForG24); never read back from the unit, because
+    # an interrupted earlier run can leave a test list in memory.
+    S89="20 16 19"
+    say "   context 10 = $(ctxlist 10)   context 89 now = $(ctxlist 89)   (stock 89 = $S89)"
     try LA 20 16
     try LB 16 19 20
     try LC 20 16 60
@@ -222,6 +223,14 @@ layers)
     next
     dmdump 'LZ later'
     finish
+    ;;
+layer89)
+    # Set the map + banner layer list by hand (memory only; an MMI restart restores it).
+    case "${2:-}" in
+        stock) dm dc 89 20 16 19 && say 'Context 89 back to stock: 20 16 19';;
+        [0-9]*) shift; dm dc 89 "$@" && say "Context 89 is now: $* (tap CAR, then MAP to apply)";;
+        *) say "Usage: sh tt.sh layer89 stock | sh tt.sh layer89 20 16   (now: $(ctxlist 89))"; exit 2;;
+    esac
     ;;
 dm)
     dmdump "${2:-manual}"; say "Display manager state added to /tmp/tt-dmdt.txt (context 89: $(ctxlist 89))"
@@ -294,6 +303,7 @@ save)
     say 'sh tt.sh play arrows | stop  arrow catalogue / stop playback'
     say 'sh tt.sh test                the full guided test, Enter for each step, then saves the logs'
     say 'sh tt.sh layers              parked layer test for the map + banner (context 89)'
+    say 'sh tt.sh layer89 stock|LIST  set the map + banner layers by hand (memory only)'
     say 'sh tt.sh dm [label]          add the display manager state to the logs'
     say 'sh tt.sh seen                what the iPhone sent so far (maneuver types, lanes)'
     say 'sh tt.sh mode default|nokdk|kdk|nopanel|noactive|nopad|off|on'
