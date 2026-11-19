@@ -5,6 +5,18 @@
 Our own guidance panel, drawn in the stock banner window on every view (map tab
 included), fed live from the iPhone ([Turn-by-turn data](Turn-by-turn-data.md)).
 
+On the car (v33/v34, parked demo):
+
+| Large view, car tab (stock frame) | Large view, map tab (own frame over CarPlay) |
+|---|---|
+| ![Car tab with exit and lanes](../docs/photos/car-tab-exit-lanes.jpg) | ![Framed panel on the map](../docs/photos/map-tab-framed-panel.jpg) |
+
+| Small view, car page | Small view, panel over the map |
+|---|---|
+| ![Small view car page](../docs/photos/small-view-car-page.jpg) | ![Panel over the map](../docs/photos/small-view-map-panel.jpg) |
+
+All pictures, drawn by the car code on the PC:
+
 ![v32 pictures](../docs/panel-preview-v32.png)
 
 ## Layout

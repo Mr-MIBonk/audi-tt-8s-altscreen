@@ -25,6 +25,8 @@ of the work.
 Details, the dead ends and what is next: **[the TT wiki](ports/tt-8s-mu1462/wiki/Home.md)**.
 Built with Claude Code; how, and how to start on your own car: [Working with Claude](ports/tt-8s-mu1462/wiki/Working-with-Claude.md).
 
+![The turn panel on the cockpit](ports/tt-8s-mu1462/docs/photos/car-tab-exit-lanes.jpg)
+
 ![Turn panel pictures](ports/tt-8s-mu1462/docs/panel-preview-v32.png)
 
 ## Where things are
@@ -46,7 +48,14 @@ the port's `scripts/` rebuild them from your own firmware copy.
 
 ## Credits and licence
 
-GPL-3.0 (see LICENSE and NOTICE). Built on aberbic's AltScreen and the work it
-credits (harman-f, luka-dev, f-io/LIVI, binarybase), luka-dev's
-mib2q-carplay-rgi, yuedizhibo's MHI2Q AltScreen, and chefranov's route-guidance
-hook (used, not included). See [Credits](ports/tt-8s-mu1462/wiki/Credits.md).
+GPL-3.0 (see LICENSE and NOTICE). Built on:
+
+- [aberbic/Audi-MHI2-Virtual-Cockpit-Altscreen-CarPlay-AndroidAuto](https://github.com/aberbic/Audi-MHI2-Virtual-Cockpit-Altscreen-CarPlay-AndroidAuto)
+  and the work it credits ([harman-f](https://github.com/harman-f), [luka-dev](https://github.com/luka-dev),
+  [f-io/LIVI](https://github.com/f-io/LIVI), [binarybase](https://github.com/binarybase))
+- [luka-dev/mib2q-carplay-rgi](https://github.com/luka-dev/mib2q-carplay-rgi)
+- [yuedizhibo/MHI2Q-CarPlay-AltScreen](https://github.com/yuedizhibo/MHI2Q-CarPlay-AltScreen)
+- [chefranov](https://github.com/chefranov)'s route-guidance hook from
+  [tehfalcon-vw/mhi2-nar-carplay-maps](https://github.com/tehfalcon-vw/mhi2-nar-carplay-maps) (used, not included)
+
+Full list: [Credits](ports/tt-8s-mu1462/wiki/Credits.md).
