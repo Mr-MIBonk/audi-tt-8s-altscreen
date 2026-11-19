@@ -1,24 +1,11 @@
-# Banner-window fit test (tt-zoom v27), parked. Each step says which view to look at.
-say v27 fit test start
+# Panel test (tt-zoom v28), parked: the new panel in each view.
+say v28 panel test start
 active 1
 panel parent top
 panel layout kdk
 panel kdkbg show
-panel kdk alpha 0
-panel info
-panel grid on
-panel kdk info
-say STEP A (30 s) SMALL VIEW: calibration grid over the banner - one photo
-wait 30000
-panel kdk info
-say STEP B (30 s) LARGE VIEW, CAR TAB: calibration grid - one photo
-wait 30000
-panel kdk info
-say STEP C (30 s) LARGE VIEW, MAP TAB: calibration grid - one photo
-wait 30000
-panel kdk info
-panel grid off
 panel kdk alpha auto
+panel grid off
 say STEP D (36 s) any view (try all three): new panel, exit with lanes
 panel turn 15,192,-1 420 180 0:0/0:0/0:0/0,45:1/45:2 4500 420 12A Spring Cypress Rd
 wait 3000

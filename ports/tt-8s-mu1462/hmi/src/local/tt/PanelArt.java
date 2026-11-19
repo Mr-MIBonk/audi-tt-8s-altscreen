@@ -139,10 +139,15 @@ public final class PanelArt {
     // ---- v27: one panel inside the stock banner window ---------------------------------
     /** Opaque fill inside the stock banner frame (the frame itself is the HMI's). */
     public static final int KDK_BG = 0xFF0C0F12;
-    /** Right column of the kdk layout (texts and lanes): x from KDK_COL to w - 6. */
-    public static final int KDK_COL = 122;
-    /** Text column when lanes are shown (the maneuver square is smaller then). */
-    public static final int KDK_COL_LANES = 104;
+    /** Side of the maneuver square in the kdk layout (smaller when lanes take the bottom row). */
+    public static int kdkSquare(int h, boolean lanes) {
+        return lanes ? h - 66 : h - 52;
+    }
+
+    /** Left edge of the text column right of the square (texts run to w - 6). */
+    public static int kdkCol(int h, boolean lanes) {
+        return 20 + kdkSquare(h, lanes) + (lanes ? 6 : 4);
+    }
 
     /**
      * v27 (v26 photos): the stock banner frame is drawn above our layer and shows our panel only
@@ -153,11 +158,11 @@ public final class PanelArt {
     public void kdk(int main, int dir, int[] arms, int bar, int[][] laneAngles, int[] laneStatus) {
         java.util.Arrays.fill(px, KDK_BG);
         if (laneAngles != null && laneAngles.length > 0) {
-            // With lanes: smaller square, texts right of it (KDK_COL_LANES), lanes across the bottom.
-            maneuver(main, dir, arms, 20, 4, KDK_COL_LANES - 26);
+            // With lanes: smaller square, texts right of it, lanes across the bottom.
+            maneuver(main, dir, arms, 20, 4, kdkSquare(h, true));
             lanes(laneAngles, laneStatus, 20, h - 60, w - 26, 56);
         } else {
-            maneuver(main, dir, arms, 20, 4, h - 52);
+            maneuver(main, dir, arms, 20, 4, kdkSquare(h, false));
         }
         if (bar >= 0) {
             int bh = h - 16;

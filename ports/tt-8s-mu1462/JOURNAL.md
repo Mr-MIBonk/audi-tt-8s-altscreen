@@ -384,6 +384,23 @@ Layout constants from the v24 log (`LayoutMIB2MMICombiTTSport`): banner position
   (30 s each), then the panel with lanes, without lanes, and a left turn.
 - **Tuning.** `sh tt.sh panel kdk-small|kdk-large X Y [SCALE]`.
 
+**v27 result (grid photos and logs, 2026-11-18):** the stock straight line is
+gone; the watcher stepped in 8 times, each time after the stock fade had pushed
+the banner picture back to opacity 100. The grid shows where the cockpit lets
+our layer through:
+- **Small view (big tach):** only a 328x180 window at 991,152 (the stock
+  picture's own size). Its top edge sits on the UI trim line, so the 210x150
+  panel left the window two-thirds covered and hid the trim line.
+- **Large view:** the frame's inner box is about 210x153 at 1105,110, and the
+  210x150 panel fits it (map tab photo).
+
+**v28:** small view gets a wide 328x170 panel at 991,160, just below the trim
+line, with the remaining distance next to the arrival time and room for street
+names. Large view unchanged. Layout sizes now follow the panel height
+(`PanelArt.kdkSquare/kdkCol`). Preview:
+[docs/panel-preview-v28.png](docs/panel-preview-v28.png). Test: `sh tt.sh play fit`
+(panel steps only).
+
 Offline previews of the panel: [docs/panel-preview.png](docs/panel-preview.png),
 [docs/panel-preview-lanes.png](docs/panel-preview-lanes.png), [docs/panel-preview-compact.png](docs/panel-preview-compact.png) (text there is
 rendered by the PC; the car uses its own fonts).
@@ -428,7 +445,7 @@ iPhone data on top of it.
 
 ## 13. Open items
 
-- v27 fit test: measure the stock banner window per view from the grid photos; set the panel size and position from them.
+- v28 parked check of the wide small-view panel; car tab photo.
 - Live drive with Google/Apple Maps once the panel fits.
 - Try the iPhone's own maneuver card (hook switches `/mnt/app/root/mibr-carplay111-nav*`, see the MHI2Q comparison).
 - Refresh the installer package (`package/`) with the final jar.

@@ -577,7 +577,8 @@ public final class TtPanel {
             return ZoomGate.small() ? TurnSpec.FULL : TurnSpec.FLAP;
         }
         // v27 default ("kdk", also "auto"): one panel in the stock banner window, every view.
-        return TurnSpec.KDK;
+        // v28: the small view's window is wider (328x180), so it gets the wide panel.
+        return ZoomGate.small() ? TurnSpec.KDK_WIDE : TurnSpec.KDK;
     }
 
     /** Called on the feed thread before posting: draws the picture so the HMI thread only uploads it. */
@@ -642,7 +643,8 @@ public final class TtPanel {
         boolean full = mode != TurnSpec.BANNER;
         int pw = t.width(mode);
         int ph = t.height(mode);
-        String spot = mode == TurnSpec.KDK ? (ZoomGate.small() ? "kdk-small" : "kdk-large")
+        boolean kdkMode = mode == TurnSpec.KDK || mode == TurnSpec.KDK_WIDE;
+        String spot = kdkMode ? (mode == TurnSpec.KDK_WIDE ? "kdk-small" : "kdk-large")
             : (mode == TurnSpec.FULL ? "small" : (mode == TurnSpec.FLAP ? "flap" : "left"));
         StringBuffer b = new StringBuffer(spot).append(' ');
         IWrappedNode3D front = parent(m);
@@ -689,23 +691,30 @@ public final class TtPanel {
         String street = t.street;
         String sub = exit.length() > 0 ? new StringBuffer("Exit ").append(exit).toString() : street;
         String destLine = destText(m, t.destM, t.eta);
-        if (mode == TurnSpec.KDK) {
+        if (kdkMode) {
             // v27: texts are anchored at their baseline (v26 photos), hence base(top, size).
             boolean lanes = t.hasLanes();
-            int col = lanes ? PanelArt.KDK_COL_LANES : PanelArt.KDK_COL;
+            int col = PanelArt.kdkCol(ph, lanes);
             int cw = pw - col - 6;
+            boolean wide = mode == TurnSpec.KDK_WIDE;
+            int big = wide ? 32 : 28;
+            int small = wide ? 20 : 18;
             String first = exit.length() > 0 ? new StringBuffer("Exit ").append(exit).toString() : street;
             if (lanes) {
                 // Square on the left, then time / distance / exit in a column, lanes across the bottom.
-                text1 = setText(m, mainRoot, text1, "ttTurnDist", distance(t.metres), 2, 28, (float) col, base(28, 28), cw);
-                text2 = setText(m, mainRoot, text2, "ttTurnSub", first, 1, 18, (float) col, base(62, 18), cw);
+                text1 = setText(m, mainRoot, text1, "ttTurnDist", distance(t.metres), 2, big, (float) col, base(30, big), cw);
+                text2 = setText(m, mainRoot, text2, "ttTurnSub", first, 1, small, (float) col, base(36 + big, small), cw);
             } else {
-                text1 = setText(m, mainRoot, text1, "ttTurnDist", distance(t.metres), 2, 28, 20f, base(106, 28), pw - 26);
-                text2 = setText(m, mainRoot, text2, "ttTurnSub", first, 1, 18, (float) col, base(38, 18), cw);
+                text1 = setText(m, mainRoot, text1, "ttTurnDist", distance(t.metres), 2, big, 20f,
+                    base(ph - big - 12, big), pw - 26);
+                text2 = setText(m, mainRoot, text2, "ttTurnSub", first, 1, small, (float) col, base(40, small), cw);
             }
-            text3 = setText(m, mainRoot, text3, "ttTurnDest", clock(m, t.eta), 1, 18, (float) col, base(6, 18), cw);
+            // The wide panel has room for the remaining distance next to the arrival time.
+            String top = wide ? destLine : clock(m, t.eta);
+            text3 = setText(m, mainRoot, text3, "ttTurnDest", top, 1, small, (float) col, base(6, small), cw);
             String second = !lanes && exit.length() > 0 ? street : "";
-            text4 = setText(m, mainRoot, text4, "ttTurnStreet", second, 1, 16, (float) col, base(62, 16), cw);
+            text4 = setText(m, mainRoot, text4, "ttTurnStreet", second, 1, small - 2, (float) col,
+                base(46 + small, small - 2), cw);
             if (destRoot != null) {
                 destRoot.setVisible(false);
             }
@@ -745,7 +754,7 @@ public final class TtPanel {
             }
         }
         mainRoot.setVisible(true);
-        kdkPanelUp = mode == TurnSpec.KDK;
+        kdkPanelUp = kdkMode;
         if (topVp != null && parentMode.equals("top")) {
             try {
                 topVp.setForceInvisible(false);
@@ -991,8 +1000,12 @@ public final class TtPanel {
     private static void place(IWrappedNode3D n, String which) {
         int x;
         int y;
-        if (which.equals("small") || which.equals("kdk-small")) {
-            // kdk-small/kdk-large: the stock banner spot (layout constants 58/59 and 60/61).
+        if (which.equals("kdk-small")) {
+            // v28 grid photos: the small view shows us only in 328x180 at 991,152 and the UI trim
+            // line runs along its top edge, so the wide panel starts just below it.
+            x = 991;
+            y = 160;
+        } else if (which.equals("small")) {
             x = 991;
             y = 152;
         } else if (which.equals("kdk-large")) {
