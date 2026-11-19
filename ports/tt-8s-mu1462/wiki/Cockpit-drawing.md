@@ -49,7 +49,7 @@ The banner spot shows only while the stock banner (KDK displayable 20) is on.
 ## Stock banner handling
 
 - Layout class `LayoutMIB2MMICombiTTSport`. Banner position constants 58/59 =
-  991,152 (small view) and 60/61 = 1105,110 (large view); crop sizes 120/121 =
+  991,152 (Sport view) and 60/61 = 1105,110 (Classic view); crop sizes 120/121 =
   210x153, 124/125 = 328x180.
 - Displayable 20 obeys `getDisplayManager().setOpacity(20, 0, alpha)`.
 - On every show, `CombiMapController.handleKdkSingleTerminal` sets opacity, position

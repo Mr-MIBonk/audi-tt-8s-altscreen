@@ -7,19 +7,19 @@ panel layout kdk
 panel kdkbg show
 panel kdk alpha auto
 panel grid off
-say M1 (20 s) LARGE view, MAP tab: CarPlay map and our framed panel?
+say M1 (20 s) CLASSIC view, MAP tab: CarPlay map and our framed panel?
 panel turn 15,192,-1 400 180 0:0/0:0/45:2 4500 420 12A Spring Cypress Rd
 wait 20000
 panel kdk info
-say M2 (20 s) LARGE view, CAR tab: panel inside the stock frame?
+say M2 (20 s) CLASSIC view, CAR tab: panel inside the stock frame?
 panel turn 15,192,-1 300 140 0:0/0:0/45:2 4400 420 12A Spring Cypress Rd
 wait 20000
 panel kdk info
-say M3 (20 s) SMALL view with the MAP: panel over the map, left of the tach?
+say M3 (20 s) SPORT view with the MAP: panel over the map, left of the tach?
 panel turn 13,64,-1,0,192 300 150 - 4300 420 - Alpha St
 wait 20000
 panel kdk info
-say M4 (20 s) SMALL view, car page (trip computer): panel as before?
+say M4 (20 s) SPORT view, car page (trip computer): panel as before?
 panel turn 13,64,-1,0,192 200 100 - 4200 420 - Alpha St
 wait 20000
 panel kdk info

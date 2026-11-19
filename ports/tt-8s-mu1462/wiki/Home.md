@@ -11,7 +11,7 @@ Everything marked "works" was checked on one car (US TT, MU1462), November 2026.
 | Feature | State | Page |
 |---|---|---|
 | CarPlay map (Apple/Google Maps) on the cockpit map tab | Works | [CarPlay map](CarPlay-map.md) |
-| Large/small view (tach-centred) layout | Works | [CarPlay map](CarPlay-map.md#small-view-layout) |
+| Large/Sport view (tach-centred) layout | Works | [CarPlay map](CarPlay-map.md#small-view-layout) |
 | Steering-wheel scroll zoom | Works | [CarPlay map](CarPlay-map.md#steering-wheel-zoom) |
 | iPhone turn-by-turn data on the head unit | Works | [Turn-by-turn data](Turn-by-turn-data.md) |
 | Turn panel on the cockpit (arrows, lanes, exit badge) | Works; first short drive done (Google Maps) | [Turn panel](Turn-panel.md) |
@@ -41,8 +41,8 @@ Everything marked "works" was checked on one car (US TT, MU1462), November 2026.
 ## Next
 
 - v33 map test (`play map`): CarPlay map kept with our framed panel on the map;
-  where our layer shows over the map in the small view (full-screen grid).
-- v35 guided test (`sh tt.sh test`): panel over the map in the small view; the
+  where our layer shows over the map in the Sport view (full-screen grid).
+- v35 guided test (`sh tt.sh test`): panel over the map in the Sport view; the
   iPhone's own maneuver card switched off (hook surface "map", `/tmp/mibr-alt111-url-mode`).
 - Chinese phone language: exit numbers from Chinese instructions (need a sample).
 - Live drive with Google and Apple Maps.

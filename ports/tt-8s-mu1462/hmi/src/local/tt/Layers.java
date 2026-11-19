@@ -94,6 +94,10 @@ public final class Layers implements Runnable {
             want = false;
         } else if (fresh) {
             want = true;
+        } else if (stamp <= 0) {
+            // v39 (car test): the renderer deletes its heartbeat when the iPhone has really gone
+            // ("renderer heartbeat withdrawn"); waiting 10 s more only kept the map black.
+            want = false;
         } else {
             // Short gaps (view change, renderer restart) keep the CarPlay lists.
             want = on && lastFresh > 0 && now - lastFresh < 10000L;

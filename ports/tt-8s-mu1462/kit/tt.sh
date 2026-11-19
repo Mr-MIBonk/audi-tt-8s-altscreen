@@ -32,6 +32,10 @@ V35=3d07121dae29006e3825c3b61520a5310212bc02dfab5245b6d0a00e614f9fe2
 V36=03994ca30aeb49c99c10297ae991ce905477db76fc50007c7f300d8cbb2caab4
 V37=9b20688cbc8d74991c7075746de6c30fe8686e0247bba62387aa7e1d9b5c66c4
 V38=c3ad31212c5c364030be092dff941e7ffd39f02003cd7857d858f9684683822c
+V39=0a7636fc436d53426f2684d08116172c0410651b9416914f69009ef611ef7d9f
+HOOK=/mnt/app/root/lib-target/libaltscreen111.so
+HOOK_OLD=9a8c01ec8323d5de7695e212ff6168b0bb7df99d8554c9971f5449c5a21d6256
+HOOK_NEW=9e4b13c12895c8bddc36586661ecd82bde71666e15a847b617993d7fcb8f0dee
 T=$K/altscreen-sha256
 
 say(){ echo "$*"; }
@@ -46,20 +50,20 @@ ro(){ sync; mount -ur /mnt/app 2>/dev/null; }
 which_jar(){
     h=$("$T" "$JAR" 2>/dev/null)
     case "$h" in
-        $V12) echo v12;; $V14) echo v14;; $V15) echo v15;; $V16) echo v16;; $V17) echo v17;; $V18) echo v18;; $V19) echo v19;; $V20) echo v20;; $V21) echo v21;; $V22) echo v22;; $V23) echo v23;; $V24) echo v24;; $V25) echo v25;; $V26) echo v26;; $V27) echo v27;; $V28) echo v28;; $V29) echo v29;; $V30) echo v30;; $V31) echo v31;; $V32) echo v32;; $V33) echo v33;; $V34) echo v34;; $V35) echo v35;; $V36) echo v36;; $V37) echo v37;; $V38) echo v38;; "") echo none;; *) echo "unknown ($h)";;
+        $V12) echo v12;; $V14) echo v14;; $V15) echo v15;; $V16) echo v16;; $V17) echo v17;; $V18) echo v18;; $V19) echo v19;; $V20) echo v20;; $V21) echo v21;; $V22) echo v22;; $V23) echo v23;; $V24) echo v24;; $V25) echo v25;; $V26) echo v26;; $V27) echo v27;; $V28) echo v28;; $V29) echo v29;; $V30) echo v30;; $V31) echo v31;; $V32) echo v32;; $V33) echo v33;; $V34) echo v34;; $V35) echo v35;; $V36) echo v36;; $V37) echo v37;; $V38) echo v38;; $V39) echo v39;; "") echo none;; *) echo "unknown ($h)";;
     esac
 }
 
 case "${1:-help}" in
 setup)
     # Run from /tmp after copying the kit there. Safe to run again for a kit update.
-    test -f /tmp/tt-zoom-v38.jar || { say 'Copy the kit files to /tmp first.'; exit 1; }
+    test -f /tmp/tt-zoom-v39.jar || { say 'Copy the kit files to /tmp first.'; exit 1; }
     rw
     mkdir -p "$K/logs"
-    for f in altscreen-sha256 tt-zoom-v38.jar stock-replay.txt catalogue.txt komo-test.txt panel-test.txt kdk-test.txt fit-test.txt win-test.txt new-test.txt map-test.txt place-test.txt; do
+    for f in altscreen-sha256 tt-zoom-v39.jar stock-replay.txt catalogue.txt komo-test.txt panel-test.txt kdk-test.txt fit-test.txt win-test.txt new-test.txt map-test.txt place-test.txt; do
         cp "/tmp/$f" "$K/$f" || { say "missing /tmp/$f"; ro; exit 1; }
     done
-    for f in tt-zoom-v12.jar tt-zoom-v14.jar tt-zoom-v15.jar tt-zoom-v16.jar tt-zoom-v17.jar tt-zoom-v18.jar tt-zoom-v19.jar tt-zoom-v20.jar tt-zoom-v21.jar tt-zoom-v22.jar tt-zoom-v23.jar tt-zoom-v24.jar tt-zoom-v25.jar tt-zoom-v26.jar tt-zoom-v27.jar tt-zoom-v28.jar tt-zoom-v29.jar tt-zoom-v30.jar tt-zoom-v31.jar tt-zoom-v32.jar tt-zoom-v33.jar tt-zoom-v34.jar tt-zoom-v35.jar tt-zoom-v36.jar tt-zoom-v37.jar; do
+    for f in tt-zoom-v12.jar tt-zoom-v14.jar tt-zoom-v15.jar tt-zoom-v16.jar tt-zoom-v17.jar tt-zoom-v18.jar tt-zoom-v19.jar tt-zoom-v20.jar tt-zoom-v21.jar tt-zoom-v22.jar tt-zoom-v23.jar tt-zoom-v24.jar tt-zoom-v25.jar tt-zoom-v26.jar tt-zoom-v27.jar tt-zoom-v28.jar tt-zoom-v29.jar tt-zoom-v30.jar tt-zoom-v31.jar tt-zoom-v32.jar tt-zoom-v33.jar tt-zoom-v34.jar tt-zoom-v35.jar tt-zoom-v36.jar tt-zoom-v37.jar tt-zoom-v38.jar libaltscreen111-fix1.so; do
         test -f "/tmp/$f" && cp "/tmp/$f" "$K/$f"
     done
     # Optional panel background picture (made with scripts/mkbg.py; kept on the car, not in git).
@@ -67,14 +71,14 @@ setup)
     cp /tmp/tt.sh /mnt/app/root/tt.sh
     chmod 755 "$T" /mnt/app/root/tt.sh
     ok=1
-    "$T" $V38 "$K/tt-zoom-v38.jar" || ok=0
+    "$T" $V39 "$K/tt-zoom-v39.jar" || ok=0
     ro
     if test $ok = 1; then say 'Kit installed. From now on just type:  sh tt.sh help'
     else say 'A kit file is damaged - copy the kit again and rerun setup.'; exit 1; fi
     ;;
 use)
     v=${2:-}
-    case "$v" in v12) h=$V12;; v14) h=$V14;; v15) h=$V15;; v16) h=$V16;; v17) h=$V17;; v18) h=$V18;; v19) h=$V19;; v20) h=$V20;; v21) h=$V21;; v22) h=$V22;; v23) h=$V23;; v24) h=$V24;; v25) h=$V25;; v26) h=$V26;; v27) h=$V27;; v28) h=$V28;; v29) h=$V29;; v30) h=$V30;; v31) h=$V31;; v32) h=$V32;; v33) h=$V33;; v34) h=$V34;; v35) h=$V35;; v36) h=$V36;; v37) h=$V37;; v38) h=$V38;; *) say 'Usage: sh tt.sh use v38   (or v37 ... v12)'; exit 2;; esac
+    case "$v" in v12) h=$V12;; v14) h=$V14;; v15) h=$V15;; v16) h=$V16;; v17) h=$V17;; v18) h=$V18;; v19) h=$V19;; v20) h=$V20;; v21) h=$V21;; v22) h=$V22;; v23) h=$V23;; v24) h=$V24;; v25) h=$V25;; v26) h=$V26;; v27) h=$V27;; v28) h=$V28;; v29) h=$V29;; v30) h=$V30;; v31) h=$V31;; v32) h=$V32;; v33) h=$V33;; v34) h=$V34;; v35) h=$V35;; v36) h=$V36;; v37) h=$V37;; v38) h=$V38;; v39) h=$V39;; *) say 'Usage: sh tt.sh use v39   (or v38 ... v12)'; exit 2;; esac
     test -f "$K/tt-zoom-$v.jar" || { say "$v is not in the kit on the car."; exit 1; }
     "$T" $h "$K/tt-zoom-$v.jar" || { say "Stored $v jar is damaged."; exit 1; }
     rw
@@ -118,41 +122,41 @@ test)
     next
     step 'PART 1: parked demo (no route needed). A demo panel (exit 12A with lanes) stays up.'
     cp "$K/place-test.txt" "$PL" || exit 1
-    step 'M1 LARGE view, MAP tab: CarPlay map + our framed panel. PHOTO'
+    step 'M1 CLASSIC view, MAP tab: CarPlay map + our framed panel. PHOTO'
     next
-    step 'M2 LARGE view, CAR tab: panel inside the stock frame. PHOTO'
+    step 'M2 CLASSIC view, CAR tab: panel inside the stock frame. PHOTO'
     next
-    step 'M3 SMALL view with the MAP: panel over the map, left of the tach. PHOTO'
+    step 'M3 SPORT view with the MAP: panel over the map, left of the tach. PHOTO'
     next
-    step 'M4 SMALL view, trip computer page: panel at its usual spot. PHOTO'
+    step 'M4 SPORT view, trip computer page: panel at its usual spot. PHOTO'
     next
     cp "$K/new-test.txt" "$PL"
-    step 'N LARGE view, MAP tab: all new pictures cycle (about 75 s for all). PHOTO only if one looks wrong.'
+    step 'N CLASSIC view, MAP tab: all new pictures cycle (about 75 s for all). PHOTO only if one looks wrong.'
     next
     rm -f "$PL"
     step 'PART 2: live routes. G0: start a GOOGLE MAPS route now, somewhere a few miles away.'
     next
-    step 'G1 LARGE view, MAP tab. PHOTO'
+    step 'G1 CLASSIC view, MAP tab. PHOTO'
     next
-    step 'G2 LARGE view, CAR tab. PHOTO'
+    step 'G2 CLASSIC view, CAR tab. PHOTO'
     next
-    step 'G3 SMALL view with the MAP. PHOTO'
+    step 'G3 SPORT view with the MAP. PHOTO'
     next
-    step 'G4 SMALL view, trip computer. PHOTO'
+    step 'G4 SPORT view, trip computer. PHOTO'
     next
     step 'A0: end the Google route, start an APPLE MAPS route now.'
     next
-    step 'A1 LARGE view, MAP tab. PHOTO'
+    step 'A1 CLASSIC view, MAP tab. PHOTO'
     next
-    step 'A2 SMALL view with the MAP. PHOTO'
+    step 'A2 SPORT view with the MAP. PHOTO'
     next
     step 'PART X: experiment, keep the Apple route running. Banner window opened directly, nav engine left out.'
     touch "$DIRECT"
-    step 'X1 SMALL view with the MAP: CarPlay map AND the panel on the right? PHOTO'
+    step 'X1 SPORT view with the MAP: CarPlay map AND the panel on the right? PHOTO'
     next
-    step 'X2 LARGE view, MAP tab: CarPlay map still there? PHOTO'
+    step 'X2 CLASSIC view, MAP tab: CarPlay map still there? PHOTO'
     next
-    step 'X3 LARGE view, CAR tab: panel in its window? PHOTO'
+    step 'X3 CLASSIC view, CAR tab: panel in its window? PHOTO'
     next
     rm -f "$DIRECT"
     step 'Experiment off (back to normal).'
@@ -160,9 +164,9 @@ test)
     echo map > "$UM"
     step 'C0: UNPLUG the iPhone, wait 5 s, PLUG it back in, wait for CarPlay, start any route. Then Enter.'
     next
-    step 'C1 LARGE view, MAP tab: is the iPhone card (top left of the map) gone? Map still there? PHOTO'
+    step 'C1 CLASSIC view, MAP tab: is the iPhone card (top left of the map) gone? Map still there? PHOTO'
     next
-    step 'C2 SMALL view with the MAP. PHOTO'
+    step 'C2 SPORT view with the MAP. PHOTO'
     next
     rm -f "$UM"
     step 'END: end the route. (Unplug and replug once more to get the iPhone card back.)'
@@ -190,10 +194,10 @@ layers)
         else
             step "$n: dmdt refused '$*' - just press Enter"; next; return
         fi
-        say "   LARGE view: tap the CAR tab, then the MAP tab again (that applies it)."
-        say "   $n-a LARGE view, MAP tab: CarPlay map? panel? PHOTO"
+        say "   CLASSIC view: tap the CAR tab, then the MAP tab again (that applies it)."
+        say "   $n-a CLASSIC view, MAP tab: CarPlay map? panel? PHOTO"
         next
-        say "   $n-b SMALL view with the map: CarPlay map? panel on the right? PHOTO"
+        say "   $n-b SPORT view with the map: CarPlay map? panel on the right? PHOTO"
         next
         dmdump "$n"
     }
@@ -201,7 +205,7 @@ layers)
     rm -f /tmp/tt-rgi-play.txt "$DIRECT"
     touch /tmp/tt-layer-off   # v37: keep the jar's own layer lists out of the way
     say 'Layer test. Parked, CarPlay running. About 10 steps, Enter for each, q stops (stock layers come back).'
-    step 'L0: start any route on the iPhone (parked is fine). LARGE view, MAP tab. CarPlay map showing? Then Enter.'
+    step 'L0: start any route on the iPhone (parked is fine). CLASSIC view, MAP tab. CarPlay map showing? Then Enter.'
     next
     dmdump 'L0 map, banner off (context 10)'
     touch "$DIRECT"
@@ -218,9 +222,9 @@ layers)
     try LD 16 60 20
     try LE 20 60 16
     dm dc 89 $S89 >/dev/null 2>&1 && say "Context 89 back to stock: $S89"; S89=
-    # Photo 3 of the v36 test: right after the window closed, the small view showed the
+    # Photo 3 of the v36 test: right after the window closed, the Sport view showed the
     # CarPlay map AND the panel in the right window. Try to catch that state on purpose.
-    step 'LZ: SMALL view with the map. Tap CAR, then MAP (window open, stock map). Then Enter: the window closes.'
+    step 'LZ: SPORT view with the map. Tap CAR, then MAP (window open, stock map). Then Enter: the window closes.'
     next
     rm -f "$DIRECT"; sleep 1; dmdump 'LZ 1 s after close'
     step 'LZ-a right after closing: CarPlay map AND panel on the right? PHOTO now, and again after 10 s.'
@@ -234,23 +238,24 @@ check)
     next(){ while :; do echo "      [Enter] next step, c = mark a CarPlay crash now, q = stop and save"; read a; case "$a" in q|Q) finish; exit 0;; c|C) mark "crash (step $S)";; *) return;; esac; done; }
     step(){ S=${1%%:*}; S=${S%% *}; say ''; say "== $1"; }
     rm -f /tmp/tt-rgi-play.txt /tmp/tt-kdk-direct /tmp/tt-layer-off /tmp/tt-rgi-kdk-map /tmp/tt-panel-pos
-    say "v38 check. jar: $(which_jar). Parked, iPhone plugged in, CarPlay running."
+    say "v39 check. jar: $(which_jar). Parked, iPhone plugged in, CarPlay running."
     say '   If the CarPlay tab goes black at any time: type c and Enter right away (marks the logs).'
+    say '   If the CarPlay icon only flickers after a replug: q, then sh tt.sh diag, then restart the MMI.'
     say "   layer lists now: map 10 = $(ctxlist 10)   map+banner 89 = $(ctxlist 89)"
     grep 'layers:' /tmp/tt-rgd.log 2>/dev/null | tail -2
     step 'P0: start a route on the iPhone (Google or Apple, parked is fine). Then Enter.'
     next
     dmdump 'P0 route on'
-    step 'P1 LARGE view, MAP tab: no stock straight-arrow before the first turn; then CarPlay map + panel in the stock frame? PHOTO'
+    step 'P1 CLASSIC view, MAP tab: no stock straight-arrow before the first turn; then CarPlay map + panel in the stock frame? PHOTO'
     next
-    step 'P2 LARGE view, CAR tab: panel in the stock frame. PHOTO'
+    step 'P2 CLASSIC view, CAR tab: panel in the stock frame. PHOTO'
     next
-    step 'P3 SMALL view with the map: CarPlay map + panel on the right? PHOTO'
+    step 'P3 SPORT view with the map: CarPlay map + panel on the right? PHOTO'
     next
-    step 'P4 SMALL view, trip computer: panel on the right. PHOTO'
+    step 'P4 SPORT view, trip computer: panel on the right. PHOTO'
     next
     dmdump 'P4'
-    step 'P5: END the route. LARGE view, MAP tab: banner gone within about 3 s, CarPlay map still there? PHOTO'
+    step 'P5: END the route. CLASSIC view, MAP tab: banner gone within about 3 s, CarPlay map still there? PHOTO'
     next
     step 'P6: UNPLUG the iPhone, wait 15 s, do NOT touch the tabs. MAP tab: STOCK map (not black)? PHOTO'
     next
@@ -263,6 +268,38 @@ check)
     dmdump 'P7 phone back'
     say "   layer lists now: map 10 = $(ctxlist 10)   map+banner 89 = $(ctxlist 89)"
     finish
+    ;;
+hookfix)
+    # CarPlay hook fix1 (scripts/patch_hook.py): a busy renderer port no longer blocks CarPlay.
+    # Writes one file on flash, keeps the original next to the kit. Takes effect after an MMI restart.
+    case "${2:-}" in
+        undo) src="$K/libaltscreen111.so.orig"; want=$HOOK_OLD;;
+        "") src="$K/libaltscreen111-fix1.so"; want=$HOOK_NEW;;
+        *) say 'Usage: sh tt.sh hookfix   |   sh tt.sh hookfix undo'; exit 2;;
+    esac
+    test -f "$src" || { say "missing $src (run setup with the kit, or nothing to undo)"; exit 1; }
+    "$T" $want "$src" || { say "$src is damaged - nothing changed."; exit 1; }
+    cur=$("$T" "$HOOK" 2>/dev/null)
+    test "$cur" = "$want" && { say 'Already in place.'; exit 0; }
+    test "$cur" = "$HOOK_OLD" -o "$cur" = "$HOOK_NEW" || { say "Unknown hook on the car ($cur) - nothing changed."; exit 1; }
+    rw
+    test -f "$K/libaltscreen111.so.orig" || cp "$HOOK" "$K/libaltscreen111.so.orig"
+    "$T" $HOOK_OLD "$K/libaltscreen111.so.orig" || { say 'Backup check failed - nothing changed.'; ro; exit 1; }
+    # new file + rename: the running process keeps the old file, the next start loads the new one
+    cp "$src" "$HOOK.new" && chmod 755 "$HOOK.new" && mv "$HOOK.new" "$HOOK"
+    "$T" $want "$HOOK" && r=0 || r=1
+    ro
+    test $r = 0 && say 'Done. Restart the MMI (hold the MMI knob) to load it.' || say 'Copy failed - check with: sh tt.sh report'
+    ;;
+diag)
+    # When the CarPlay icon only flickers: who holds the hook's ports? Added to the logs.
+    { echo "===== DIAG"; echo '--- processes'; pidin arg 2>/dev/null | grep -E 'dio_manager|cluster_|mm-ipod|sleep' | grep -v grep
+      echo '--- sockets'; netstat -an 2>/dev/null | grep -E '19820|19821|6031|19810'
+      echo '--- hook'; tail -20 /tmp/altscreen111.log 2>/dev/null
+      echo '--- renderer'; tail -10 /tmp/mu1438-cluster-runtime.log 2>/dev/null
+      for p in $(pidin arg 2>/dev/null | grep -E 'dio_manager|cluster_' | grep -v grep | awk '{print $1}'); do
+          echo "--- fds of $p"; pidin -p $p fds 2>/dev/null | head -40; done; } >> /tmp/tt-diag.txt 2>&1
+    tail -40 /tmp/tt-diag.txt; say ''; say 'Saved in /tmp/tt-diag.txt (sh tt.sh save keeps it).'
     ;;
 mark)
     shift; mark "${*:-crash}"
@@ -284,9 +321,9 @@ mode)
         direct) touch /tmp/tt-kdk-direct; say 'Mode: experiment, banner window opened directly (no nav-engine view).';;
         layersoff) touch /tmp/tt-layer-off; say 'Mode: stock layer lists (v36 behaviour: banner off on the map). Back: sh tt.sh mode default';;
         kdkmap) touch /tmp/tt-rgi-kdk-map; say 'Mode: stock banner on the map too (v32 behaviour, hides the CarPlay map).';;
-        nokdk) touch /tmp/tt-rgi-nokdk; say 'Mode: no stock banner (v26 behaviour: small view only).';;
+        nokdk) touch /tmp/tt-rgi-nokdk; say 'Mode: no stock banner (v26 behaviour: Sport view only).';;
         kdk) rm -f /tmp/tt-rgi-nokdk; touch /tmp/tt-rgi-kdk; say 'Mode: stock banner in every view.';;
-        nokdksmall) touch /tmp/tt-rgi-nokdk-small; say 'Mode: no stock banner in the small view either.';;
+        nokdksmall) touch /tmp/tt-rgi-nokdk-small; say 'Mode: no stock banner in the Sport view either.';;
         nopanel) touch /tmp/tt-panel-off; say 'Mode: nopanel (our turn panel off).';;
         noactive) touch /tmp/tt-rgi-noactive; say 'Mode: never report route active.';;
         nopad) touch /tmp/tt-rgi-nopad; say 'Arrows: bare 2-number shape.';;
@@ -309,9 +346,10 @@ panel)
     esac
     ;;
 report)
-    say "== jar: $(which_jar)    (v38 is the current one)"
+    say "== jar: $(which_jar)    (v39 is the current one)"
     say "== layers: map 10 = $(ctxlist 10)  map+banner 89 = $(ctxlist 89)  (v37 with CarPlay: 16 60 / 20 16 60)"
     grep "layers:" /tmp/tt-rgd.log 2>/dev/null | tail -3
+    h=$("$T" "$HOOK" 2>/dev/null); case "$h" in $HOOK_OLD) say '== CarPlay hook: original';; $HOOK_NEW) say '== CarPlay hook: fix1 (busy port no longer blocks CarPlay)';; *) say "== CarPlay hook: unknown ($h)";; esac
     test -f "$K/panel-bg.a8" && say '== panel background: installed' || say '== panel background: none'
     say '== switches:'
     ls /tmp/tt-rgi-* 2>/dev/null || say '(none)'
@@ -337,18 +375,20 @@ seen)
 save)
     n=1; while test -e "$K/logs/run$n"; do n=$((n+1)); done
     rw; mkdir -p "$K/logs/run$n"
-    for f in /tmp/tt-rgd.log /tmp/tt-rgd.log.1 /tmp/tt-nav.log /tmp/tt-zoom.log /tmp/tt-rgd.txt /tmp/tt-rgd-cat.txt /tmp/tt-route.txt /tmp/tt-dmdt.txt /tmp/altscreen111.log /tmp/mu1438-cluster-runtime.log /tmp/mibr-alt111-gen2.status /tmp/mibr-carplay111.state; do test -f "$f" && cp "$f" "$K/logs/run$n/"; done
+    for f in /tmp/tt-rgd.log /tmp/tt-rgd.log.1 /tmp/tt-nav.log /tmp/tt-zoom.log /tmp/tt-rgd.txt /tmp/tt-rgd-cat.txt /tmp/tt-route.txt /tmp/tt-dmdt.txt /tmp/altscreen111.log /tmp/mu1438-cluster-runtime.log /tmp/mibr-alt111-gen2.status /tmp/mibr-carplay111.state /tmp/tt-diag.txt; do test -f "$f" && cp "$f" "$K/logs/run$n/"; done
     ro
     say "Saved to $K/logs/run$n (kept across MMI restarts). On the Mac:"
     say "scp -O -r -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedAlgorithms=+ssh-rsa root@10.173.189.1:$K/logs ~/Downloads/tt-logs"
     ;;
 *)
     say 'sh tt.sh report              what is installed and what it is doing (paste this)'
-    say 'sh tt.sh use v38             switch version (v38 ... v12), then restart the MMI'
+    say 'sh tt.sh use v39             switch version (v39 ... v12), then restart the MMI'
     say 'sh tt.sh play map|new|fit|win|kdk|panel|komo|stock  parked tests'
     say 'sh tt.sh play arrows | stop  arrow catalogue / stop playback'
     say 'sh tt.sh test                the full guided test, Enter for each step, then saves the logs'
     say 'sh tt.sh check               v38 guided check (Enter for each step, c marks a CarPlay crash)'
+    say 'sh tt.sh hookfix [undo]      CarPlay hook fix1: a busy port no longer blocks CarPlay (flash, then MMI restart)'
+    say 'sh tt.sh diag                when the CarPlay icon only flickers: record who holds the ports'
     say 'sh tt.sh mark [text]         put a marker line into all logs (e.g. right after a crash)'
     say 'sh tt.sh layers              parked layer test for the map + banner (context 89)'
     say 'sh tt.sh layer89 stock|LIST  set the map + banner layers by hand (memory only)'

@@ -5,7 +5,7 @@ panel parent top
 panel kdk alpha 0
 panel turn 15,192,-1 600 255 0:0/0:0/0:0/0,45:1/45:2 4800 420 12A Spring Cypress Rd
 panel kdk info
-say STEP A (25 s) SMALL VIEW: stock banner transparent, our panel in our own top layer
+say STEP A (25 s) SPORT VIEW: stock banner transparent, our panel in our own top layer
 panel turn 15,192,-1 600 255 0:0/0:0/0:0/0,45:1/45:2 4800 420 12A Spring Cypress Rd
 wait 3000
 panel turn 15,192,-1 588 249 0:0/0:0/0:0/0,45:1/45:2 4788 420 12A Spring Cypress Rd
@@ -23,7 +23,7 @@ wait 3000
 panel turn 15,192,-1 516 219 0:0/0:0/0:0/0,45:1/45:2 4716 420 12A Spring Cypress Rd
 wait 3000
 panel kdk info
-say STEP B (25 s) SMALL VIEW: also hide the grey stock frame
+say STEP B (25 s) SPORT VIEW: also hide the grey stock frame
 panel kdkbg hide
 panel turn 15,192,-1 504 214 0:0/0:0/0:0/0,45:1/45:2 4704 420 12A Spring Cypress Rd
 wait 3000
@@ -41,7 +41,7 @@ panel turn 15,192,-1 432 183 0:0/0:0/0:0/0,45:1/45:2 4632 420 12A Spring Cypress
 wait 3000
 panel turn 15,192,-1 420 178 0:0/0:0/0:0/0,45:1/45:2 4620 420 12A Spring Cypress Rd
 wait 3000
-say STEP C (30 s) LARGE VIEW, CAR TAB: banner spot forced on, full panel there
+say STEP C (30 s) CLASSIC VIEW, CAR TAB: banner spot forced on, full panel there
 panel kdk force 1
 panel layout full
 panel turn 15,192,-1 408 173 0:0/0:0/0:0/0,45:1/45:2 4608 420 12A Spring Cypress Rd
@@ -65,7 +65,7 @@ wait 3000
 panel turn 15,192,-1 300 127 0:0/0:0/0:0/0,45:1/45:2 4500 420 12A Spring Cypress Rd
 wait 3000
 panel kdk info
-say STEP D (25 s) LARGE VIEW, MAP TAB: normal two banners over the map, stock banner off
+say STEP D (25 s) CLASSIC VIEW, MAP TAB: normal two banners over the map, stock banner off
 panel kdk force 0
 panel layout auto
 panel kdkbg show

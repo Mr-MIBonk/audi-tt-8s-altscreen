@@ -31,3 +31,20 @@
 
 `package/` still holds the early jar; refreshing it is an open item. Day-to-day
 testing uses the `kit/` toolkit instead ([Build and test](Build-and-test.md)).
+
+## Hook fix1: a busy port no longer blocks CarPlay
+
+Car log (run32): after the iPhone dropped, each reconnect loaded the hook again, but the
+renderer tee port 127.0.0.1:19820 was still held by the old session. The hook logged
+`cannot start local H264 tee; AltScreen disabled fail-closed` and returned before it looked
+up the stock `AirPlayReceiverSession*` functions; its exported replacements still took the
+calls and found no stock delegate (`FATAL no stock SessionSetup delegate`), so every setup
+failed and the CarPlay icon only flickered (about 30 attempts, 11 frames each).
+
+`scripts/patch_hook.py` changes one instruction in the shipped `libaltscreen111.so`
+(`mov r3, r6` -> `mov r3, #1` before the tee's `bind_listener_ipv4`): with 19820 busy the tee
+takes a free port, the hook finishes its start-up and CarPlay connects. The cockpit renderer
+still connects to 19820, so the cockpit map waits for the old holder to go. Install with
+`sh tt.sh hookfix` (keeps the original, `sh tt.sh hookfix undo`), then restart the MMI.
+Open: which process keeps 19820 (`sh tt.sh diag` records it). Likely related: the hook
+spawns `cluster_supervisor.sh` without close-on-exec on its listening sockets.

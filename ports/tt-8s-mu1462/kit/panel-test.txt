@@ -1,7 +1,7 @@
-# Turn panel demo (tt-zoom v23), parked. Large view: LEFT banner (maneuver) + RIGHT banner (destination).
-# Small view: one full panel on the right. Switch views during the demo to see both.
+# Turn panel demo (tt-zoom v23), parked. Classic view: LEFT banner (maneuver) + RIGHT banner (destination).
+# Sport view: one full panel on the right. Switch views during the demo to see both.
 say turn panel demo start
-# Declare a route so the small view shows the stock banner spot (our panel is drawn on it).
+# Declare a route so the Sport view shows the stock banner spot (our panel is drawn on it).
 active 1
 panel turn 11,255 3200 -1 - 9000 780 - Grand Pkwy
 wait 4000

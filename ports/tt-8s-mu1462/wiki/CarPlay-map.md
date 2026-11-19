@@ -9,11 +9,11 @@ compared on the car (`package/safe-preset.sh`); `h320` fits the TT window best.
 
 ## Small-view layout
 
-"Classic/Sport" on this car is the cockpit's large/small view size; the skin
+"Classic/Sport" on this car is the cockpit's large/Sport view size; the skin
 stays 1 (Sport) throughout.
 
 **How it works:** `tt-zoom.jar` creates `/tmp/mu1438-cluster-sport` in the small
-view and deletes it in the large view. The patched renderer (`scripts/mkrt.py`)
+view and deletes it in the Classic view. The patched renderer (`scripts/mkrt.py`)
 re-reads the decoder attributes every 8 frames and, while the file exists, crops
 the source at x = 453: crop (453,0,987,540) drawn at (0,0,987,540).
 
