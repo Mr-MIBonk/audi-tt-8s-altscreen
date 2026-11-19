@@ -212,6 +212,15 @@ layers)
     try LC 20 16 60
     try LD 16 60 20
     try LE 20 60 16
+    dm dc 89 $S89 >/dev/null 2>&1 && say "Context 89 back to stock: $S89"; S89=
+    # Photo 3 of the v36 test: right after the window closed, the small view showed the
+    # CarPlay map AND the panel in the right window. Try to catch that state on purpose.
+    step 'LZ: SMALL view with the map. Tap CAR, then MAP (window open, stock map). Then Enter: the window closes.'
+    next
+    rm -f "$DIRECT"; sleep 1; dmdump 'LZ 1 s after close'
+    step 'LZ-a right after closing: CarPlay map AND panel on the right? PHOTO now, and again after 10 s.'
+    next
+    dmdump 'LZ later'
     finish
     ;;
 dm)
