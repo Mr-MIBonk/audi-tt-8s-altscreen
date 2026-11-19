@@ -23,6 +23,8 @@ login folder:
 | `sh tt.sh report` | What is installed and running |
 | `sh tt.sh test` | The full guided test in one session, paced by Enter (q stops and saves): parked demo, new pictures, live Google and Apple routes, experiments; saves the logs at the end |
 | `sh tt.sh use vNN` | Install a stored jar (sha-checked); then restart the MMI |
+| `sh tt.sh layers` | Parked layer test: opens the banner window, then tries five layer lists for context 89 in the display manager's memory (`dmdt dc`), one photo per view each; the stock list comes back at the end, on `q`, or at an MMI restart |
+| `sh tt.sh dm [label]` | Adds `dmdt gs/gc/gd` output to `/tmp/tt-dmdt.txt` (saved with the logs) |
 | `sh tt.sh play new\|fit\|win\|kdk\|panel\|komo\|stock\|arrows` | Parked test scripts |
 | `sh tt.sh stop` | End playback |
 | `sh tt.sh seen` | What the iPhone has sent so far (maneuver types, lanes) |

@@ -33,6 +33,11 @@ V36=03994ca30aeb49c99c10297ae991ce905477db76fc50007c7f300d8cbb2caab4
 T=$K/altscreen-sha256
 
 say(){ echo "$*"; }
+dm(){ LD_LIBRARY_PATH=/eso/lib:/mnt/app/root/lib-target:/mnt/app/usr/lib:/mnt/app/armle/lib:/mnt/app/armle/lib/dll:/mnt/app/armle/usr/lib IPL_CONFIG_DIR=/etc/eso/production /eso/bin/apps/dmdt "$@"; }
+# Dump the display manager state into /tmp/tt-dmdt.txt with a label.
+dmdump(){ { echo "===== $1  $(date)"; echo '--- gs'; dm gs; echo '--- gc'; dm gc; echo '--- gd'; dm gd; } >> /tmp/tt-dmdt.txt 2>&1; }
+# Displayables of one context, from the newest gc dump.
+ctxlist(){ dm gc 2>/dev/null | awk -v c="$1" '$1==c && $2=="|" {f=1; next} f && /^[ \t]*-+/ {next} f && NF==0 {exit} f && $1 ~ /^-?[0-9]+$/ {printf "%s ", $1}'; }
 rw(){ mount -uw /mnt/app || { say 'Cannot make /mnt/app writable.'; exit 1; }; }
 ro(){ sync; mount -ur /mnt/app 2>/dev/null; }
 which_jar(){
@@ -160,6 +165,58 @@ test)
     step 'END: end the route. (Unplug and replug once more to get the iPhone card back.)'
     finish
     ;;
+layers)
+    # Parked test of the cockpit layer lists (dmdt). Context 89 = map + banner; its layer
+    # list is changed in the display manager's memory only (no flash; an MMI restart or
+    # the end of this test puts the stock list back).
+    DIRECT=/tmp/tt-kdk-direct
+    S89=
+    finish(){
+        if test -n "$S89"; then dm dc 89 $S89 >/dev/null 2>&1 && say "Context 89 back to stock: $S89"; fi
+        rm -f "$DIRECT"; dmdump 'end'
+        say ''; say '== Saving the logs.'; sh "$0" save; say 'Done. Send the photos (named by step) and the newest logs folder.'
+    }
+    next(){ echo "      [Enter] next step, q = stop and save"; read a; case "$a" in q|Q) finish; exit 0;; esac; }
+    step(){ say ''; say "== $1"; }
+    try(){
+        # $1 = name, rest = layer list for context 89
+        n=$1; shift
+        if dm dc 89 "$@" >/dev/null 2>&1; then
+            echo "$(date) 89 = $*" >> /tmp/tt-dmdt.txt
+            step "$n: context 89 is now: $* (stock: $S89)"
+        else
+            step "$n: dmdt refused '$*' - just press Enter"; next; return
+        fi
+        say "   LARGE view: tap the CAR tab, then the MAP tab again (that applies it)."
+        say "   $n-a LARGE view, MAP tab: CarPlay map? panel? PHOTO"
+        next
+        say "   $n-b SMALL view with the map: CarPlay map? panel on the right? PHOTO"
+        next
+        dmdump "$n"
+    }
+    test -x /eso/bin/apps/dmdt || { say 'dmdt not found on this unit.'; exit 1; }
+    rm -f /tmp/tt-rgi-play.txt "$DIRECT"
+    say 'Layer test. Parked, CarPlay running. About 10 steps, Enter for each, q stops (stock layers come back).'
+    step 'L0: start any route on the iPhone (parked is fine). LARGE view, MAP tab. CarPlay map showing? Then Enter.'
+    next
+    dmdump 'L0 map, banner off (context 10)'
+    touch "$DIRECT"
+    step 'L1: banner window opened (experiment mode). Stock map should now cover CarPlay. PHOTO'
+    next
+    dmdump 'L1 banner on (context 89)'
+    S89=$(ctxlist 89)
+    say "   context 10 = $(ctxlist 10)   context 89 = $S89   context 901 = $(ctxlist 901)"
+    test -n "$S89" || { say 'Could not read context 89 - stopping (nothing changed).'; S89=; finish; exit 1; }
+    try LA 20 16
+    try LB 16 19 20
+    try LC 20 16 60
+    try LD 16 60 20
+    try LE 20 60 16
+    finish
+    ;;
+dm)
+    dmdump "${2:-manual}"; say "Display manager state added to /tmp/tt-dmdt.txt (context 89: $(ctxlist 89))"
+    ;;
 mode)
     case "${2:-}" in
         default) rm -f /tmp/tt-kdk-direct /tmp/tt-rgi-kdk-map /tmp/tt-rgi-noactive /tmp/tt-rgi-kdk /tmp/tt-rgi-nokdk /tmp/tt-rgi-nokdk-small /tmp/tt-rgi-nopad /tmp/tt-rgi-off /tmp/tt-panel-off; say 'Mode: default (our panel inside the stock banner, every view).';;
@@ -216,7 +273,7 @@ seen)
 save)
     n=1; while test -e "$K/logs/run$n"; do n=$((n+1)); done
     rw; mkdir -p "$K/logs/run$n"
-    for f in /tmp/tt-rgd.log /tmp/tt-rgd.log.1 /tmp/tt-nav.log /tmp/tt-zoom.log /tmp/tt-rgd.txt /tmp/tt-rgd-cat.txt /tmp/tt-route.txt; do test -f "$f" && cp "$f" "$K/logs/run$n/"; done
+    for f in /tmp/tt-rgd.log /tmp/tt-rgd.log.1 /tmp/tt-nav.log /tmp/tt-zoom.log /tmp/tt-rgd.txt /tmp/tt-rgd-cat.txt /tmp/tt-route.txt /tmp/tt-dmdt.txt; do test -f "$f" && cp "$f" "$K/logs/run$n/"; done
     ro
     say "Saved to $K/logs/run$n (kept across MMI restarts). On the Mac:"
     say "scp -O -r -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedAlgorithms=+ssh-rsa root@10.173.189.1:$K/logs ~/Downloads/tt-logs"
@@ -227,6 +284,8 @@ save)
     say 'sh tt.sh play map|new|fit|win|kdk|panel|komo|stock  parked tests'
     say 'sh tt.sh play arrows | stop  arrow catalogue / stop playback'
     say 'sh tt.sh test                the full guided test, Enter for each step, then saves the logs'
+    say 'sh tt.sh layers              parked layer test for the map + banner (context 89)'
+    say 'sh tt.sh dm [label]          add the display manager state to the logs'
     say 'sh tt.sh seen                what the iPhone sent so far (maneuver types, lanes)'
     say 'sh tt.sh mode default|nokdk|kdk|nopanel|noactive|nopad|off|on'
     say 'sh tt.sh panel kdk-small|kdk-large X Y [S]  move/resize the panel live (reset | show)'

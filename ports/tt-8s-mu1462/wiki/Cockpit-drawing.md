@@ -72,7 +72,17 @@ The banner spot shows only while the stock banner (KDK displayable 20) is on.
   context 89 is not a different layout; what paints the stock map over CarPlay must
   be something the banner request triggers (likely the nav engine's guidance view).
   v36 experiment `/tmp/tt-kdk-direct` opens the window with `setKDKVisible(20, 0)`
-  and never asks for the guidance view.
+  and never asks for the guidance view. Result: still context 89, no guidance-view
+  events in `tt-nav.log`, and the CarPlay map was still lost; map and panel showed
+  together only for a moment while the window closed (89 -> 10). That rules out the
+  nav engine's view.
+- Context layer lists (Java `defineContexts`): 10 = {16, 19}, 89 = {20, 16, 19},
+  79 = {20, 16}, 78 = {16, 59}. Native names from MU0678 `dmdt`: 16 HMI, 19 MAPVIEWER,
+  20 MAP_ROUTE_GUIDANCE (328x180, the banner window), 59 EXTERNAL_SMARTPHONE; the
+  CarPlay picture is layer 60 (`cluster_runtime`, context 901 = {16, 60}).
+  Candidate cause: with the banner, layer 19 (stock map) is composed above layer 60.
+  On MU0678 `dmdt dc` redeclared an existing context in memory, so `sh tt.sh layers`
+  tries other lists for 89 without touching flash.
 - Contexts logged by v33 (both views): map 10; map with banner 89; car page with
   banner 79. Every tab switch passes through 78 and 157 (78 + 79) for under a
   second: map to car is 10, 78, 157, 79; car to map is 79, 157, 89, 10.

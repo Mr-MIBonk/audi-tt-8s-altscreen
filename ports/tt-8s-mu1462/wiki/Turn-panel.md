@@ -104,7 +104,7 @@ cluster. Code 12 stays stock's "prepare" icon, so lane change got its own code.
 | v33 | Banner off while the map shows (context 10/89), own frame on the map, full-screen grid | Map kept on live Google and Apple routes in every view; banner back on the car page. At a playback start the banner stayed up about 11 s |
 | v34 | Map check reads the live context; the watcher runs for as long as a route is declared | Photos: CarPlay map + framed panel on the large map, panel in the stock frame on the car pages. Small view with the map: map kept, panel not visible (its window is gone) |
 | v35 | Small view with the map: panel over the map at 130,76; U-turn lanes drawn as a hook; street names shrink before "..." | Test pending |
-| v36 | v35 plus an experiment switch: banner window opened directly, nav engine left out (could give map and panel at the usual spot in the small view) | Test pending (guided test part X) |
+| v36 | v35 plus an experiment switch: banner window opened directly, nav engine left out (could give map and panel at the usual spot in the small view) | Window opened (context 10 -> 89) without any guidance-view request, but the CarPlay map still lost; both showed together only for a moment when the window closed. So the nav engine's view is not the cause. Next: `sh tt.sh layers` |
 
 Previews: [v27](../docs/panel-preview-v27.png), [v28](../docs/panel-preview-v28.png),
 [v29](../docs/panel-preview-v29.png), [v30](../docs/panel-preview-v30.png),
