@@ -92,6 +92,15 @@ play)
 stop)
     rm -f /tmp/tt-rgi-play.txt; say 'Playback stopped; iPhone feed resumes in a few seconds.'
     ;;
+test)
+    # One command for a whole test round: map test once (M1..M4, 20 s each), then stop and save.
+    cp "$K/map-test.txt" /tmp/tt-rgi-play.txt || exit 1
+    say 'Test running, about 85 s. Every 20 s: M1 large view MAP tab, M2 large view CAR tab,'
+    say 'M3 small view with the MAP (grid), M4 small view trip computer. One photo each.'
+    i=0; while test $i -lt 85; do sleep 5; i=$((i+5)); say "... ${i} s"; done
+    rm -f /tmp/tt-rgi-play.txt
+    sh "$0" save
+    ;;
 mode)
     case "${2:-}" in
         default) rm -f /tmp/tt-rgi-kdk-map /tmp/tt-rgi-noactive /tmp/tt-rgi-kdk /tmp/tt-rgi-nokdk /tmp/tt-rgi-nokdk-small /tmp/tt-rgi-nopad /tmp/tt-rgi-off /tmp/tt-panel-off; say 'Mode: default (our panel inside the stock banner, every view).';;
@@ -157,6 +166,7 @@ save)
     say 'sh tt.sh use v33             switch version (v33 ... v12), then restart the MMI'
     say 'sh tt.sh play map|new|fit|win|kdk|panel|komo|stock  parked tests'
     say 'sh tt.sh play arrows | stop  arrow catalogue / stop playback'
+    say 'sh tt.sh test                one test round: map test, then saves the logs'
     say 'sh tt.sh seen                what the iPhone sent so far (maneuver types, lanes)'
     say 'sh tt.sh mode default|nokdk|kdk|nopanel|noactive|nopad|off|on'
     say 'sh tt.sh panel kdk-small|kdk-large X Y [S]  move/resize the panel live (reset | show)'
