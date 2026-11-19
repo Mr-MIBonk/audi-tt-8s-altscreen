@@ -96,71 +96,69 @@ stop)
     rm -f /tmp/tt-rgi-play.txt; say 'Playback stopped; iPhone feed resumes in a few seconds.'
     ;;
 test)
-    # One session, one SSH connection (v35): parked demo, the new pictures, live Google and
-    # Apple Maps routes, then the iPhone's own maneuver card switched off. Saves at the end.
-    # Keep this SSH window open; if it drops, run it again (it starts over).
+    # One session, one SSH connection, paced by you: each step waits for Enter, so steps can
+    # be skipped or taken slowly. q (then Enter) at any prompt stops, cleans up and saves.
     PL=/tmp/tt-rgi-play.txt
     UM=/tmp/mibr-alt111-url-mode
-    wait_s(){ n=$1; while test "$n" -gt 0; do sleep 5; n=$((n-5)); say "      ... $n s"; done; }
+    DIRECT=/tmp/tt-kdk-direct
+    finish(){ rm -f "$PL" "$UM" "$DIRECT"; say ''; say '== Saving the logs.'; sh "$0" save; say 'Done. Send the photos (named by step) and the newest logs folder.'; }
+    next(){ echo "      [Enter] next step, q = stop and save"; read a; case "$a" in q|Q) finish; exit 0;; esac; }
     step(){ say ''; say "== $1"; }
-    rm -f /tmp/tt-panel-pos
-    say 'Full test, about 10 minutes. iPhone plugged in, CarPlay running, parked. Photos where it says PHOTO.'
-    step 'PART 1: parked demo (no route needed). Starting in 10 s.'
-    sleep 10
-    cp "$K/map-test.txt" "$PL" || exit 1
-    step 'M1 (20 s) LARGE view, MAP tab: CarPlay map + our framed panel. PHOTO'
-    wait_s 20
-    step 'M2 (20 s) LARGE view, CAR tab: panel inside the stock frame. PHOTO'
-    wait_s 20
-    step 'M3 (20 s) SMALL view with the MAP: panel over the map, left of the tach. PHOTO'
-    wait_s 20
-    step 'M4 (20 s) SMALL view, trip computer page: panel at its usual spot. PHOTO'
-    wait_s 20
+    rm -f /tmp/tt-panel-pos "$DIRECT"
+    say 'Guided test. iPhone plugged in, CarPlay running, parked. PHOTO = take one photo.'
+    say 'Each step waits for Enter. Skip a step by just pressing Enter.'
+    next
+    step 'PART 1: parked demo (no route needed). A demo panel (exit 12A with lanes) stays up.'
+    cp "$K/place-test.txt" "$PL" || exit 1
+    step 'M1 LARGE view, MAP tab: CarPlay map + our framed panel. PHOTO'
+    next
+    step 'M2 LARGE view, CAR tab: panel inside the stock frame. PHOTO'
+    next
+    step 'M3 SMALL view with the MAP: panel over the map, left of the tach. PHOTO'
+    next
+    step 'M4 SMALL view, trip computer page: panel at its usual spot. PHOTO'
+    next
     cp "$K/new-test.txt" "$PL"
-    step 'N (75 s) LARGE view, MAP tab: all new pictures with our own frame. PHOTO only if one looks wrong.'
-    wait_s 75
+    step 'N LARGE view, MAP tab: all new pictures cycle (about 75 s for all). PHOTO only if one looks wrong.'
+    next
     rm -f "$PL"
-    step 'PART 2: live routes.'
-    step 'G0 (30 s) Start a GOOGLE MAPS route now, somewhere a few miles away.'
-    wait_s 30
-    step 'G1 (15 s) LARGE view, MAP tab. PHOTO'
-    wait_s 15
-    step 'G2 (15 s) LARGE view, CAR tab. PHOTO'
-    wait_s 15
-    step 'G3 (15 s) SMALL view with the MAP. PHOTO'
-    wait_s 15
-    step 'G4 (15 s) SMALL view, trip computer. PHOTO'
-    wait_s 15
-    step 'A0 (30 s) End the Google route. Start an APPLE MAPS route now.'
-    wait_s 30
-    step 'A1 (15 s) LARGE view, MAP tab. PHOTO'
-    wait_s 15
-    step 'A2 (15 s) SMALL view with the MAP. PHOTO'
-    wait_s 15
+    step 'PART 2: live routes. G0: start a GOOGLE MAPS route now, somewhere a few miles away.'
+    next
+    step 'G1 LARGE view, MAP tab. PHOTO'
+    next
+    step 'G2 LARGE view, CAR tab. PHOTO'
+    next
+    step 'G3 SMALL view with the MAP. PHOTO'
+    next
+    step 'G4 SMALL view, trip computer. PHOTO'
+    next
+    step 'A0: end the Google route, start an APPLE MAPS route now.'
+    next
+    step 'A1 LARGE view, MAP tab. PHOTO'
+    next
+    step 'A2 SMALL view with the MAP. PHOTO'
+    next
     step 'PART X: experiment, keep the Apple route running. Banner window opened directly, nav engine left out.'
-    touch /tmp/tt-kdk-direct
-    step 'X1 (20 s) SMALL view with the MAP: CarPlay map AND the panel on the right? PHOTO'
-    wait_s 20
-    step 'X2 (15 s) LARGE view, MAP tab: CarPlay map still there? PHOTO'
-    wait_s 15
-    step 'X3 (15 s) LARGE view, CAR tab: panel in its window? PHOTO'
-    wait_s 15
-    rm -f /tmp/tt-kdk-direct
-    step 'X4 (10 s) experiment off (back to normal).'
-    wait_s 10
+    touch "$DIRECT"
+    step 'X1 SMALL view with the MAP: CarPlay map AND the panel on the right? PHOTO'
+    next
+    step 'X2 LARGE view, MAP tab: CarPlay map still there? PHOTO'
+    next
+    step 'X3 LARGE view, CAR tab: panel in its window? PHOTO'
+    next
+    rm -f "$DIRECT"
+    step 'Experiment off (back to normal).'
     step 'PART 3: the iPhone draws its own maneuver card on the map. Try switching it off.'
     echo map > "$UM"
-    step 'C0 (60 s) UNPLUG the iPhone, wait 5 s, PLUG it back in, wait for CarPlay, start any route.'
-    wait_s 60
-    step 'C1 (20 s) LARGE view, MAP tab: is the iPhone card (top left of the map) gone? Map still there? PHOTO'
-    wait_s 20
-    step 'C2 (15 s) SMALL view with the MAP. PHOTO'
-    wait_s 15
+    step 'C0: UNPLUG the iPhone, wait 5 s, PLUG it back in, wait for CarPlay, start any route. Then Enter.'
+    next
+    step 'C1 LARGE view, MAP tab: is the iPhone card (top left of the map) gone? Map still there? PHOTO'
+    next
+    step 'C2 SMALL view with the MAP. PHOTO'
+    next
     rm -f "$UM"
-    step 'END (10 s) End the route. Saving the logs. (Unplug and replug once more to get the card back.)'
-    wait_s 10
-    sh "$0" save
-    say 'Done. Send the photos (named by step) and the newest logs folder.'
+    step 'END: end the route. (Unplug and replug once more to get the iPhone card back.)'
+    finish
     ;;
 mode)
     case "${2:-}" in
@@ -228,7 +226,7 @@ save)
     say 'sh tt.sh use v36             switch version (v36 ... v12), then restart the MMI'
     say 'sh tt.sh play map|new|fit|win|kdk|panel|komo|stock  parked tests'
     say 'sh tt.sh play arrows | stop  arrow catalogue / stop playback'
-    say 'sh tt.sh test                the full guided test (about 10 min), then saves the logs'
+    say 'sh tt.sh test                the full guided test, Enter for each step, then saves the logs'
     say 'sh tt.sh seen                what the iPhone sent so far (maneuver types, lanes)'
     say 'sh tt.sh mode default|nokdk|kdk|nopanel|noactive|nopad|off|on'
     say 'sh tt.sh panel kdk-small|kdk-large X Y [S]  move/resize the panel live (reset | show)'
