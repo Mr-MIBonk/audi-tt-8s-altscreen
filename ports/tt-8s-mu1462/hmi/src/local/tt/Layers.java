@@ -25,6 +25,14 @@ public final class Layers implements Runnable {
     private static final File ACTIVE = new File("/tmp/mu1438-cluster-active");
     private static final File OFF = new File("/tmp/tt-layer-off");
     private static final File STATUS = new File("/tmp/mibr-alt111-gen2.status");
+    /** v41: "1" while a map view shows (context 10/89), else "0"; supervisor v5 starts the
+     *  renderer only then, so car tab <-> CarPlay tab flips never start it. */
+    private static final File MAP_VIEW = new File("/tmp/tt-map-view");
+    private static int mapFlag = -1;
+    /** v41: the iPhone's route-guidance link went (unplugged): stock lists at once. */
+    private static volatile long goneAt;
+    /** v41: since when the CarPlay tab holds the CarPlay lists (at most 30 s). */
+    private static long tabSince;
     private static final String DMDT = "/eso/bin/apps/dmdt";
     private static final String[] ENV = {
         "LD_LIBRARY_PATH=/eso/lib:/mnt/app/root/lib-target:/mnt/app/usr/lib:/mnt/app/armle/lib:/mnt/app/armle/lib/dll:/mnt/app/armle/usr/lib",
@@ -41,6 +49,11 @@ public final class Layers implements Runnable {
     private static int fails;
 
     private Layers() {
+    }
+
+    /** RgdBus: the iPhone's link ended. */
+    static void phoneGone() {
+        goneAt = System.currentTimeMillis();
     }
 
     /** True while the CarPlay lists are in place (banner allowed on the map). */
@@ -70,14 +83,19 @@ public final class Layers implements Runnable {
             Thread.sleep(5000L);
         } catch (Throwable ignored) {
         }
+        int n = 0;
         while (true) {
             try {
-                tick();
+                mapView();
+                // every 2 s, or at once after the iPhone went
+                if (n++ % 10 == 0 || (goneAt > 0 && on && System.currentTimeMillis() - goneAt < 1000L)) {
+                    tick();
+                }
             } catch (Throwable t) {
                 RgdBus.note(new StringBuffer("layers: ").append(String.valueOf(t)).toString());
             }
             try {
-                Thread.sleep(2000L);
+                Thread.sleep(200L);
             } catch (Throwable ignored) {
             }
         }
@@ -91,13 +109,22 @@ public final class Layers implements Runnable {
             lastFresh = now;
         }
         boolean want;
+        boolean tab = !fresh && on && carplayTab();
+        if (!tab) {
+            tabSince = 0;
+        } else if (tabSince == 0) {
+            tabSince = now;
+        }
         if (OFF.exists()) {
             want = false;
         } else if (fresh) {
             want = true;
-        } else if (on && carplayTab()) {
+        } else if (goneAt > 0 && now - goneAt < 15000L) {
+            // v41 (car test): unplugged on the map tab, the map stayed black.
+            want = false;
+        } else if (tab && now - tabSince < 30000L) {
             // v40: the supervisor pauses the renderer while the CarPlay tab has the screen; keep
-            // the CarPlay lists so the map is back as soon as the renderer is.
+            // the CarPlay lists so the map is back as soon as the renderer is (v41: at most 30 s).
             want = true;
             lastFresh = now;
         } else if (stamp <= 0) {
@@ -135,6 +162,28 @@ public final class Layers implements Runnable {
         try {
             de.audi.tghu.navi.app.cluster.TtRgi.viewChanged();
         } catch (Throwable ignored) {
+        }
+    }
+
+    /** v41: tell supervisor v5 whether a map view shows. */
+    private static void mapView() {
+        int m = TtPanel.mapShowing() ? 1 : 0;
+        if (m == mapFlag) {
+            return;
+        }
+        java.io.FileOutputStream out = null;
+        try {
+            out = new java.io.FileOutputStream(MAP_VIEW);
+            out.write(m == 1 ? "1\n".getBytes() : "0\n".getBytes());
+            mapFlag = m;
+        } catch (Throwable ignored) {
+        } finally {
+            try {
+                if (out != null) {
+                    out.close();
+                }
+            } catch (Throwable ignored) {
+            }
         }
     }
 

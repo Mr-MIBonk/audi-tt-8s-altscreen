@@ -34,10 +34,12 @@ V37=9b20688cbc8d74991c7075746de6c30fe8686e0247bba62387aa7e1d9b5c66c4
 V38=c3ad31212c5c364030be092dff941e7ffd39f02003cd7857d858f9684683822c
 V39=0a7636fc436d53426f2684d08116172c0410651b9416914f69009ef611ef7d9f
 V40=799e2cf291bfb05a728875c6c227dc5b9e93fd317796bcc1d20527dce7ac8c14
+V41=0fdfdb631f0ad028af51d5e7bf78bab03d908877d344e0de03ba41c8a23864b4
 SUP=/mnt/app/root/mu1438-cluster/cluster_supervisor.sh
 SUP_V2=9175a6deaff6acf2c4f35b61b245476ba8827e7f4b74977b48cdafc2c7c6f57c
 SUP_V3=4c37a375954a387e4938fbabcad868bb2fcc4207a97bcbe599421974e75f06bd
 SUP_V4=d520d1971e843bdbdc2898a7e64b09b2fbb3d6b7495a6374a420769446bbb8ed
+SUP_V5=5a746386705da855b4d88c33042122d54e44ebbd8516165325bf3839e0627282
 HOOK=/mnt/app/root/lib-target/libaltscreen111.so
 # CarPlay hook builds: shipped, h320 safe-area preset (what the TT runs), and their fix1 versions
 HOOK_STOCK=9a8c01ec8323d5de7695e212ff6168b0bb7df99d8554c9971f5449c5a21d6256
@@ -60,20 +62,20 @@ ro(){ sync; mount -ur /mnt/app 2>/dev/null; }
 which_jar(){
     h=$("$T" "$JAR" 2>/dev/null)
     case "$h" in
-        $V12) echo v12;; $V14) echo v14;; $V15) echo v15;; $V16) echo v16;; $V17) echo v17;; $V18) echo v18;; $V19) echo v19;; $V20) echo v20;; $V21) echo v21;; $V22) echo v22;; $V23) echo v23;; $V24) echo v24;; $V25) echo v25;; $V26) echo v26;; $V27) echo v27;; $V28) echo v28;; $V29) echo v29;; $V30) echo v30;; $V31) echo v31;; $V32) echo v32;; $V33) echo v33;; $V34) echo v34;; $V35) echo v35;; $V36) echo v36;; $V37) echo v37;; $V38) echo v38;; $V39) echo v39;; $V40) echo v40;; "") echo none;; *) echo "unknown ($h)";;
+        $V12) echo v12;; $V14) echo v14;; $V15) echo v15;; $V16) echo v16;; $V17) echo v17;; $V18) echo v18;; $V19) echo v19;; $V20) echo v20;; $V21) echo v21;; $V22) echo v22;; $V23) echo v23;; $V24) echo v24;; $V25) echo v25;; $V26) echo v26;; $V27) echo v27;; $V28) echo v28;; $V29) echo v29;; $V30) echo v30;; $V31) echo v31;; $V32) echo v32;; $V33) echo v33;; $V34) echo v34;; $V35) echo v35;; $V36) echo v36;; $V37) echo v37;; $V38) echo v38;; $V39) echo v39;; $V40) echo v40;; $V41) echo v41;; "") echo none;; *) echo "unknown ($h)";;
     esac
 }
 
 case "${1:-help}" in
 setup)
     # Run from /tmp after copying the kit there. Safe to run again for a kit update.
-    test -f /tmp/tt-zoom-v40.jar || { say 'Copy the kit files to /tmp first.'; exit 1; }
+    test -f /tmp/tt-zoom-v41.jar || { say 'Copy the kit files to /tmp first.'; exit 1; }
     rw
     mkdir -p "$K/logs"
-    for f in altscreen-sha256 tt-zoom-v40.jar stock-replay.txt catalogue.txt komo-test.txt panel-test.txt kdk-test.txt fit-test.txt win-test.txt new-test.txt map-test.txt place-test.txt; do
+    for f in altscreen-sha256 tt-zoom-v41.jar stock-replay.txt catalogue.txt komo-test.txt panel-test.txt kdk-test.txt fit-test.txt win-test.txt new-test.txt map-test.txt place-test.txt; do
         cp "/tmp/$f" "$K/$f" || { say "missing /tmp/$f"; ro; exit 1; }
     done
-    for f in tt-zoom-v12.jar tt-zoom-v14.jar tt-zoom-v15.jar tt-zoom-v16.jar tt-zoom-v17.jar tt-zoom-v18.jar tt-zoom-v19.jar tt-zoom-v20.jar tt-zoom-v21.jar tt-zoom-v22.jar tt-zoom-v23.jar tt-zoom-v24.jar tt-zoom-v25.jar tt-zoom-v26.jar tt-zoom-v27.jar tt-zoom-v28.jar tt-zoom-v29.jar tt-zoom-v30.jar tt-zoom-v31.jar tt-zoom-v32.jar tt-zoom-v33.jar tt-zoom-v34.jar tt-zoom-v35.jar tt-zoom-v36.jar tt-zoom-v37.jar tt-zoom-v38.jar tt-zoom-v39.jar libaltscreen111-fix1.so libaltscreen111-h320-fix1.so cluster_supervisor-v4.sh; do
+    for f in tt-zoom-v12.jar tt-zoom-v14.jar tt-zoom-v15.jar tt-zoom-v16.jar tt-zoom-v17.jar tt-zoom-v18.jar tt-zoom-v19.jar tt-zoom-v20.jar tt-zoom-v21.jar tt-zoom-v22.jar tt-zoom-v23.jar tt-zoom-v24.jar tt-zoom-v25.jar tt-zoom-v26.jar tt-zoom-v27.jar tt-zoom-v28.jar tt-zoom-v29.jar tt-zoom-v30.jar tt-zoom-v31.jar tt-zoom-v32.jar tt-zoom-v33.jar tt-zoom-v34.jar tt-zoom-v35.jar tt-zoom-v36.jar tt-zoom-v37.jar tt-zoom-v39.jar tt-zoom-v40.jar libaltscreen111-fix1.so libaltscreen111-h320-fix1.so cluster_supervisor-v5.sh; do
         test -f "/tmp/$f" && cp "/tmp/$f" "$K/$f"
     done
     # Optional panel background picture (made with scripts/mkbg.py; kept on the car, not in git).
@@ -81,14 +83,14 @@ setup)
     cp /tmp/tt.sh /mnt/app/root/tt.sh
     chmod 755 "$T" /mnt/app/root/tt.sh
     ok=1
-    "$T" $V40 "$K/tt-zoom-v40.jar" || ok=0
+    "$T" $V41 "$K/tt-zoom-v41.jar" || ok=0
     ro
     if test $ok = 1; then say 'Kit installed. From now on just type:  sh tt.sh help'
     else say 'A kit file is damaged - copy the kit again and rerun setup.'; exit 1; fi
     ;;
 use)
     v=${2:-}
-    case "$v" in v12) h=$V12;; v14) h=$V14;; v15) h=$V15;; v16) h=$V16;; v17) h=$V17;; v18) h=$V18;; v19) h=$V19;; v20) h=$V20;; v21) h=$V21;; v22) h=$V22;; v23) h=$V23;; v24) h=$V24;; v25) h=$V25;; v26) h=$V26;; v27) h=$V27;; v28) h=$V28;; v29) h=$V29;; v30) h=$V30;; v31) h=$V31;; v32) h=$V32;; v33) h=$V33;; v34) h=$V34;; v35) h=$V35;; v36) h=$V36;; v37) h=$V37;; v38) h=$V38;; v39) h=$V39;; v40) h=$V40;; *) say 'Usage: sh tt.sh use v40   (or v39 ... v12)'; exit 2;; esac
+    case "$v" in v12) h=$V12;; v14) h=$V14;; v15) h=$V15;; v16) h=$V16;; v17) h=$V17;; v18) h=$V18;; v19) h=$V19;; v20) h=$V20;; v21) h=$V21;; v22) h=$V22;; v23) h=$V23;; v24) h=$V24;; v25) h=$V25;; v26) h=$V26;; v27) h=$V27;; v28) h=$V28;; v29) h=$V29;; v30) h=$V30;; v31) h=$V31;; v32) h=$V32;; v33) h=$V33;; v34) h=$V34;; v35) h=$V35;; v36) h=$V36;; v37) h=$V37;; v38) h=$V38;; v39) h=$V39;; v40) h=$V40;; v41) h=$V41;; *) say 'Usage: sh tt.sh use v41   (or v40 ... v12)'; exit 2;; esac
     test -f "$K/tt-zoom-$v.jar" || { say "$v is not in the kit on the car."; exit 1; }
     "$T" $h "$K/tt-zoom-$v.jar" || { say "Stored $v jar is damaged."; exit 1; }
     rw
@@ -309,14 +311,13 @@ hookfix)
     test $r = 0 && say 'Done. Restart the MMI (hold the MMI knob) to load it.' || say 'Copy failed - check with: sh tt.sh report'
     ;;
 sup)
-    # Supervisor v4 (scripts/mksup.py): v2 plus: the renderer starts only after
-    # the car has held the screen 4 s (quick tab flips never start it). One file on flash,
-    # the original v2 kept; takes effect at the next replug.
+    # Supervisor v5 (scripts/mksup.py): v2, but the cockpit renderer starts only while a map
+    # view shows (tt-zoom v41 writes /tmp/tt-map-view). One file on flash, v2 kept; next replug.
     cur=$("$T" "$SUP" 2>/dev/null)
     case "${2:-}" in
         undo) src="$K/cluster_supervisor.sh.v2"; want=$SUP_V2; test -f "$src" || { say 'Nothing to undo.'; exit 1; };;
-        "") src="$K/cluster_supervisor-v4.sh"; want=$SUP_V4
-            case "$cur" in $SUP_V2|$SUP_V3|$SUP_V4) ;; *) say "Unknown supervisor on the car ($cur) - nothing changed."; exit 1;; esac;;
+        "") src="$K/cluster_supervisor-v5.sh"; want=$SUP_V5
+            case "$cur" in $SUP_V2|$SUP_V3|$SUP_V4|$SUP_V5) ;; *) say "Unknown supervisor on the car ($cur) - nothing changed."; exit 1;; esac;;
         *) say 'Usage: sh tt.sh sup   |   sh tt.sh sup undo'; exit 2;;
     esac
     test "$cur" = "$want" && { say 'Already in place.'; exit 0; }
@@ -329,21 +330,19 @@ sup)
     test $r = 0 && say 'Done. Unplug the iPhone, wait 10 s, plug it back in.' || say 'Copy failed - check with: sh tt.sh report'
     ;;
 crash)
-    # CarPlay-tab crash with supervisor v4: quick flips, long stays, then the keep switch.
-    KEEPF=/tmp/mu1462-keep-renderer
-    finish(){ rm -f "$KEEPF" /tmp/mu1438-cluster-disable; mark 'crash test end'; say ''; say '== Saving the logs.'; sh "$0" save
-              say 'Done. Send the newest logs folder.'; }
-    next(){ while :; do echo "      [Enter] next step, c = it went black / crashed now, q = stop and save"; read a; case "$a" in q|Q) finish; exit 0;; c|C) mark "crash (step $S)";; *) return;; esac; done; }
+    # v41 + supervisor v5 check: tab flips, map return speed, unplug and replug.
+    finish(){ mark 'crash test end'; say ''; say '== Saving the logs.'; sh "$0" save; say 'Done. Send the newest logs folder.'; }
+    next(){ while :; do echo "      [Enter] next step, c = something went wrong just now, q = stop and save"; read a; case "$a" in q|Q) finish; exit 0;; c|C) mark "problem (step $S)";; *) return;; esac; done; }
     step(){ S=${1%%:*}; S=${S%% *}; say ''; say "== $1"; mark "step $S"; }
-    rm -f "$KEEPF" /tmp/mu1438-cluster-disable
-    say "CarPlay-tab crash test. $(sh "$0" report 2>/dev/null | grep supervisor)"
-    say 'Parked, CarPlay connected, no route needed. If it crashes: c + Enter at once, then replug and go on.'
-    step 'Q: QUICK flips: CAR tab (under 3 s) -> CarPlay tab (5 s) -> CAR tab ... 6 times. The cockpit map may stay stock: fine.'
+    say "Check. $(sh "$0" report 2>/dev/null | grep -E 'jar:|supervisor')"
+    say 'Parked, CarPlay connected, no route needed. c + Enter whenever something goes wrong (black, crash, slow).'
+    step 'Q: CAR tab <-> CarPlay tab, quick flips, 6 times. Any black CarPlay tab or crash?'
     next
-    step 'L: LONG stays: CAR tab for 8 s (the cockpit CarPlay map comes back) -> CarPlay tab 5 s -> CAR tab ... 6 times.'
+    step 'M: MAP view (wait for the CarPlay map) -> CarPlay tab -> MAP view, 6 times. How fast is the CarPlay map back?'
     next
-    touch "$KEEPF"
-    step 'K: keep switch ON (renderer keeps running on the CarPlay tab). LONG stays again, 6 times. Is the CarPlay tab OK?'
+    step 'U1: on the MAP view, UNPLUG the iPhone. Within about 5 s: stock map (not black)? PHOTO if not.'
+    next
+    step 'U2: PLUG it back in, stay on the MAP view. CarPlay connects (no flicker) and the CarPlay map comes back?'
     next
     finish
     ;;
@@ -402,11 +401,11 @@ panel)
     esac
     ;;
 report)
-    say "== jar: $(which_jar)    (v40 is the current one)"
+    say "== jar: $(which_jar)    (v41 is the current one)"
     say "== layers: map 10 = $(ctxlist 10)  map+banner 89 = $(ctxlist 89)  (v37 with CarPlay: 16 60 / 20 16 60)"
     grep "layers:" /tmp/tt-rgd.log 2>/dev/null | tail -3
     h=$("$T" "$HOOK" 2>/dev/null); case "$h" in $HOOK_STOCK) say '== CarPlay hook: original';; $HOOK_H320) say '== CarPlay hook: original (h320 preset)';; $FIX_STOCK|$FIX_H320) say '== CarPlay hook: fix1 (busy port no longer blocks CarPlay)';; *) say "== CarPlay hook: unknown ($h)";; esac
-    h=$("$T" "$SUP" 2>/dev/null); case "$h" in $SUP_V2) say '== supervisor: v2 (switches the display to 901)';; $SUP_V3) say '== supervisor: v3 (no display switch: no CarPlay map in the map views - replace it)';; $SUP_V4) say "== supervisor: v4 (4 s start delay$(test -e /tmp/mu1462-keep-renderer && echo ', keep switch ON'))";; *) say "== supervisor: unknown ($h)";; esac
+    h=$("$T" "$SUP" 2>/dev/null); case "$h" in $SUP_V2) say '== supervisor: v2 (switches the display to 901)';; $SUP_V3) say '== supervisor: v3 (no display switch: no CarPlay map in the map views - replace it)';; $SUP_V4) say '== supervisor: v4 (4 s start delay: slow map - replace with v5)';; $SUP_V5) say "== supervisor: v5 (renderer only on the map view; map view now: $(cat /tmp/tt-map-view 2>/dev/null))";; *) say "== supervisor: unknown ($h)";; esac
     tail -3 /tmp/mu1462-supervisor.log 2>/dev/null
     test -f "$K/panel-bg.a8" && say '== panel background: installed' || say '== panel background: none'
     say '== switches:'
@@ -441,14 +440,14 @@ save)
     ;;
 *)
     say 'sh tt.sh report              what is installed and what it is doing (paste this)'
-    say 'sh tt.sh use v40             switch version (v40 ... v12), then restart the MMI'
+    say 'sh tt.sh use v41             switch version (v41 ... v12), then restart the MMI'
     say 'sh tt.sh play map|new|fit|win|kdk|panel|komo|stock  parked tests'
     say 'sh tt.sh play arrows | stop  arrow catalogue / stop playback'
     say 'sh tt.sh test                the full guided test, Enter for each step, then saves the logs'
     say 'sh tt.sh check               v38 guided check (Enter for each step, c marks a CarPlay crash)'
     say 'sh tt.sh hookfix [undo]      CarPlay hook fix1: a busy port no longer blocks CarPlay (flash, then MMI restart)'
-    say 'sh tt.sh sup [undo]          supervisor v4 for the CarPlay-tab crash (flash, then replug)'
-    say 'sh tt.sh crash               CarPlay-tab crash test: quick flips, long stays, keep switch'
+    say 'sh tt.sh sup [undo]          supervisor v5 for the CarPlay-tab crash (flash, then replug)'
+    say 'sh tt.sh crash               check: tab flips, map return, unplug and replug'
     say 'sh tt.sh diag                when the CarPlay icon only flickers: record who holds the ports'
     say 'sh tt.sh mark [text]         put a marker line into all logs (e.g. right after a crash)'
     say 'sh tt.sh layers              parked layer test for the map + banner (context 89)'

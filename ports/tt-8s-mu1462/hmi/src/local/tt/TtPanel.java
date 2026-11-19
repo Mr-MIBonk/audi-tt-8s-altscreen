@@ -1297,9 +1297,11 @@ public final class TtPanel {
 
     /** v38: new layer lists wait for a real context switch (guardCheck does one on the plain map). */
     private static volatile boolean relayer;
+    private static volatile long relayerUntil;
 
     /** v37 Layers: the layer lists changed; redraw in the new mode (banner frame or own frame). */
     static void layersChanged() {
+        relayerUntil = System.currentTimeMillis() + 20000L;
         relayer = true;
         String t = lastTurn;
         if (t != null && (liveShown || kdkPanelUp)) {
@@ -1362,7 +1364,7 @@ public final class TtPanel {
                 // check never stops while the stock banner could come up.
                 boolean watch = (kdkAlpha == -2 && kdkPanelUp) || liveShown
                     || de.audi.tghu.navi.app.cluster.TtRgi.rgActive(false);
-                if (!watch && now > burstUntil) {
+                if (!watch && !relayer && now > burstUntil) {
                     break;
                 }
                 if (watch || relayer) {
@@ -1406,16 +1408,19 @@ public final class TtPanel {
             // after it came back the stock map stayed. The display manager only uses a new list
             // when it switches into the context, and the HMI skips a switch to the current one,
             // so go to 89 and straight back. Only on the plain map without the banner.
-            relayer = false;
+            // v41: on the map with the banner still up (unplugged during a route) wait for it to go,
+            // up to 20 s, instead of giving up.
             try {
                 int ctx = d.getCurrentContextID(0);
                 boolean banner = d instanceof de.audi.tghu.fwhmi.IDisplayManagerKombiControl
                     && ((de.audi.tghu.fwhmi.IDisplayManagerKombiControl) d).getVisibleKDK(0) == KDK;
                 if (ctx == 10 && !banner) {
+                    relayer = false;
                     d.switchContext(89, 0, null);
                     d.switchContext(10, 0, null);
                     RgdBus.note("layers: re-applied on the map (10 -> 89 -> 10)");
-                } else {
+                } else if (ctx != 89 || System.currentTimeMillis() > relayerUntil) {
+                    relayer = false;
                     RgdBus.note(new StringBuffer("layers: re-apply skipped, context ").append(ctx)
                         .append(banner ? " (banner up)" : "").toString());
                 }

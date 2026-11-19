@@ -222,6 +222,7 @@ public final class RgdBus implements Runnable {
                 mine = current == s;
             }
             if (mine) {
+                Layers.phoneGone();
                 synchronized (STATE) {
                     STATE.clear();
                 }

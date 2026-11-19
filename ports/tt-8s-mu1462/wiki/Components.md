@@ -85,3 +85,14 @@ was not the crash cause). Supervisor v4 is therefore v2 plus: it starts the rend
 `/tmp/mu1462-keep-renderer` keeps it running on the CarPlay tab (do both fit on one display?).
 `sh tt.sh crash` now tests quick flips, long stays and the keep switch; each `c` also stores a
 slice of `sloginfo` (stock dio_manager/AirPlay messages) in `/tmp/tt-slog-marks.txt`.
+
+Run39 (v4): one crash all session, but the map took about 7 s to come back after the CarPlay
+tab (4 s wait + renderer start + switch). Supervisor v5 (`scripts/mksup.py`) is v2 with one
+condition: the renderer starts only while a map view shows. tt-zoom v41 writes
+`/tmp/tt-map-view` (1 on contexts 10/89, else 0, polled every 200 ms); flips between the car
+tab and the CarPlay tab never start it, on the map it starts 1 s after the car has the screen,
+and it keeps running on the car tab so map <-> car stays instant. Without the file it behaves
+like v2. v41 also switches the jar's layer lists back at once when the iPhone's link ends, and
+retries the real context switch for up to 20 s while the banner is still up (unplugged during
+a route: the map stayed black). Remaining: rare crash (map view -> CarPlay tab right after the
+renderer started), and the replug flicker (busy tee port; needs a native fix).
