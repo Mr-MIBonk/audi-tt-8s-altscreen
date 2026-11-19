@@ -426,6 +426,28 @@ showed for a few seconds after our panel went away.
 
 Preview: [docs/panel-preview-v29.png](docs/panel-preview-v29.png).
 
+v29 was never installed. The user asked to see designs before any jar is built.
+After five PC mockups (with the user's feedback each time) the design became v30:
+- **3D arrows:** the maneuver is drawn flat at 2x and split into route (white)
+  and side streets (grey). It is laid on the road in perspective (far end
+  narrower), then extruded: side walls, a lit top face with a bright front edge,
+  and a soft shadow. Arrows are thinner than in mockup 1, so the roundabout
+  reads, and they sit lower.
+- **Lanes:** raised lane arrows on a lane row kept clear of the bottom edge.
+  The bar is cylinder-shaded.
+- **Centred layout:** the arrow is centred in its area. Text rows are spread
+  evenly over the height and each is centred in the text column, number and
+  unit as one group. Without an exit number the street becomes the main line.
+  All positions come from `KdkLayout`, for both the picture and the text nodes.
+- **Background picture:** the user's own picture, centred, faint and with its
+  proportions kept. It is read from `/mnt/app/root/tt/panel-bg.a8`, made with
+  `scripts/mkbg.py`. Pictures stay out of git (third-party art and trademarks).
+  Without the file there is no background.
+- **Speed:** the static part of the picture is cached per maneuver, so a bar
+  update only copies it and redraws the bar.
+- **Preview:** [docs/panel-preview-v30.png](docs/panel-preview-v30.png) is drawn
+  by the car code, without a background picture.
+
 Offline previews of the panel: [docs/panel-preview.png](docs/panel-preview.png),
 [docs/panel-preview-lanes.png](docs/panel-preview-lanes.png), [docs/panel-preview-compact.png](docs/panel-preview-compact.png) (text there is
 rendered by the PC; the car uses its own fonts).
@@ -470,7 +492,7 @@ iPhone data on top of it.
 
 ## 13. Open items
 
-- v29 look check (`play fit`) and window-move test (`play win`).
+- v30 look check (`play fit`) and window-move test (`play win`).
 - Live drive with Google/Apple Maps once the panel fits.
 - Try the iPhone's own maneuver card (hook switches `/mnt/app/root/mibr-carplay111-nav*`, see the MHI2Q comparison).
 - Refresh the installer package (`package/`) with the final jar.

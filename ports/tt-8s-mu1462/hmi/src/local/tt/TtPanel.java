@@ -689,7 +689,8 @@ public final class TtPanel {
         String sub = exit.length() > 0 ? new StringBuffer("Exit ").append(exit).toString() : street;
         String destLine = destText(m, t.destM, t.eta);
         if (kdkMode) {
-            kdkTexts(m, t, new KdkLayout(pw, ph, t.hasLanes()), destLine);
+            kdkTexts(m, t, new KdkLayout(pw, ph, t.hasLanes(), t.exit.length() > 0, t.street.length() > 0),
+                destLine);
             if (destRoot != null) {
                 destRoot.setVisible(false);
             }
@@ -1448,27 +1449,41 @@ public final class TtPanel {
             ns -= 2;
             nw = textW(m, num, 2, ns);
         }
-        // Number and unit share the baseline of the full-size number.
+        // Number and unit: one group, centred, sharing the baseline of the full-size number.
         float baseY = base(l.numTop, l.numSize);
-        tx(m, 0, "ttNum", num, 2, ns, (float) l.col, baseY, 0, WHITE);
-        tx(m, 1, "ttUnit", unit, 1, l.unitSize, (float) (l.col + nw + 6), baseY, 0, SOFT);
-        String top = l.wide ? destLine : clock(m, t.eta);
-        tx(m, 2, "ttTop", top, 1, l.topSize, (float) l.col, base(l.topY, l.topSize), l.cw, SOFT);
+        int gx = l.centre(nw + 6 + uw);
+        tx(m, 0, "ttNum", num, 2, ns, (float) gx, baseY, 0, WHITE);
+        tx(m, 1, "ttUnit", unit, 1, l.unitSize, (float) (gx + nw + 6), baseY, 0, SOFT);
+        String top = fitText(m, l.wide ? destLine : clock(m, t.eta), 1, l.topSize, l.cw);
+        tx(m, 2, "ttTop", top, 1, l.topSize, (float) l.centre(textW(m, top, 1, l.topSize)),
+            base(l.topY, l.topSize), 0, SOFT);
         String label = KdkLayout.badgeLabel(t.exit);
-        if (label.length() > 0) {
+        if (l.badgeTop >= 0) {
             int bw = l.badgeW(label);
-            int lw = textW(m, label, 2, l.badgeText);
-            float lx = l.col + Math.max(4, (bw - lw) / 2);
+            String lt = fitText(m, label, 2, l.badgeText, bw - 8);
+            int lw = textW(m, lt, 2, l.badgeText);
+            float lx = l.badgeX(label) + Math.max(4, (bw - lw) / 2);
             float ly = base(l.badgeTop + (l.badgeH - l.badgeText) / 2 - 1, l.badgeText);
-            tx(m, 3, "ttBadge", label, 2, l.badgeText, lx, ly, bw - 8, WHITE);
-            String street = l.lanes ? "" : t.street;
-            tx(m, 4, "ttStreet", street, 1, l.streetSize, (float) l.col, base(l.streetTop, l.streetSize), l.cw, SOFT);
+            tx(m, 3, "ttBadge", lt, 2, l.badgeText, lx, ly, 0, WHITE);
         } else {
-            // No exit number: the street takes the badge row, in white.
-            tx(m, 3, "ttBadge", t.street, 1, l.streetSize + 2, (float) l.col,
-                base(l.badgeTop + 2, l.streetSize + 2), l.cw, WHITE);
-            tx(m, 4, "ttStreet", "", 1, l.streetSize, (float) l.col, base(l.streetTop < 0 ? 0 : l.streetTop,
-                l.streetSize), l.cw, SOFT);
+            tx(m, 3, "ttBadge", "", 2, l.badgeText, (float) l.col, 0f, 0, WHITE);
         }
+        if (l.streetTop >= 0) {
+            // With a badge the street is secondary (grey); without one it is the main line (white).
+            String st = fitText(m, t.street, 1, l.streetSize, l.cw);
+            tx(m, 4, "ttStreet", st, 1, l.streetSize, (float) l.centre(textW(m, st, 1, l.streetSize)),
+                base(l.streetTop, l.streetSize), 0, l.badgeTop >= 0 ? SOFT : WHITE);
+        } else {
+            tx(m, 4, "ttStreet", "", 1, l.streetSize, (float) l.col, 0f, 0, SOFT);
+        }
+    }
+
+    /** The text shortened with "..." to maxW (so centring uses the width that is really shown). */
+    private static String fitText(EALManager m, String t, int style, int size, int maxW) {
+        de.esolutions.hmi.widgets.audi.base.eal.IWrappedFont f = font(style, size);
+        if (f == null || t == null || t.length() == 0) {
+            return t == null || t.length() == 0 ? " " : t;
+        }
+        return fit(m, t, f, maxW);
     }
 }

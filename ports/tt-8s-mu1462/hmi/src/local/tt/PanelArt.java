@@ -174,130 +174,364 @@ public final class PanelArt {
         }
     }
 
-    // ---- v29: TT style (frame, gradient, 3D shapes with drop shadow) ------------------------
+    // ---- v29: TT style (user-approved mockups 1-5) ----------------------------------------
     public static final int TT_RED = 0xFFE0001E;
     public static final int EXIT_GREEN = 0xFF0E7B3E;
-    private static final int TOP_BG = 0xF2262C33;
-    private static final int BOTTOM_BG = 0xF20A0D11;
+    /** Optional background picture (alpha mask) on the car: "TTBG", u16 width, u16 height, alpha bytes. */
+    public static final String BG_FILE = "/mnt/app/root/tt/panel-bg.a8";
+    private static final float BG_ALPHA = 0.22f;
+    /** Where loadBg() looks (BG_FILE on the car; the PC preview points it elsewhere). */
+    static String bgPath = BG_FILE;
+    private static float[] bgMask;
+    private static int bgW;
+    private static int bgH;
+    private static boolean bgTried;
+    /** Everything except the bar, per layout (the bar changes every few seconds near a turn). */
+    private static final java.util.Hashtable BASE = new java.util.Hashtable();
 
     /**
-     * v29 (user): framed, Audi TT styled, modern 3D look. framed = our own chamfered frame with a
-     * light border and a red accent (tach-centred view, where nothing else frames us); otherwise
-     * only the gradient (large view, where the stock frame already surrounds the window).
+     * v29 TT-style panel: dark gradient, the user's background picture centred and faint,
+     * perspective 3D arrows (lit top face, side walls, soft shadow), raised lane arrows, a
+     * cylinder bar and a green exit badge. framed = our own chamfered frame with a red accent
+     * (tach-centred view); otherwise only the gradient (large view, inside the stock frame).
+     * Texts are HMI nodes placed by KdkLayout.
      */
     public void kdkStyled(int main, int dir, int[] arms, int bar, int[][] laneAngles, int[] laneStatus,
-                          String exit, boolean framed) {
+                          String exit, boolean hasStreet, boolean framed) {
         boolean hasLanes = laneAngles != null && laneAngles.length > 0;
-        KdkLayout l = new KdkLayout(w, h, hasLanes);
-        ttBackground(framed);
-        // Flat parts (no shadow): bar track, lane separators.
-        int barTop = 12;
-        int barH = h - 24;
-        roundRect(9, barTop, 6, barH, 3, 0xFF2C3238);
-        if (hasLanes) {
-            laneSeparators(laneAngles.length, 20, h - 60, w - 28, 56);
+        String label = KdkLayout.badgeLabel(exit);
+        KdkLayout l = new KdkLayout(w, h, hasLanes, label.length() > 0, hasStreet);
+        StringBuffer k = new StringBuffer().append(w).append('x').append(h).append(',').append(main).append(',')
+            .append(dir).append(',').append(label).append(',').append(hasStreet).append(',').append(framed);
+        for (int i = 0; arms != null && i < arms.length; i++) {
+            k.append(',').append(arms[i]);
         }
-        // 3D parts go to their own layer first, then get shadow, shading and bevel.
-        PanelArt fg = new PanelArt(w, h);
-        fg.maneuver(main, dir, arms, 20, 4, l.square);
-        if (hasLanes) {
-            fg.laneArrows(laneAngles, laneStatus, 20, h - 60, w - 28, 56);
-        }
-        if (bar >= 0) {
-            int filled = (int) ((long) barH * Math.min(255, bar) / 255);
-            if (filled > 0) {
-                fg.roundRect(9, barTop + barH - filled, 6, filled, 3, BAR_ON);
+        for (int i = 0; hasLanes && i < laneAngles.length; i++) {
+            k.append('/').append(laneStatus == null || i >= laneStatus.length ? 0 : laneStatus[i]);
+            for (int j = 0; laneAngles[i] != null && j < laneAngles[i].length; j++) {
+                k.append(':').append(laneAngles[i][j]);
             }
         }
-        String label = KdkLayout.badgeLabel(exit);
-        if (label.length() > 0) {
-            int bw = l.badgeW(label);
-            fg.roundRect(l.col, l.badgeTop, bw, l.badgeH, 5, 0xFFFFFFFF);
-            fg.roundRect(l.col + 2, l.badgeTop + 2, bw - 4, l.badgeH - 4, 4, EXIT_GREEN);
+        String key = k.toString();
+        int[] base;
+        synchronized (BASE) {
+            base = (int[]) BASE.get(key);
         }
-        compose3d(fg);
+        if (base == null) {
+            base = new int[w * h];
+            drawBase(base, l, main, dir, arms, laneAngles, laneStatus, label, framed);
+            synchronized (BASE) {
+                if (BASE.size() > 8) {
+                    BASE.clear();
+                }
+                BASE.put(key, base);
+            }
+        }
+        System.arraycopy(base, 0, px, 0, px.length);
+        // Cylinder bar: lit in the middle, darker at the sides.
+        int barTop = 12;
+        int barH = h - 24;
+        int filled = bar < 0 ? 0 : (int) ((long) barH * Math.min(255, bar) / 255);
+        for (int y = 0; y < barH; y++) {
+            boolean on = y >= barH - filled;
+            for (int x = 0; x < 7; x++) {
+                float cx = (x - 3f) / 3.5f;
+                float shade = 1f - 0.55f * cx * cx;
+                int c = on ? lerpRgb(0x000000, 0xF4F6F8, shade) : lerpRgb(0x000000, 0x2C3238, 0.7f + 0.3f * shade);
+                blend(8 + x, barTop + y, 0xFF000000 | c, 1f);
+            }
+        }
     }
 
-    private void ttBackground(boolean framed) {
-        java.util.Arrays.fill(px, 0);
+    private void drawBase(int[] dst, KdkLayout l, int main, int dir, int[] arms, int[][] laneAngles,
+                          int[] laneStatus, String label, boolean framed) {
+        int n = w * h;
         int cut = framed ? 18 : 0;
         for (int y = 0; y < h; y++) {
-            float t = h <= 1 ? 0f : (float) y / (h - 1);
-            int c = lerp(TOP_BG, BOTTOM_BG, t);
+            int c = lerpRgb(0x262C33, 0x0A0D11, h <= 1 ? 0f : (float) y / (h - 1));
             for (int x = 0; x < w; x++) {
                 float cov = 1f;
                 if (cut > 0) {
-                    // Chamfered top-right corner like the stock TT banner frame.
-                    float d = ((w - cut + y) - (x + 0.5f)) * 0.7071f;
-                    cov = clamp(d + 0.5f);
+                    cov = clamp(((w - cut + y) - (x + 0.5f)) * 0.7071f + 0.5f);
                 }
-                blend(x, y, c, cov);
+                dst[y * w + x] = cov <= 0f ? 0 : ((int) (0xF2 * cov) << 24) | c;
             }
         }
+        // The user's picture, centred, proportions kept.
+        loadBg();
+        if (bgMask != null) {
+            float kk = Math.min(w * 0.80f / bgW, h * 0.62f / bgH);
+            int bw = Math.max(1, (int) (bgW * kk));
+            int bh = Math.max(1, (int) (bgH * kk));
+            float[] a = new float[bw * bh];
+            for (int y = 0; y < bh; y++) {
+                for (int x = 0; x < bw; x++) {
+                    a[y * bw + x] = BG_ALPHA * samp(bgMask, bgW, bgH, x * (bgW - 1f) / Math.max(1, bw - 1),
+                        y * (bgH - 1f) / Math.max(1, bh - 1));
+                }
+            }
+            overSolid(dst, (w - bw) / 2, (h - bh) / 2, bw, bh, a, 0xC8D2DC);
+        }
+        // Frame (tach-centred view) or a thin top highlight (large view).
+        PanelArt fr = new PanelArt(w, h);
         if (framed) {
-            int edge = 0xA0B4BEC8;
-            thick(0.75f, 0.75f, w - cut - 0.75f, 0.75f, 1.5f, edge);
-            thick(w - cut - 0.75f, 0.75f, w - 0.75f, cut + 0.75f, 1.5f, edge);
-            thick(w - 0.75f, cut + 0.75f, w - 0.75f, h - 0.75f, 1.5f, edge);
-            thick(0.75f, h - 0.75f, w - 0.75f, h - 0.75f, 1.5f, 0x60B4BEC8);
-            thick(0.75f, 0.75f, 0.75f, h - 0.75f, 1.5f, edge);
-            // Red accent along the top-left edge.
-            thick(1.5f, 1.5f, w * 0.38f, 1.5f, 3f, TT_RED);
+            int e = 0xA0B4BEC8;
+            fr.thick(0.75f, 0.75f, w - cut - 0.75f, 0.75f, 1.5f, e);
+            fr.thick(w - cut - 0.75f, 0.75f, w - 0.75f, cut + 0.75f, 1.5f, e);
+            fr.thick(w - 0.75f, cut + 0.75f, w - 0.75f, h - 0.75f, 1.5f, e);
+            fr.thick(0.75f, h - 0.75f, w - 0.75f, h - 0.75f, 1.5f, 0x60B4BEC8);
+            fr.thick(0.75f, 0.75f, 0.75f, h - 0.75f, 1.5f, e);
+            fr.thick(1.5f, 1.5f, w * 0.38f, 1.5f, 3f, TT_RED);
         } else {
-            thick(0f, 0.5f, w, 0.5f, 1f, 0x40FFFFFF);
+            fr.thick(0f, 0.5f, w, 0.5f, 1f, 0x40FFFFFF);
+        }
+        overLayer(dst, fr.px);
+        // 3D maneuver: drawn flat at 2x, split into route (white) and side streets (grey),
+        // laid on the road in perspective, then extruded.
+        int s = l.square;
+        int big = s * 2;
+        PanelArt flat = new PanelArt(big, big);
+        flat.maneuver(main, dir, arms, 0, 0, big);
+        float[] route = warp(dilate(split(flat.px, true), big, big, (int) (big * 0.012f)), big, s);
+        float[] arm = warp(split(flat.px, false), big, s);
+        solid(dst, l.squareX, l.squareY, s, s, arm, 2, 0x9AA3AC, 0x6E777F, 0x454B52);
+        solid(dst, l.squareX, l.squareY, s, s, route, 4, 0xFFFFFF, 0xC8D0D8, 0x8A939C);
+        // Lanes: flat dashes, raised arrows.
+        if (laneAngles != null && laneAngles.length > 0) {
+            PanelArt sep = new PanelArt(w, h);
+            sep.laneSeparators(laneAngles.length, 20, l.lanesY, w - 28, l.lanesH);
+            overLayer(dst, sep.px);
+            PanelArt lp = new PanelArt(w, h);
+            lp.laneArrows(laneAngles, laneStatus, 20, l.lanesY - 2, w - 28, l.lanesH);
+            float[] white = new float[n];
+            float[] grey = new float[n];
+            for (int i = 0; i < n; i++) {
+                float a = (lp.px[i] >>> 24) / 255f;
+                if (((lp.px[i] >> 16) & 0xff) > 0xF0) {
+                    white[i] = a;
+                } else {
+                    grey[i] = a;
+                }
+            }
+            solid(dst, 0, 0, w, h, grey, 2, 0x7C858E, 0x5A6068, 0x30353A);
+            solid(dst, 0, 0, w, h, white, 3, 0xFFFFFF, 0xD8DEE4, 0x8A939C);
+        }
+        // Exit badge (centred in the text column).
+        if (label.length() > 0 && l.badgeTop >= 0) {
+            PanelArt bd = new PanelArt(w, h);
+            int bw = l.badgeW(label);
+            int bx = l.badgeX(label);
+            bd.roundRect(bx, l.badgeTop, bw, l.badgeH, 5, 0xFFFFFFFF);
+            bd.roundRect(bx + 2, l.badgeTop + 2, bw - 4, l.badgeH - 4, 4, EXIT_GREEN);
+            overLayer(dst, bd.px);
         }
     }
 
-    /** Shadow (blurred, offset), vertical shading and a 1 px bevel for the shapes in fg. */
-    private void compose3d(PanelArt fg) {
-        int[] f = fg.px;
-        int n = w * h;
-        float[] a = new float[n];
-        for (int i = 0; i < n; i++) {
-            a[i] = (f[i] >>> 24) / 255f;
+    /** Reads BG_FILE once (missing file = no background). */
+    private static void loadBg() {
+        if (bgTried) {
+            return;
         }
-        float[] s = blur(blur(a, w, h, 3), w, h, 3);
-        int ox = 2;
-        int oy = 3;
+        bgTried = true;
+        try {
+            java.io.File f = new java.io.File(bgPath);
+            if (!f.exists() || f.length() < 8 || f.length() > 2000000L) {
+                return;
+            }
+            byte[] b = new byte[(int) f.length()];
+            java.io.FileInputStream in = new java.io.FileInputStream(f);
+            try {
+                int off = 0;
+                while (off < b.length) {
+                    int r = in.read(b, off, b.length - off);
+                    if (r < 0) {
+                        break;
+                    }
+                    off += r;
+                }
+            } finally {
+                in.close();
+            }
+            if (b[0] != 'T' || b[1] != 'T' || b[2] != 'B' || b[3] != 'G') {
+                return;
+            }
+            int bw = ((b[4] & 0xff) << 8) | (b[5] & 0xff);
+            int bh = ((b[6] & 0xff) << 8) | (b[7] & 0xff);
+            if (bw < 2 || bh < 2 || 8 + bw * bh > b.length) {
+                return;
+            }
+            float[] m = new float[bw * bh];
+            for (int i = 0; i < m.length; i++) {
+                m[i] = (b[8 + i] & 0xff) / 255f;
+            }
+            bgW = bw;
+            bgH = bh;
+            bgMask = m;
+        } catch (Throwable ignored) {
+            bgMask = null;
+        }
+    }
+
+    /** Route (white) or side-street (grey) coverage of a flat maneuver picture. */
+    private static float[] split(int[] p, boolean route) {
+        float[] m = new float[p.length];
+        for (int i = 0; i < p.length; i++) {
+            float a = (p[i] >>> 24) / 255f;
+            int r = (p[i] >> 16) & 0xff;
+            float wv = Math.max(0f, Math.min(1f, (r - 0x6E) / (float) (0xFF - 0x6E)));
+            m[i] = route ? a * wv : a * (1f - wv);
+        }
+        return m;
+    }
+
+    private static float samp(float[] m, int w, int h, float x, float y) {
+        if (x < 0 || y < 0 || x >= w - 1 || y >= h - 1) {
+            return 0f;
+        }
+        int x0 = (int) x;
+        int y0 = (int) y;
+        float fx = x - x0;
+        float fy = y - y0;
+        float a = m[y0 * w + x0];
+        float b = m[y0 * w + x0 + 1];
+        float c = m[(y0 + 1) * w + x0];
+        float d = m[(y0 + 1) * w + x0 + 1];
+        return (a * (1 - fx) + b * fx) * (1 - fy) + (c * (1 - fx) + d * fx) * fy;
+    }
+
+    /** Perspective: the flat square lies on the road, the far end narrower and compressed. */
+    private static float[] warp(float[] m, int src, int out) {
+        float[] o = new float[out * out];
+        for (int y = 0; y < out; y++) {
+            float v = y / (float) (out - 1);
+            float sy = (float) Math.pow(v, 1.18) * (src - 1);
+            float sc = 0.72f + 0.28f * v;
+            for (int x = 0; x < out; x++) {
+                float u = x / (float) (out - 1);
+                o[y * out + x] = samp(m, src, src, (0.5f + (u - 0.5f) / sc) * (src - 1), sy);
+            }
+        }
+        return o;
+    }
+
+    private static float[] dilate(float[] a, int w, int h, int r) {
+        if (r < 1) {
+            return a;
+        }
+        float[] t = new float[w * h];
+        float[] o = new float[w * h];
         for (int y = 0; y < h; y++) {
             for (int x = 0; x < w; x++) {
-                int sx = x - ox;
-                int sy = y - oy;
-                if (sx >= 0 && sy >= 0) {
-                    float v = s[sy * w + sx] * 0.85f;
-                    if (v > 0.01f) {
-                        blend(x, y, 0xFF000000, v);
+                float m = 0f;
+                for (int k = -r; k <= r; k++) {
+                    int xx = x + k;
+                    if (xx >= 0 && xx < w && a[y * w + xx] > m) {
+                        m = a[y * w + xx];
                     }
                 }
+                t[y * w + x] = m;
             }
         }
         for (int y = 0; y < h; y++) {
-            float shade = 1.04f - 0.22f * y / h;
             for (int x = 0; x < w; x++) {
-                int i = y * w + x;
-                int c = f[i];
-                float ca = a[i];
-                if (ca <= 0f) {
-                    continue;
+                float m = 0f;
+                for (int k = -r; k <= r; k++) {
+                    int yy = y + k;
+                    if (yy >= 0 && yy < h && t[yy * w + x] > m) {
+                        m = t[yy * w + x];
+                    }
                 }
-                float up = y > 0 ? a[i - w] : 0f;
-                float dn = y < h - 1 ? a[i + w] : 0f;
-                float lift = 0f;
-                if (ca - up > 0.3f) {
-                    lift = 45f * (ca - up);
-                } else if (ca - dn > 0.3f) {
-                    lift = -60f * (ca - dn);
+                o[y * w + x] = m;
+            }
+        }
+        return o;
+    }
+
+    /** Extruded solid: soft shadow, side walls t px deep, lit top face with a bright front edge. */
+    private void solid(int[] dst, int x0, int y0, int sw, int sh, float[] a, int t, int topNear, int topFar,
+                       int side) {
+        float[] sd = blur(blur(a, sw, sh, 3), sw, sh, 3);
+        for (int i = 0; i < sd.length; i++) {
+            sd[i] *= 0.8f;
+        }
+        overSolid(dst, x0 + 3, y0 + t + 4, sw, sh, sd, 0x000000);
+        for (int k = t; k >= 1; k--) {
+            overSolid(dst, x0, y0 + k, sw, sh, a, lerpRgb(side, 0x1A1E22, 0.5f * k / t));
+        }
+        int[] top = new int[sw * sh];
+        for (int y = 0; y < sh; y++) {
+            int c0 = lerpRgb(topFar, topNear, y / (float) sh);
+            for (int x = 0; x < sw; x++) {
+                int i = y * sw + x;
+                float up = y > 0 ? a[i - sw] : 0f;
+                float lf = x > 0 ? a[i - 1] : 0f;
+                float hl = Math.max(0f, a[i] - up) * 0.9f + Math.max(0f, a[i] - lf) * 0.35f;
+                top[i] = lerpRgb(c0, 0xFFFFFF, Math.min(1f, hl));
+            }
+        }
+        overRgb(dst, x0, y0, sw, sh, a, top);
+    }
+
+    private void overSolid(int[] dst, int x0, int y0, int sw, int sh, float[] a, int rgb) {
+        for (int y = 0; y < sh; y++) {
+            int dy = y0 + y;
+            if (dy < 0 || dy >= h) {
+                continue;
+            }
+            for (int x = 0; x < sw; x++) {
+                int dx = x0 + x;
+                float sa = a[y * sw + x];
+                if (dx >= 0 && dx < w && sa > 0.003f) {
+                    dst[dy * w + dx] = over(dst[dy * w + dx], rgb, sa);
                 }
-                int r = chan(((c >> 16) & 0xff) * shade + lift);
-                int g = chan(((c >> 8) & 0xff) * shade + lift);
-                int b = chan((c & 0xff) * shade + lift);
-                blend(x, y, 0xFF000000 | (r << 16) | (g << 8) | b, ca);
             }
         }
     }
 
-    private static int chan(float v) {
-        return v < 0f ? 0 : (v > 255f ? 255 : (int) (v + 0.5f));
+    private void overRgb(int[] dst, int x0, int y0, int sw, int sh, float[] a, int[] rgb) {
+        for (int y = 0; y < sh; y++) {
+            int dy = y0 + y;
+            if (dy < 0 || dy >= h) {
+                continue;
+            }
+            for (int x = 0; x < sw; x++) {
+                int dx = x0 + x;
+                int i = y * sw + x;
+                if (dx >= 0 && dx < w && a[i] > 0.003f) {
+                    dst[dy * w + dx] = over(dst[dy * w + dx], rgb[i], a[i]);
+                }
+            }
+        }
+    }
+
+    /** A full-size ARGB layer over dst. */
+    private void overLayer(int[] dst, int[] layer) {
+        for (int i = 0; i < layer.length; i++) {
+            int c = layer[i];
+            float a = (c >>> 24) / 255f;
+            if (a > 0.003f) {
+                dst[i] = over(dst[i], c & 0xffffff, a);
+            }
+        }
+    }
+
+    private static int over(int d, int rgb, float sa) {
+        float da = (d >>> 24) / 255f;
+        float oa = sa + da * (1f - sa);
+        if (oa <= 0f) {
+            return 0;
+        }
+        int r = mix((rgb >> 16) & 0xff, (d >> 16) & 0xff, sa, da, oa);
+        int g = mix((rgb >> 8) & 0xff, (d >> 8) & 0xff, sa, da, oa);
+        int b = mix(rgb & 0xff, d & 0xff, sa, da, oa);
+        return ((int) (oa * 255f + 0.5f) << 24) | (r << 16) | (g << 8) | b;
+    }
+
+    private static int lerpRgb(int a, int b, float t) {
+        int r = (int) (((a >> 16) & 0xff) * (1 - t) + ((b >> 16) & 0xff) * t);
+        int g = (int) (((a >> 8) & 0xff) * (1 - t) + ((b >> 8) & 0xff) * t);
+        int bb = (int) ((a & 0xff) * (1 - t) + (b & 0xff) * t);
+        return (r << 16) | (g << 8) | bb;
     }
 
     /** Separable box blur of an alpha map. */
