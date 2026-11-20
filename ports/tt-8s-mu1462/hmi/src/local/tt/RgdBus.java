@@ -406,6 +406,7 @@ public final class RgdBus implements Runnable {
         int glideBar = -1;
         String lanes = "-";
         String exit = "";
+        String manId = "";
         long now = System.currentTimeMillis();
         synchronized (STATE) {
             if (!fromBus && offSince < 0L && !wantOn && !lastOn && !RgiPlayer.playing()) {
@@ -436,6 +437,7 @@ public final class RgdBus implements Runnable {
             String order = str("maneuver_list");
             int comma = order.indexOf(',');
             String first = (comma < 0 ? order : order.substring(0, comma)).trim();
+            manId = first;
             if (first.length() > 0) {
                 StringBuffer p = new StringBuffer("m").append(first).append('_');
                 int plen = p.length();
@@ -525,6 +527,7 @@ public final class RgdBus implements Runnable {
             String result = TtRgi.update(on, declare, stockSafe(icon), mState, turn, bar, dest, eta, road, next);
             TtPanel.near = nearTurn(main, turn);
             Card.route(on, TtPanel.near);
+            AutoZoom.route(on, main, turn, manId);
             // Lanes only while approaching the turn, like stock.
             TtPanel.live(on, icon, turn, glideBar, mState >= 3 ? lanes : "-", dest, eta, exit, next);
             if (result != null) {

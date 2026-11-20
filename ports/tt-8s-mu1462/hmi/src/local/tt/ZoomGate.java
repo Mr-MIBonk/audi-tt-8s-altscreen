@@ -173,6 +173,11 @@ public final class ZoomGate {
         }
     }
 
+    /** v47 AutoZoom: steps < 0 zoom in, > 0 out (as the wheel); /tmp/tt-zoom-invert applies. */
+    static boolean autoZoom(String source, int steps) {
+        return send(source, INVERT.exists() ? -steps : steps);
+    }
+
     private static boolean send(String source, int steps) {
         StringBuffer b = new StringBuffer(source);
         b.append(" steps=").append(steps);

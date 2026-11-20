@@ -40,6 +40,19 @@ map is left alone; otherwise the stock code runs.
 - CarPlay's zoom direction is the reverse of the stock one; `/tmp/tt-zoom-invert` flips it.
 - Every decision is logged to `/tmp/tt-zoom.log`.
 
+### Auto zoom at turns (v47)
+
+`local.tt.AutoZoom` uses the same path: when a turn is within 250 m (motorway exits and forks
+600 m) it sends 2 zoom-in steps (`/tmp/tt-autozoom-steps`, 1-6), once per maneuver, and the same
+steps out 3 s after the turn (or when the route ends or the turn moves far away again). Back-to-back
+turns stay zoomed in. Kit: `sh tt.sh autozoom on|off|steps N`. Whether the apps keep a zoom level
+set this way during guidance is still to be checked on the car.
+
+### Map tilt
+
+There is no known cluster URL option or command for pitch. Google Maps already draws its cluster
+map in 3D; Apple Maps draws it top-down. That is the app's choice and cannot be changed from the car.
+
 ## The iPhone's own maneuver card
 
 The hook asks the iPhone for `maps:/car/instrumentcluster` (map with the app's card) or
