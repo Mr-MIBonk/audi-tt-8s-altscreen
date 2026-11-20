@@ -35,12 +35,14 @@ V38=c3ad31212c5c364030be092dff941e7ffd39f02003cd7857d858f9684683822c
 V39=0a7636fc436d53426f2684d08116172c0410651b9416914f69009ef611ef7d9f
 V40=799e2cf291bfb05a728875c6c227dc5b9e93fd317796bcc1d20527dce7ac8c14
 V41=0fdfdb631f0ad028af51d5e7bf78bab03d908877d344e0de03ba41c8a23864b4
+V42=679ccf4a1c1951e909d1b7f7897f5b257dc89bd91b58ba8339075ebfdd7daa64
 SUP=/mnt/app/root/mu1438-cluster/cluster_supervisor.sh
 SUP_V2=9175a6deaff6acf2c4f35b61b245476ba8827e7f4b74977b48cdafc2c7c6f57c
 SUP_V3=4c37a375954a387e4938fbabcad868bb2fcc4207a97bcbe599421974e75f06bd
 SUP_V4=d520d1971e843bdbdc2898a7e64b09b2fbb3d6b7495a6374a420769446bbb8ed
 SUP_V5=5a746386705da855b4d88c33042122d54e44ebbd8516165325bf3839e0627282
 SUP_V6=de728b175607fe702393297b7e6a73be5efea32ea29d86b23398f6f1938557d4
+SUP_V7=e8dbabcaf69b08fb2532825ee5506c03e6603398f1a5293baea621136035ae26
 HOOK=/mnt/app/root/lib-target/libaltscreen111.so
 # CarPlay hook builds: shipped, h320 safe-area preset (what the TT runs), and their fix1 versions
 HOOK_STOCK=9a8c01ec8323d5de7695e212ff6168b0bb7df99d8554c9971f5449c5a21d6256
@@ -65,20 +67,20 @@ ro(){ sync; mount -ur /mnt/app 2>/dev/null; }
 which_jar(){
     h=$("$T" "$JAR" 2>/dev/null)
     case "$h" in
-        $V12) echo v12;; $V14) echo v14;; $V15) echo v15;; $V16) echo v16;; $V17) echo v17;; $V18) echo v18;; $V19) echo v19;; $V20) echo v20;; $V21) echo v21;; $V22) echo v22;; $V23) echo v23;; $V24) echo v24;; $V25) echo v25;; $V26) echo v26;; $V27) echo v27;; $V28) echo v28;; $V29) echo v29;; $V30) echo v30;; $V31) echo v31;; $V32) echo v32;; $V33) echo v33;; $V34) echo v34;; $V35) echo v35;; $V36) echo v36;; $V37) echo v37;; $V38) echo v38;; $V39) echo v39;; $V40) echo v40;; $V41) echo v41;; "") echo none;; *) echo "unknown ($h)";;
+        $V12) echo v12;; $V14) echo v14;; $V15) echo v15;; $V16) echo v16;; $V17) echo v17;; $V18) echo v18;; $V19) echo v19;; $V20) echo v20;; $V21) echo v21;; $V22) echo v22;; $V23) echo v23;; $V24) echo v24;; $V25) echo v25;; $V26) echo v26;; $V27) echo v27;; $V28) echo v28;; $V29) echo v29;; $V30) echo v30;; $V31) echo v31;; $V32) echo v32;; $V33) echo v33;; $V34) echo v34;; $V35) echo v35;; $V36) echo v36;; $V37) echo v37;; $V38) echo v38;; $V39) echo v39;; $V40) echo v40;; $V41) echo v41;; $V42) echo v42;; "") echo none;; *) echo "unknown ($h)";;
     esac
 }
 
 case "${1:-help}" in
 setup)
     # Run from /tmp after copying the kit there. Safe to run again for a kit update.
-    test -f /tmp/tt-zoom-v41.jar || { say 'Copy the kit files to /tmp first.'; exit 1; }
+    test -f /tmp/tt-zoom-v42.jar || { say 'Copy the kit files to /tmp first.'; exit 1; }
     rw
     mkdir -p "$K/logs"
-    for f in altscreen-sha256 tt-zoom-v41.jar stock-replay.txt catalogue.txt komo-test.txt panel-test.txt kdk-test.txt fit-test.txt win-test.txt new-test.txt map-test.txt place-test.txt; do
+    for f in altscreen-sha256 tt-zoom-v42.jar stock-replay.txt catalogue.txt komo-test.txt panel-test.txt kdk-test.txt fit-test.txt win-test.txt new-test.txt map-test.txt place-test.txt; do
         cp "/tmp/$f" "$K/$f" || { say "missing /tmp/$f"; ro; exit 1; }
     done
-    for f in tt-zoom-v12.jar tt-zoom-v14.jar tt-zoom-v15.jar tt-zoom-v16.jar tt-zoom-v17.jar tt-zoom-v18.jar tt-zoom-v19.jar tt-zoom-v20.jar tt-zoom-v21.jar tt-zoom-v22.jar tt-zoom-v23.jar tt-zoom-v24.jar tt-zoom-v25.jar tt-zoom-v26.jar tt-zoom-v27.jar tt-zoom-v28.jar tt-zoom-v29.jar tt-zoom-v30.jar tt-zoom-v31.jar tt-zoom-v32.jar tt-zoom-v33.jar tt-zoom-v34.jar tt-zoom-v35.jar tt-zoom-v36.jar tt-zoom-v37.jar tt-zoom-v39.jar tt-zoom-v40.jar libaltscreen111-tt1.so cluster_supervisor-v6.sh; do
+    for f in tt-zoom-v12.jar tt-zoom-v14.jar tt-zoom-v15.jar tt-zoom-v16.jar tt-zoom-v17.jar tt-zoom-v18.jar tt-zoom-v19.jar tt-zoom-v20.jar tt-zoom-v21.jar tt-zoom-v22.jar tt-zoom-v23.jar tt-zoom-v24.jar tt-zoom-v25.jar tt-zoom-v26.jar tt-zoom-v27.jar tt-zoom-v28.jar tt-zoom-v29.jar tt-zoom-v30.jar tt-zoom-v31.jar tt-zoom-v32.jar tt-zoom-v33.jar tt-zoom-v34.jar tt-zoom-v35.jar tt-zoom-v36.jar tt-zoom-v37.jar tt-zoom-v40.jar tt-zoom-v41.jar libaltscreen111-tt1.so cluster_supervisor-v7.sh; do
         test -f "/tmp/$f" && cp "/tmp/$f" "$K/$f"
     done
     # Optional panel background picture (made with scripts/mkbg.py; kept on the car, not in git).
@@ -86,14 +88,14 @@ setup)
     cp /tmp/tt.sh /mnt/app/root/tt.sh
     chmod 755 "$T" /mnt/app/root/tt.sh
     ok=1
-    "$T" $V41 "$K/tt-zoom-v41.jar" || ok=0
+    "$T" $V42 "$K/tt-zoom-v42.jar" || ok=0
     ro
     if test $ok = 1; then say 'Kit installed. From now on just type:  sh tt.sh help'
     else say 'A kit file is damaged - copy the kit again and rerun setup.'; exit 1; fi
     ;;
 use)
     v=${2:-}
-    case "$v" in v12) h=$V12;; v14) h=$V14;; v15) h=$V15;; v16) h=$V16;; v17) h=$V17;; v18) h=$V18;; v19) h=$V19;; v20) h=$V20;; v21) h=$V21;; v22) h=$V22;; v23) h=$V23;; v24) h=$V24;; v25) h=$V25;; v26) h=$V26;; v27) h=$V27;; v28) h=$V28;; v29) h=$V29;; v30) h=$V30;; v31) h=$V31;; v32) h=$V32;; v33) h=$V33;; v34) h=$V34;; v35) h=$V35;; v36) h=$V36;; v37) h=$V37;; v38) h=$V38;; v39) h=$V39;; v40) h=$V40;; v41) h=$V41;; *) say 'Usage: sh tt.sh use v41   (or v40 ... v12)'; exit 2;; esac
+    case "$v" in v12) h=$V12;; v14) h=$V14;; v15) h=$V15;; v16) h=$V16;; v17) h=$V17;; v18) h=$V18;; v19) h=$V19;; v20) h=$V20;; v21) h=$V21;; v22) h=$V22;; v23) h=$V23;; v24) h=$V24;; v25) h=$V25;; v26) h=$V26;; v27) h=$V27;; v28) h=$V28;; v29) h=$V29;; v30) h=$V30;; v31) h=$V31;; v32) h=$V32;; v33) h=$V33;; v34) h=$V34;; v35) h=$V35;; v36) h=$V36;; v37) h=$V37;; v38) h=$V38;; v39) h=$V39;; v40) h=$V40;; v41) h=$V41;; v42) h=$V42;; *) say 'Usage: sh tt.sh use v42   (or v41 ... v12)'; exit 2;; esac
     test -f "$K/tt-zoom-$v.jar" || { say "$v is not in the kit on the car."; exit 1; }
     "$T" $h "$K/tt-zoom-$v.jar" || { say "Stored $v jar is damaged."; exit 1; }
     rw
@@ -314,14 +316,14 @@ hookfix)
     test $r = 0 && say 'Done. Restart the MMI (hold the MMI knob) to load it.' || say 'Copy failed - check with: sh tt.sh report'
     ;;
 sup)
-    # Supervisor v6 (scripts/mksup.py): v2, but the cockpit renderer starts only while a map
-    # view shows (tt-zoom v41 writes /tmp/tt-map-view); test switch /tmp/mu1462-keep-renderer.
+    # Supervisor v7 (scripts/mksup.py): the cockpit renderer runs for the whole session (started
+    # after 3 s of car screen, never stopped for the CarPlay tab), no display switching.
     # One file on flash, v2 kept; next replug.
     cur=$("$T" "$SUP" 2>/dev/null)
     case "${2:-}" in
         undo) src="$K/cluster_supervisor.sh.v2"; want=$SUP_V2; test -f "$src" || { say 'Nothing to undo.'; exit 1; };;
-        "") src="$K/cluster_supervisor-v6.sh"; want=$SUP_V6
-            case "$cur" in $SUP_V2|$SUP_V3|$SUP_V4|$SUP_V5|$SUP_V6) ;; *) say "Unknown supervisor on the car ($cur) - nothing changed."; exit 1;; esac;;
+        "") src="$K/cluster_supervisor-v7.sh"; want=$SUP_V7
+            case "$cur" in $SUP_V2|$SUP_V3|$SUP_V4|$SUP_V5|$SUP_V6|$SUP_V7) ;; *) say "Unknown supervisor on the car ($cur) - nothing changed."; exit 1;; esac;;
         *) say 'Usage: sh tt.sh sup   |   sh tt.sh sup undo'; exit 2;;
     esac
     test "$cur" = "$want" && { say 'Already in place.'; exit 0; }
@@ -342,18 +344,12 @@ crash)
     say 'Parked, CarPlay connected, no route needed. c + Enter whenever something goes wrong (black, crash, slow).'
     step 'Q: CAR tab <-> CarPlay tab, quick flips, 6 times. Any black CarPlay tab or crash?'
     next
-    step 'M: MAP view (wait for the CarPlay map) -> CarPlay tab -> MAP view, 6 times. How fast is the CarPlay map back?'
+    step 'M: MAP view <-> CarPlay tab, 10 times, some FAST. CarPlay tab always shows CarPlay (not the map)? Map back at once? With a route too if you can.'
     next
     step 'U1: on the MAP view, UNPLUG the iPhone. Within about 5 s: stock map (not black)? PHOTO if not.'
     next
     step 'U2: PLUG it back in, stay on the MAP view. CarPlay connects (no flicker) and the CarPlay map comes back?'
     next
-    touch /tmp/mu1462-keep-renderer
-    step 'K0: keep switch ON. UNPLUG the iPhone, wait 5 s, PLUG it back in (the supervisor reads the switch at connect).'
-    next
-    step 'K1: MAP view (CarPlay map) -> CarPlay tab -> MAP view, 6 times, quick and slow. CarPlay tab OK? Map back at once?'
-    next
-    rm -f /tmp/mu1462-keep-renderer
     finish
     ;;
 unstick)
@@ -447,11 +443,11 @@ panel)
     esac
     ;;
 report)
-    say "== jar: $(which_jar)    (v41 is the current one)"
+    say "== jar: $(which_jar)    (v42 is the current one)"
     say "== layers: map 10 = $(ctxlist 10)  map+banner 89 = $(ctxlist 89)  (v37 with CarPlay: 16 60 / 20 16 60)"
     grep "layers:" /tmp/tt-rgd.log 2>/dev/null | tail -3
     h=$("$T" "$HOOK" 2>/dev/null); case "$h" in $HOOK_STOCK) say '== CarPlay hook: original';; $HOOK_H320) say '== CarPlay hook: original (h320 preset)';; $FIX_STOCK|$FIX_H320) say '== CarPlay hook: fix1 (old byte patch - replace with: sh tt.sh hookfix)';; $HOOK_TT1) say '== CarPlay hook: TT build 1 (from source: no port leak, always falls back to plain CarPlay)';; *) say "== CarPlay hook: unknown ($h)";; esac
-    h=$("$T" "$SUP" 2>/dev/null); case "$h" in $SUP_V2) say '== supervisor: v2 (switches the display to 901)';; $SUP_V3) say '== supervisor: v3 (no display switch: no CarPlay map in the map views - replace it)';; $SUP_V4) say '== supervisor: v4 (4 s start delay: slow map - replace with v5)';; $SUP_V5) say "== supervisor: v5 (renderer only on the map view)";; $SUP_V6) say "== supervisor: v6 (renderer only on the map view$(test -e /tmp/mu1462-keep-renderer && echo ', KEEP switch ON'); map view now: $(cat /tmp/tt-map-view 2>/dev/null))";; *) say "== supervisor: unknown ($h)";; esac
+    h=$("$T" "$SUP" 2>/dev/null); case "$h" in $SUP_V2) say '== supervisor: v2 (switches the display to 901)';; $SUP_V3) say '== supervisor: v3 (no display switch: no CarPlay map in the map views - replace it)';; $SUP_V4) say '== supervisor: v4 (4 s start delay: slow map - replace with v5)';; $SUP_V5) say "== supervisor: v5 (renderer only on the map view)";; $SUP_V6) say '== supervisor: v6 (test switch version - replace with v7)';; $SUP_V7) say '== supervisor: v7 (renderer runs all session, no display switching)';; *) say "== supervisor: unknown ($h)";; esac
     tail -3 /tmp/mu1462-supervisor.log 2>/dev/null
     test -f "$K/panel-bg.a8" && say '== panel background: installed' || say '== panel background: none'
     say '== switches:'
@@ -486,13 +482,13 @@ save)
     ;;
 *)
     say 'sh tt.sh report              what is installed and what it is doing (paste this)'
-    say 'sh tt.sh use v41             switch version (v41 ... v12), then restart the MMI'
+    say 'sh tt.sh use v42             switch version (v42 ... v12), then restart the MMI'
     say 'sh tt.sh play map|new|fit|win|kdk|panel|komo|stock  parked tests'
     say 'sh tt.sh play arrows | stop  arrow catalogue / stop playback'
     say 'sh tt.sh test                the full guided test, Enter for each step, then saves the logs'
     say 'sh tt.sh check               v38 guided check (Enter for each step, c marks a CarPlay crash)'
     say 'sh tt.sh hookfix [undo]      CarPlay hook TT build 1: reconnect after a crash (flash, then MMI restart)'
-    say 'sh tt.sh sup [undo]          supervisor v6 for the CarPlay-tab crash (flash, then replug)'
+    say 'sh tt.sh sup [undo]          supervisor v7: renderer runs all session (flash, then replug)'
     say 'sh tt.sh crash               check: tab flips, map return, unplug and replug'
     say 'sh tt.sh unstick             after a crash, when CarPlay will not reconnect: clear the old session'
     say 'sh tt.sh delay SECONDS       renderer start delay on the map view (default 1)'

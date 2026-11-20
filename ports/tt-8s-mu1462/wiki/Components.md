@@ -118,3 +118,17 @@ stock `AirPlayReceiverSession*` functions looked up first so a fail-closed start
 plain CarPlay. Compared with the h320 build: same imports/exports, same strings and data
 (strings reordered), 136 bytes more code. Supervisor v6 = v5 plus the test switch
 `/tmp/mu1462-keep-renderer` (keep the renderer on the CarPlay tab).
+
+**CarPlay-tab crash: cause and fix (run41/43).** Run41 (v6 without the switch): the drop came
+again 0.5 s after a renderer start; the hook fix worked (no busy port on any reconnect). Run43
+(keep switch on): 49 CarPlay-tab openings with the renderer running, no drop; one renderer
+process for the whole session, decoder never closed. While the CarPlay tab holds the screen
+the renderer cannot bind its output ("NvMediaVideoMixerBindOutput: Unable to Create YUV
+Display", retried) and binds again afterwards ("Created output"): the hardware is shared
+without trouble; only opening/closing the renderer while the CarPlay tab started its video
+dropped the session. Remaining: fast flips sometimes left the CarPlay tab showing the map -
+v2's `dmdt sc 0 901` (12 switches in run43) racing the HMI's switch to the CarPlay tab.
+Supervisor v7: renderer started once after 3 s of car screen, never stopped for the CarPlay
+tab, no display switching. tt-zoom v42: the layer re-apply also works with the banner up
+(context 0 -> 79 and back to 89). Failed reconnects in run41 ended before any CarPlay session
+setup (USB/iAP2 level, not the hook): try another cable/port.

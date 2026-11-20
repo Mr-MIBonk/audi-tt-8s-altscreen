@@ -1419,6 +1419,14 @@ public final class TtPanel {
                     d.switchContext(89, 0, null);
                     d.switchContext(10, 0, null);
                     RgdBus.note("layers: re-applied on the map (10 -> 89 -> 10)");
+                } else if (ctx == 89 && banner) {
+                    // v42: banner up on the map. With supervisor v7 the renderer runs all session
+                    // and nothing switches the display behind the HMI, so the new 89 list needs a
+                    // real switch too: car page (0 -> 79 with the banner) and back (10 -> 89).
+                    relayer = false;
+                    d.switchContext(0, 0, null);
+                    d.switchContext(10, 0, null);
+                    RgdBus.note("layers: re-applied with the banner (79 -> 89)");
                 } else if (ctx != 89 || System.currentTimeMillis() > relayerUntil) {
                     relayer = false;
                     RgdBus.note(new StringBuffer("layers: re-apply skipped, context ").append(ctx)
