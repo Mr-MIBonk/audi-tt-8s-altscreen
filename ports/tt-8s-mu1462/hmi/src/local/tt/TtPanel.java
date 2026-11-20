@@ -301,6 +301,49 @@ public final class TtPanel {
             }
             return new StringBuffer("layout ").append(layoutForce).toString();
         }
+        if (op.equals("where")) {
+            StringBuffer b = new StringBuffer("where: skin=").append(ZoomGate.skinNow())
+                .append(" small=").append(ZoomGate.small()).append(" mode=").append(currentMode())
+                .append(" mapShowing=").append(mapShowing).append(" layers=").append(Layers.on());
+            if (mainRoot != null) {
+                b.append(" panel at ").append((int) mainRoot.getX()).append(',').append((int) mainRoot.getY())
+                    .append(" visible=").append(mainRoot.isVisible());
+            } else {
+                b.append(" panel none (no route?)");
+            }
+            de.audi.atip.hmi.view.IDisplayManager d = dm(m);
+            if (d != null) {
+                try {
+                    int[] p = d.getPosition(KDK, 0);
+                    b.append(" | stock window pos ");
+                    if (p == null) {
+                        b.append("null");
+                    } else {
+                        b.append(p[0]).append(',').append(p[1]);
+                    }
+                } catch (Throwable t) {
+                    b.append(" | pos error ").append(String.valueOf(t));
+                }
+                for (int i = 0; i < 2; i++) {
+                    try {
+                        int[] e = d.getExtends(i == 0 ? KDK : 0);
+                        b.append(i == 0 ? " ext(20) " : " ext(0) ");
+                        for (int j = 0; e != null && j < e.length; j++) {
+                            b.append(j > 0 ? "," : "").append(e[j]);
+                        }
+                    } catch (Throwable t) {
+                        b.append(" ext error");
+                    }
+                }
+                try {
+                    b.append(" opacity ").append(d.getOpacity(KDK, 0)).append(" ctx ").append(d.getCurrentContextID(0));
+                } catch (Throwable ignored) {
+                }
+            }
+            b.append(" | pos file ").append(posLine("kdk-small") != null ? "kdk-small set " : "").append(posLine("kdk-large") != null ? "kdk-large set" : "");
+            RgdBus.note(b.toString());
+            return "where";
+        }
         if (op.equals("fade") && w.length >= 2) {
             try {
                 fadeNow = Float.parseFloat(w[1]);
@@ -659,6 +702,25 @@ public final class TtPanel {
     /** The panel node whose opacity a fade changed, and its original value. */
     private static IWrappedNode3D fadeRoot;
     private static float fadeBase = 1f;
+
+    /** v50 Layers loop: /tmp/tt-panel-pos changed (redraw now) or /tmp/tt-panel-where asked for a report. */
+    private static long posStamp = -1L;
+    private static final java.io.File WHERE = new java.io.File("/tmp/tt-panel-where");
+
+    static void poll() {
+        try {
+            long st = POS.exists() ? POS.lastModified() + POS.length() : 0L;
+            if (posStamp != -1L && st != posStamp && lastTurn != null) {
+                post(lastTurn, false);
+            }
+            posStamp = st;
+            if (WHERE.exists()) {
+                WHERE.delete();
+                post("where", false);
+            }
+        } catch (Throwable ignored) {
+        }
+    }
 
     /** ZoomGate: large/small view changed; rebuild in the other layout. */
     public static void viewChanged() {
@@ -1156,12 +1218,23 @@ public final class TtPanel {
             // line runs along its top edge, so the wide panel starts just below it.
             x = 991;
             y = 160;
+            // v50: follow the stock banner window (other skins put it elsewhere).
+            int[] k = kdkWindow();
+            if (k != null) {
+                x = k[0];
+                y = k[1] + 8;
+            }
         } else if (which.equals("small")) {
             x = 991;
             y = 152;
         } else if (which.equals("kdk-large")) {
             x = 1105;
             y = 110;
+            int[] k = kdkWindow();
+            if (k != null) {
+                x = k[0];
+                y = k[1];
+            }
         } else if (which.equals("flap")) {
             x = 1105;
             y = 110;
@@ -1196,6 +1269,26 @@ public final class TtPanel {
         }
         n.setScale(scale, scale, 1f);
         n.setPosition((float) x, (float) y, 0f);
+    }
+
+    /**
+     * v50: where the stock banner window (displayable 20) is now, {x, y}, or null if unknown.
+     * Only off the Sport skin (1), whose hard-coded spots are measured and car-tested.
+     */
+    static int[] kdkWindow() {
+        if (ZoomGate.skinNow() == 1) {
+            return null;
+        }
+        try {
+            EALManager m = manager();
+            de.audi.atip.hmi.view.IDisplayManager d = m == null ? null : dm(m);
+            int[] p = d == null ? null : d.getPosition(KDK, 0);
+            if (p != null && p.length >= 2 && p[0] > 0 && p[0] < 1440 && p[1] >= 0 && p[1] < 540) {
+                return p;
+            }
+        } catch (Throwable ignored) {
+        }
+        return null;
     }
 
     private static String[] posLine(String which) {

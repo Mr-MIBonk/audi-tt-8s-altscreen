@@ -87,6 +87,7 @@ public final class Layers implements Runnable {
         while (true) {
             try {
                 mapView();
+                TtPanel.poll();
                 if (n % 5 == 0) {
                     Card.tick();
                     AutoZoom.tick();

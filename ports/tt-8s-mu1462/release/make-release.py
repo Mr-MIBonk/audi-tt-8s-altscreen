@@ -39,7 +39,7 @@ TESTED = {
     "NEW_LIB": "347a911454a48cc494851178d4298c29b71d8854fd3087ce6cb403e51c7885c5",   # hook TT build 2
     "NEW_RT": "24bf08142cc43a18330550ca448f4635e10d5ab3ed38475e80d450a469991a7f",    # renderer, Sport shift
     "NEW_SUP": None,   # set with --supervisor-sha after the car test (v6 de728b17 / v7 e8dbabca)
-    "NEW_JAR": "1704d048fc1e28ff6ef690a7649376d5d0acda186a5e87d41f290918d26a7dc9",   # tt-zoom v50
+    "NEW_JAR": "ac5f1958763d70f4890f83ad0659807f6b18b7a67992acacaa36d4b6738b141e",   # tt-zoom v50 (pending car test)
 }
 
 

@@ -36,6 +36,11 @@ public final class ZoomGate {
     private ZoomGate() {
     }
 
+    /** v50: the skin as last reported (0 standard, 1 Sport, -1 unknown). */
+    public static int skinNow() {
+        return skinState;
+    }
+
     /** True while the cockpit shows the small view (1), false for large (0) or unknown. */
     public static boolean small() {
         return smallState == 1;
