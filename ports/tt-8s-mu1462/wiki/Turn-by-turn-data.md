@@ -23,6 +23,10 @@
 - Maneuver list: `mN_type`, `exit_angle` / `turn_angle`, `junction_type`,
   `driving_side`, `name`, `after_road`.
 - Lanes (seen from Google Maps): `lgN_index`, `lane_directions`, `lane_angles`, `lane_status`.
+  `lgN_index` is a maneuver id; `lane_status` 0 = not this lane, 2 = preferred (one entry per
+  lane, left to right). Sets often come once per route; after a reroute the ids restart at 0,
+  so old sets must be dropped (v43). Google also sends `lane_guidance_showing` (1 while it shows
+  lanes itself); Apple Maps sends 0 there regardless.
 - iOS sends a short `route_state 0` about every 30 s, so "route off" is only
   accepted after 6 s.
 - No separate exit-number field has been seen yet. `RgdBus.exitNumber` takes the

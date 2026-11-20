@@ -69,6 +69,9 @@ public final class RgdBus implements Runnable {
     private static boolean wantOn;
     private static boolean lastOn;
     private static String lastSummary = "";
+    /** v43: when each lane-set slot (lgN_) was last sent, and the current maneuver id. */
+    private static final Hashtable LANES_AT = new Hashtable();
+    private static int laneFirst = -1;
     // v40 bar glide: the iPhone sends rounded distances (0.2 mi, 0.1 mi, 50 ft steps), so the
     // bar jumped. Between changes it now slides at the speed the changes imply.
     private static String gKey;
@@ -353,7 +356,14 @@ public final class RgdBus implements Runnable {
                 if (b < 0) {
                     continue;
                 }
-                STATE.put(line.substring(0, a), line.substring(b + 1));
+                String key = line.substring(0, a);
+                STATE.put(key, line.substring(b + 1));
+                if (key.startsWith("lg")) {
+                    int u = key.indexOf('_');
+                    if (u > 2) {
+                        LANES_AT.put(key.substring(0, u), new Long(System.currentTimeMillis()));
+                    }
+                }
             }
         }
     }
@@ -465,7 +475,12 @@ public final class RgdBus implements Runnable {
                 dir = 255;
             }
             if (first.length() > 0) {
-                lanes = laneSpec(first);
+                dropOldLanes(first, now);
+                // v43: Google sends lane_guidance_showing, 1 while it shows lanes itself (on the
+                // approach); with 0 there are none to show. Apple Maps always sends 0: ignored.
+                boolean googleOff = str("source_name").indexOf("Google") >= 0
+                    && "0".equals(str("lane_guidance_showing").trim());
+                lanes = googleOff ? "-" : laneSpec(first);
                 StringBuffer ep = new StringBuffer("m").append(first).append('_');
                 int eplen = ep.length();
                 exit = exitNumber(str(ep.append("name").toString()));
@@ -691,6 +706,43 @@ public final class RgdBus implements Runnable {
             return new short[] { (short) main, d, -1 };
         }
         return new short[] { (short) main, d };
+    }
+
+    /**
+     * v43 (car photos): lane sets are numbered by maneuver id and often sent only once, at route
+     * start. After a reroute the ids start again at 0 and the old route's sets stayed: a left turn
+     * showed the lanes of the previous right turn. When the current id goes backwards, drop every
+     * set not sent in the last 2 s (a new route's sets can arrive just before its maneuver list).
+     * Call with STATE locked.
+     */
+    private static void dropOldLanes(String first, long now) {
+        int fi;
+        try {
+            fi = Integer.parseInt(first.trim());
+        } catch (Throwable t) {
+            return;
+        }
+        if (laneFirst >= 0 && fi < laneFirst) {
+            java.util.Vector gone = new java.util.Vector();
+            for (Enumeration e = STATE.keys(); e.hasMoreElements();) {
+                String k = (String) e.nextElement();
+                int u = k.indexOf('_');
+                if (k.startsWith("lg") && u > 2) {
+                    Long at = (Long) LANES_AT.get(k.substring(0, u));
+                    if (at == null || now - at.longValue() > 2000L) {
+                        gone.addElement(k);
+                    }
+                }
+            }
+            for (int i = 0; i < gone.size(); i++) {
+                STATE.remove(gone.elementAt(i));
+            }
+            if (gone.size() > 0) {
+                log(new StringBuffer("lanes: route restarted (maneuver ").append(laneFirst).append(" -> ")
+                    .append(fi).append("), dropped ").append(gone.size()).append(" old lane keys").toString());
+            }
+        }
+        laneFirst = fi;
     }
 
     /**
