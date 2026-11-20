@@ -13,6 +13,17 @@ javac (`--release 8`), PatchZoom, VerifyZoom (ASM verifier), `checklib.py` (ever
 (`mkjar.py`). The inputs are your own converted stock jar, ASM 9.7 and the car's
 Java library. The jar contains patched stock classes, so it is never committed.
 
+## Native build (hook and renderer)
+
+The CarPlay hook (`libaltscreen111.so`) and renderer (`cluster_runtime`) are C for QNX 6.5
+armle-v7; the compiler only runs on Linux. On Windows: install WSL once (admin PowerShell:
+`wsl --install -d Ubuntu-24.04`, reboot, choose a Linux user), then
+`scripts/wsl-native-build.sh tools`, `image` (builds the GCC 4.9 toolchain image from
+luka-dev/qnx65-armv7-toolchain, long, once) and `native` (compiles `carplay/src/native` with
+upstream's `compile-native.sh` and compares exports/imports with `carplay/bin`). Run as root
+in WSL: `wsl -d Ubuntu-24.04 -u root sh <path>/scripts/wsl-native-build.sh <step>`.
+Built binaries are not committed.
+
 ## Toolkit (`kit/tt.sh`)
 
 Copy the kit to `/tmp`, run `sh /tmp/tt.sh setup` once; afterwards, from the SSH
