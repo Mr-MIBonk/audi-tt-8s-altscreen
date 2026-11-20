@@ -7,10 +7,9 @@ import java.io.FileOutputStream;
 /**
  * The iPhone's own maneuver card on the cockpit CarPlay map.
  *
- * v44: per view (Classic with card, Sport map only). v46 (user's choice): in both views the card
- * shows only near a turn, the same rule as RgdBus.nearTurn (next turn or destination within 1 km,
+ * v44: per view (Classic with card, Sport map only). v46: the card shows only near a turn, the same rule as RgdBus.nearTurn (next turn or destination within 1 km,
  * motorway exits and forks 2 km), plus 10 s at route start and 5 s after a turn; otherwise map
- * only ("map" surface). Its position comes from the hook's maneuverLayout setting (sh tt.sh card top).
+ * only ("map" surface). v49 (user): never in Sport (the small map window), near turns in Classic. Its position comes from the hook's maneuverLayout setting (sh tt.sh card top).
  *
  * The hook reads /tmp/mibr-alt111-url-mode when CarPlay connects and on every showUI it sends;
  * touching /tmp/mibr-alt111-show-only makes it send showUI again with the current address, so the
@@ -69,7 +68,7 @@ public final class Card {
             int want;
             boolean live;
             synchronized (MODE) {
-                boolean card = routeOn && (nearNow || now < startUntil || now < holdUntil);
+                boolean card = routeOn && !ZoomGate.small() && (nearNow || now < startUntil || now < holdUntil);
                 want = card ? 0 : 1;
                 if (want == last) {
                     return;
