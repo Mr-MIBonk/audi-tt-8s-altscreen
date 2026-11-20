@@ -71,6 +71,9 @@ public final class RgdBus implements Runnable {
     private static String lastSummary = "";
     /** v48: when time_remaining_seconds was last received (System.currentTimeMillis). */
     private static long remainingAt;
+    /** v51: the phone's UTC time (ms) at calAt, from eta_seconds - time_remaining_seconds. */
+    private static long calAt;
+    private static long calUtcMs;
     /** v43: when each lane-set slot (lgN_) was last sent, and the current maneuver id. */
     private static final Hashtable LANES_AT = new Hashtable();
     private static int laneFirst = -1;
@@ -441,8 +444,15 @@ public final class RgdBus implements Runnable {
             // the UTC ETA showed as UTC. With the phone's time remaining, the ETA is re-based on this
             // clock (TtPanel.clock adds it to the cockpit clock); eta_seconds is only the fallback.
             long rem = num("time_remaining_seconds", -1);
-            if (rem >= 0 && remainingAt > 0L) {
-                eta = (remainingAt + rem * 1000L) / 1000L;
+            // v51 (car photo: 10:05 for Google's 10:02): Google re-times the route by sending a new
+            // eta_seconds without a new time remaining. Calibrate once per time-remaining message
+            // (the phone's UTC "now" = eta - remaining at that moment), then follow eta_seconds.
+            if (rem >= 0 && eta > 0 && remainingAt > 0L && remainingAt != calAt) {
+                calAt = remainingAt;
+                calUtcMs = (eta - rem) * 1000L;
+            }
+            if (eta > 0 && calAt > 0L) {
+                eta = (calAt + (eta * 1000L - calUtcMs)) / 1000L;
             }
             road = str("current_road");
             next = "";

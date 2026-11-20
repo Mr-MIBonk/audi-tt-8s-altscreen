@@ -41,6 +41,17 @@ public final class ZoomGate {
         return skinState;
     }
 
+    /**
+     * v51: true while the CarPlay map has only a small window. Sport skin: the small view
+     * (tach-centred). Standard skin (0, two round dials): view size 0 is the two-dials view with the
+     * map between them, size 1 the big map (car photos and panel where, 2026-11-20).
+     */
+    public static boolean smallMap() {
+        int skin = skinState;
+        int st = smallState;
+        return skin == 0 ? st == 0 : st == 1;
+    }
+
     /** True while the cockpit shows the small view (1), false for large (0) or unknown. */
     public static boolean small() {
         return smallState == 1;

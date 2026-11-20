@@ -303,7 +303,8 @@ public final class TtPanel {
         }
         if (op.equals("where")) {
             StringBuffer b = new StringBuffer("where: skin=").append(ZoomGate.skinNow())
-                .append(" small=").append(ZoomGate.small()).append(" mode=").append(currentMode())
+                .append(" small=").append(ZoomGate.small()).append(" smallMap=").append(ZoomGate.smallMap())
+                .append(" mode=").append(currentMode())
                 .append(" mapShowing=").append(mapShowing).append(" layers=").append(Layers.on());
             if (mainRoot != null) {
                 b.append(" panel at ").append((int) mainRoot.getX()).append(',').append((int) mainRoot.getY())
