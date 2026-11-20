@@ -39,3 +39,15 @@ map is left alone; otherwise the stock code runs.
 
 - CarPlay's zoom direction is the reverse of the stock one; `/tmp/tt-zoom-invert` flips it.
 - Every decision is logged to `/tmp/tt-zoom.log`.
+
+## The iPhone's own maneuver card
+
+The hook asks the iPhone for `maps:/car/instrumentcluster` (map with the app's card) or
+`.../map` (map only), plus `?showSpeedLimit&showCompass&showETA&maneuverLayout=`
+(`leftAligned`, `rightAligned`, `topAligned`). The surface comes from
+`/tmp/mibr-alt111-url-mode` (or `/mnt/app/root/mibr-carplay111-nav.surface`), the layout from
+`/mnt/app/root/mibr-carplay111-nav.maneuverLayout`. They are read when CarPlay connects and
+whenever the hook sends `showUI`; touching `/tmp/mibr-alt111-show-only` makes it send `showUI`
+again while connected. There is no option for map tilt or auto zoom (only zoom steps,
+`changeMapZoomLevel`). tt-zoom v44 switches the surface per view: Classic with card, Sport map
+only (`sh tt.sh card`).

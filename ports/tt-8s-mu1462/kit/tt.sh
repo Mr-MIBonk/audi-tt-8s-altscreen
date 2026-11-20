@@ -37,6 +37,7 @@ V40=799e2cf291bfb05a728875c6c227dc5b9e93fd317796bcc1d20527dce7ac8c14
 V41=0fdfdb631f0ad028af51d5e7bf78bab03d908877d344e0de03ba41c8a23864b4
 V42=679ccf4a1c1951e909d1b7f7897f5b257dc89bd91b58ba8339075ebfdd7daa64
 V43=b9f3e25770a2459eb6e2856d985fa9ddc763d3130345196d76d5e5382a1b5a38
+V44=0bb8db47205430a9054ec4c9418dc71ce102dde92bc5c656013b30d9c0b7cdd8
 SUP=/mnt/app/root/mu1438-cluster/cluster_supervisor.sh
 SUP_V2=9175a6deaff6acf2c4f35b61b245476ba8827e7f4b74977b48cdafc2c7c6f57c
 SUP_V3=4c37a375954a387e4938fbabcad868bb2fcc4207a97bcbe599421974e75f06bd
@@ -68,20 +69,20 @@ ro(){ sync; mount -ur /mnt/app 2>/dev/null; }
 which_jar(){
     h=$("$T" "$JAR" 2>/dev/null)
     case "$h" in
-        $V12) echo v12;; $V14) echo v14;; $V15) echo v15;; $V16) echo v16;; $V17) echo v17;; $V18) echo v18;; $V19) echo v19;; $V20) echo v20;; $V21) echo v21;; $V22) echo v22;; $V23) echo v23;; $V24) echo v24;; $V25) echo v25;; $V26) echo v26;; $V27) echo v27;; $V28) echo v28;; $V29) echo v29;; $V30) echo v30;; $V31) echo v31;; $V32) echo v32;; $V33) echo v33;; $V34) echo v34;; $V35) echo v35;; $V36) echo v36;; $V37) echo v37;; $V38) echo v38;; $V39) echo v39;; $V40) echo v40;; $V41) echo v41;; $V42) echo v42;; $V43) echo v43;; "") echo none;; *) echo "unknown ($h)";;
+        $V12) echo v12;; $V14) echo v14;; $V15) echo v15;; $V16) echo v16;; $V17) echo v17;; $V18) echo v18;; $V19) echo v19;; $V20) echo v20;; $V21) echo v21;; $V22) echo v22;; $V23) echo v23;; $V24) echo v24;; $V25) echo v25;; $V26) echo v26;; $V27) echo v27;; $V28) echo v28;; $V29) echo v29;; $V30) echo v30;; $V31) echo v31;; $V32) echo v32;; $V33) echo v33;; $V34) echo v34;; $V35) echo v35;; $V36) echo v36;; $V37) echo v37;; $V38) echo v38;; $V39) echo v39;; $V40) echo v40;; $V41) echo v41;; $V42) echo v42;; $V43) echo v43;; $V44) echo v44;; "") echo none;; *) echo "unknown ($h)";;
     esac
 }
 
 case "${1:-help}" in
 setup)
     # Run from /tmp after copying the kit there. Safe to run again for a kit update.
-    test -f /tmp/tt-zoom-v43.jar || { say 'Copy the kit files to /tmp first.'; exit 1; }
+    test -f /tmp/tt-zoom-v44.jar || { say 'Copy the kit files to /tmp first.'; exit 1; }
     rw
     mkdir -p "$K/logs"
-    for f in altscreen-sha256 tt-zoom-v43.jar stock-replay.txt catalogue.txt komo-test.txt panel-test.txt kdk-test.txt fit-test.txt win-test.txt new-test.txt map-test.txt place-test.txt; do
+    for f in altscreen-sha256 tt-zoom-v44.jar stock-replay.txt catalogue.txt komo-test.txt panel-test.txt kdk-test.txt fit-test.txt win-test.txt new-test.txt map-test.txt place-test.txt; do
         cp "/tmp/$f" "$K/$f" || { say "missing /tmp/$f"; ro; exit 1; }
     done
-    for f in tt-zoom-v12.jar tt-zoom-v14.jar tt-zoom-v15.jar tt-zoom-v16.jar tt-zoom-v17.jar tt-zoom-v18.jar tt-zoom-v19.jar tt-zoom-v20.jar tt-zoom-v21.jar tt-zoom-v22.jar tt-zoom-v23.jar tt-zoom-v24.jar tt-zoom-v25.jar tt-zoom-v26.jar tt-zoom-v27.jar tt-zoom-v28.jar tt-zoom-v29.jar tt-zoom-v30.jar tt-zoom-v31.jar tt-zoom-v32.jar tt-zoom-v33.jar tt-zoom-v34.jar tt-zoom-v35.jar tt-zoom-v36.jar tt-zoom-v37.jar tt-zoom-v41.jar tt-zoom-v42.jar libaltscreen111-tt1.so cluster_supervisor-v7.sh; do
+    for f in tt-zoom-v12.jar tt-zoom-v14.jar tt-zoom-v15.jar tt-zoom-v16.jar tt-zoom-v17.jar tt-zoom-v18.jar tt-zoom-v19.jar tt-zoom-v20.jar tt-zoom-v21.jar tt-zoom-v22.jar tt-zoom-v23.jar tt-zoom-v24.jar tt-zoom-v25.jar tt-zoom-v26.jar tt-zoom-v27.jar tt-zoom-v28.jar tt-zoom-v29.jar tt-zoom-v30.jar tt-zoom-v31.jar tt-zoom-v32.jar tt-zoom-v33.jar tt-zoom-v34.jar tt-zoom-v35.jar tt-zoom-v36.jar tt-zoom-v37.jar tt-zoom-v42.jar tt-zoom-v43.jar libaltscreen111-tt1.so cluster_supervisor-v7.sh; do
         test -f "/tmp/$f" && cp "/tmp/$f" "$K/$f"
     done
     # Optional panel background picture (made with scripts/mkbg.py; kept on the car, not in git).
@@ -89,14 +90,14 @@ setup)
     cp /tmp/tt.sh /mnt/app/root/tt.sh
     chmod 755 "$T" /mnt/app/root/tt.sh
     ok=1
-    "$T" $V43 "$K/tt-zoom-v43.jar" || ok=0
+    "$T" $V44 "$K/tt-zoom-v44.jar" || ok=0
     ro
     if test $ok = 1; then say 'Kit installed. From now on just type:  sh tt.sh help'
     else say 'A kit file is damaged - copy the kit again and rerun setup.'; exit 1; fi
     ;;
 use)
     v=${2:-}
-    case "$v" in v12) h=$V12;; v14) h=$V14;; v15) h=$V15;; v16) h=$V16;; v17) h=$V17;; v18) h=$V18;; v19) h=$V19;; v20) h=$V20;; v21) h=$V21;; v22) h=$V22;; v23) h=$V23;; v24) h=$V24;; v25) h=$V25;; v26) h=$V26;; v27) h=$V27;; v28) h=$V28;; v29) h=$V29;; v30) h=$V30;; v31) h=$V31;; v32) h=$V32;; v33) h=$V33;; v34) h=$V34;; v35) h=$V35;; v36) h=$V36;; v37) h=$V37;; v38) h=$V38;; v39) h=$V39;; v40) h=$V40;; v41) h=$V41;; v42) h=$V42;; v43) h=$V43;; *) say 'Usage: sh tt.sh use v43   (or v42 ... v12)'; exit 2;; esac
+    case "$v" in v12) h=$V12;; v14) h=$V14;; v15) h=$V15;; v16) h=$V16;; v17) h=$V17;; v18) h=$V18;; v19) h=$V19;; v20) h=$V20;; v21) h=$V21;; v22) h=$V22;; v23) h=$V23;; v24) h=$V24;; v25) h=$V25;; v26) h=$V26;; v27) h=$V27;; v28) h=$V28;; v29) h=$V29;; v30) h=$V30;; v31) h=$V31;; v32) h=$V32;; v33) h=$V33;; v34) h=$V34;; v35) h=$V35;; v36) h=$V36;; v37) h=$V37;; v38) h=$V38;; v39) h=$V39;; v40) h=$V40;; v41) h=$V41;; v42) h=$V42;; v43) h=$V43;; v44) h=$V44;; *) say 'Usage: sh tt.sh use v44   (or v43 ... v12)'; exit 2;; esac
     test -f "$K/tt-zoom-$v.jar" || { say "$v is not in the kit on the car."; exit 1; }
     "$T" $h "$K/tt-zoom-$v.jar" || { say "Stored $v jar is damaged."; exit 1; }
     rw
@@ -354,25 +355,29 @@ crash)
     finish
     ;;
 card)
-    # The iPhone's own maneuver card on the cockpit CarPlay map (the hook asks for it when CarPlay
-    # connects; takes effect at the next replug).
-    #   off            map only, no card (/tmp, gone after an MMI restart)
-    #   on             card back (removes "off")
-    #   left|right|top card position (small settings file on flash)
-    #   default        stock position and card on
+    # The iPhone's own maneuver card on the cockpit CarPlay map.
+    #   auto           (default, tt-zoom v44) card in Classic, map only in Sport, switched live
+    #   off | on       map only / card in both views (until "card auto" or an MMI restart)
+    #   left|right|top card position when it shows (small settings file on flash)
+    #   default        auto, hook default position
+    # Changes go to the iPhone at once when CarPlay is connected (the hook re-sends showUI).
     LAYOUT=/mnt/app/root/mibr-carplay111-nav.maneuverLayout
+    send(){ touch /tmp/mibr-alt111-show-only; }
     case "${2:-}" in
-        off) echo map > /tmp/mibr-alt111-url-mode; say 'Card off (map only) from the next replug, until an MMI restart.';;
-        on) rm -f /tmp/mibr-alt111-url-mode; say 'Card on from the next replug.';;
+        auto) rm -f /tmp/tt-card-fixed; say 'Card: automatic (Classic with card, Sport map only) from the next view change.';;
+        off) touch /tmp/tt-card-fixed; echo map > /tmp/mibr-alt111-url-mode; send; say 'Card off (map only) in both views.';;
+        on) touch /tmp/tt-card-fixed; echo base > /tmp/mibr-alt111-url-mode; send; say 'Card on in both views.';;
         left|right|top)
-            rw; echo "$2" > "$LAYOUT"; ro
-            rm -f /tmp/mibr-alt111-url-mode
-            say "Card position $2 from the next replug.";;
+            rw; echo "$2" > "$LAYOUT"; ro; send
+            say "Card position $2 (whenever the card shows).";;
         default)
-            rm -f /tmp/mibr-alt111-url-mode
+            rm -f /tmp/tt-card-fixed
             if test -f "$LAYOUT"; then rw; rm -f "$LAYOUT"; ro; fi
-            say 'Card back to the hook default from the next replug.';;
-        *) say "Usage: sh tt.sh card off | on | left | right | top | default   (now: $(cat /tmp/mibr-alt111-url-mode 2>/dev/null || echo card), position $(cat $LAYOUT 2>/dev/null || echo default))"; exit 2;;
+            send
+            say 'Card: automatic, hook default position.';;
+        *) say "Usage: sh tt.sh card auto | off | on | left | right | top | default"
+           say "   now: $(test -e /tmp/tt-card-fixed && echo fixed || echo auto), surface $(cat /tmp/mibr-alt111-url-mode 2>/dev/null || echo base), position $(cat $LAYOUT 2>/dev/null || echo default)"
+           exit 2;;
     esac
     ;;
 unstick)
@@ -466,7 +471,7 @@ panel)
     esac
     ;;
 report)
-    say "== jar: $(which_jar)    (v43 is the current one)"
+    say "== jar: $(which_jar)    (v44 is the current one)"
     say "== layers: map 10 = $(ctxlist 10)  map+banner 89 = $(ctxlist 89)  (v37 with CarPlay: 16 60 / 20 16 60)"
     grep "layers:" /tmp/tt-rgd.log 2>/dev/null | tail -3
     h=$("$T" "$HOOK" 2>/dev/null); case "$h" in $HOOK_STOCK) say '== CarPlay hook: original';; $HOOK_H320) say '== CarPlay hook: original (h320 preset)';; $FIX_STOCK|$FIX_H320) say '== CarPlay hook: fix1 (old byte patch - replace with: sh tt.sh hookfix)';; $HOOK_TT1) say '== CarPlay hook: TT build 1 (from source: no port leak, always falls back to plain CarPlay)';; *) say "== CarPlay hook: unknown ($h)";; esac
@@ -505,7 +510,7 @@ save)
     ;;
 *)
     say 'sh tt.sh report              what is installed and what it is doing (paste this)'
-    say 'sh tt.sh use v43             switch version (v43 ... v12), then restart the MMI'
+    say 'sh tt.sh use v44             switch version (v44 ... v12), then restart the MMI'
     say 'sh tt.sh play map|new|fit|win|kdk|panel|komo|stock  parked tests'
     say 'sh tt.sh play arrows | stop  arrow catalogue / stop playback'
     say 'sh tt.sh test                the full guided test, Enter for each step, then saves the logs'
@@ -513,7 +518,7 @@ save)
     say 'sh tt.sh hookfix [undo]      CarPlay hook TT build 1: reconnect after a crash (flash, then MMI restart)'
     say 'sh tt.sh sup [undo]          supervisor v7: renderer runs all session (flash, then replug)'
     say 'sh tt.sh crash               check: tab flips, map return, unplug and replug'
-    say 'sh tt.sh card off|on|left|right|top|default  the iPhone card on the cockpit map (next replug)'
+    say 'sh tt.sh card auto|off|on|left|right|top|default  the iPhone card on the cockpit map (applies at once)'
     say 'sh tt.sh unstick             after a crash, when CarPlay will not reconnect: clear the old session'
     say 'sh tt.sh delay SECONDS       renderer start delay on the map view (default 1)'
     say 'sh tt.sh diag                when the CarPlay icon only flickers: record who holds the ports'
