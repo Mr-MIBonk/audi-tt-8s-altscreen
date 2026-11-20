@@ -632,15 +632,33 @@ public final class TtPanel {
             return;
         }
         try {
-            if (fadeNow <= 0f) {
+            // v48 (car photo: picture black, text only): setOpacity(1f) is not "fully visible" on
+            // this HMI. The node's own opacity is only touched while a fade runs, scaled from the
+            // value it had, and restored afterwards.
+            if (fadeNow >= 1f) {
+                if (fadeRoot == mainRoot) {
+                    mainRoot.setOpacity(fadeBase);
+                    fadeRoot = null;
+                }
+                mainRoot.setVisible(true);
+            } else if (fadeNow <= 0f) {
                 mainRoot.setVisible(false);
             } else {
-                mainRoot.setOpacity(fadeNow);
+                if (fadeRoot != mainRoot) {
+                    fadeBase = mainRoot.getOpacity();
+                    fadeRoot = mainRoot;
+                    RgdBus.note(new StringBuffer("panel: node opacity ").append(fadeBase).toString());
+                }
+                mainRoot.setOpacity(fadeBase * fadeNow);
                 mainRoot.setVisible(true);
             }
         } catch (Throwable ignored) {
         }
     }
+
+    /** The panel node whose opacity a fade changed, and its original value. */
+    private static IWrappedNode3D fadeRoot;
+    private static float fadeBase = 1f;
 
     /** ZoomGate: large/small view changed; rebuild in the other layout. */
     public static void viewChanged() {
@@ -1045,7 +1063,14 @@ public final class TtPanel {
         }
         long ms = etaUtc * 1000L;
         try {
-            ms = m.getTerminal().getFramework().convertUTCTimeToLocalTime(ms);
+            // v48: the cockpit clock (what the car shows) plus the time left. The HMI's UTC offset
+            // is 0 on the TT, so convertUTCTimeToLocalTime returned UTC.
+            long kombi = m.getTerminal().getFramework().getKombiTime();
+            if (kombi > 0L) {
+                ms = kombi + (ms - System.currentTimeMillis());
+            } else {
+                ms = m.getTerminal().getFramework().convertUTCTimeToLocalTime(ms);
+            }
         } catch (Throwable ignored) {
             // keep UTC
         }

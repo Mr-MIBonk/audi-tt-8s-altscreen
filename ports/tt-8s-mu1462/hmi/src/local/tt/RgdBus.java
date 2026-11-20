@@ -69,6 +69,8 @@ public final class RgdBus implements Runnable {
     private static boolean wantOn;
     private static boolean lastOn;
     private static String lastSummary = "";
+    /** v48: when time_remaining_seconds was last received (System.currentTimeMillis). */
+    private static long remainingAt;
     /** v43: when each lane-set slot (lgN_) was last sent, and the current maneuver id. */
     private static final Hashtable LANES_AT = new Hashtable();
     private static int laneFirst = -1;
@@ -358,6 +360,9 @@ public final class RgdBus implements Runnable {
                 }
                 String key = line.substring(0, a);
                 STATE.put(key, line.substring(b + 1));
+                if (key.equals("time_remaining_seconds")) {
+                    remainingAt = System.currentTimeMillis();
+                }
                 if (key.startsWith("lg")) {
                     int u = key.indexOf('_');
                     if (u > 2) {
@@ -432,6 +437,13 @@ public final class RgdBus implements Runnable {
             turn = (int) num("dist_maneuver_m", -1);
             dest = (int) num("dist_dest_m", -1);
             eta = num("eta_seconds", -1);
+            // v48 (car photo: arrival 4:09 AM for 22:09): the HMI's UTC offset is 0 on the TT, so
+            // the UTC ETA showed as UTC. With the phone's time remaining, the ETA is re-based on this
+            // clock (TtPanel.clock adds it to the cockpit clock); eta_seconds is only the fallback.
+            long rem = num("time_remaining_seconds", -1);
+            if (rem >= 0 && remainingAt > 0L) {
+                eta = (remainingAt + rem * 1000L) / 1000L;
+            }
             road = str("current_road");
             next = "";
             String order = str("maneuver_list");
