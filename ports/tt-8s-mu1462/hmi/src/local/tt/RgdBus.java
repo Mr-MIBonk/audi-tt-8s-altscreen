@@ -556,7 +556,18 @@ public final class RgdBus implements Runnable {
             return;
         }
         try {
-            String result = TtRgi.update(on, declare, stockSafe(icon), mState, turn, bar, dest, eta, road, next);
+            // v54: the cockpit's bottom strip shows these two (StripText): "Left to Alpha St".
+            String stripRoad = road;
+            String stripNext = next;
+            int sm = StripText.mode();
+            if (sm != 2) {
+                String t = StripText.turn(main, dir, next, exit);
+                stripNext = t;
+                if (sm == 1 && on && t.length() > 0) {
+                    stripRoad = t;
+                }
+            }
+            String result = TtRgi.update(on, declare, stockSafe(icon), mState, turn, bar, dest, eta, stripRoad, stripNext);
             TtPanel.near = nearTurn(main, turn);
             Card.route(on, TtPanel.near);
             AutoZoom.route(on, main, turn, manId);

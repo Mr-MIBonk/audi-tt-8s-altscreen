@@ -75,6 +75,17 @@ strip already shows ETA/distance), standard safe window. The map options are sen
 Tried: `look low1` (safe window 520,110 400x360) puts the car lower during guidance but the app's ETA
 bar then sits behind the car's bottom strip.
 
+## The bottom strip
+
+The cockpit map's bottom strip (NaviScreenBag6 map view, `MapStatuslineLabelContainer`) is a
+turn-point icon (choice model 69) and two labels: model 62, the current street
+(`ClusterService.updateCurrentStreet`), and model 71, the street after the next turn
+(`updateTurnToStreet`). `ClusterService.refreshStreetMode` shows the icon and the turn-to street
+while the bargraph is on (the approach, about the last 430 m, motorway 1750 m) and the current
+street otherwise. Altitude and scale sit beside it. TtRgi feeds both streets from the iPhone
+(stock nav overwrites the current street with its map-matched one now and then; TtRgi resends
+within 2 s). v54 words them: "Left to Alpha St" (`sh tt.sh strip turn|always|plain`).
+
 ## How far ahead the map shows
 
 The iPhone is told the stream is 1440 x 540 px on a 320 x 120 mm screen, with a 400 x 320 safe
