@@ -523,6 +523,7 @@ public final class RgdBus implements Runnable {
         }
         try {
             String result = TtRgi.update(on, declare, stockSafe(icon), mState, turn, bar, dest, eta, road, next);
+            TtPanel.near = nearTurn(main, turn);
             // Lanes only while approaching the turn, like stock.
             TtPanel.live(on, icon, turn, glideBar, mState >= 3 ? lanes : "-", dest, eta, exit, next);
             if (result != null) {
@@ -654,6 +655,23 @@ public final class RgdBus implements Runnable {
      * turns (follow, off-road, calculating) stay in state 1; an unknown
      * distance shows the full icon without a bargraph.
      */
+    /**
+     * v45: whether the turn banner should show on the CarPlay map: the next turn (or the
+     * destination) within 1 km, motorway exits and forks within 2 km. Unknown values count as near.
+     */
+    static boolean nearTurn(int main, int turn) {
+        if (main < 0 || turn < 0) {
+            return true;
+        }
+        boolean turnLike = main >= 12 && main != 28 && main != 29 && main != 30 && main != 31;
+        boolean arrival = main >= 2 && main <= 5 || main == 38;
+        if (main == 11 || (!turnLike && !arrival)) {
+            return false;
+        }
+        boolean motorway = main >= 14 && main <= 20 || main == 40 || main == 43;
+        return turn <= (motorway ? 2000 : 1000);
+    }
+
     static int[] phase(int main, int turn) {
         boolean turnLike = main >= 12 && main != 28 && main != 29 && main != 30 && main != 31;
         boolean arrival = main >= 2 && main <= 5 || main == 38;

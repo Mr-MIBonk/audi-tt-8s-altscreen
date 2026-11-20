@@ -301,7 +301,18 @@ public final class TtPanel {
             }
             return new StringBuffer("layout ").append(layoutForce).toString();
         }
+        if (op.equals("fade") && w.length >= 2) {
+            try {
+                fadeNow = Float.parseFloat(w[1]);
+            } catch (Throwable t) {
+                fadeNow = 1f;
+            }
+            applyFade();
+            m.fireRenderEvent();
+            return "fade";
+        }
         if (op.equals("off")) {
+            fadeNow = 1f;
             clearTurn(m);
             lastTurn = null;
             // v29: the stock banner stays transparent after our panel goes (v28 showed its empty black
@@ -487,6 +498,15 @@ public final class TtPanel {
                 }
                 return;
             }
+            long now = System.currentTimeMillis();
+            if (!liveShown) {
+                startUntil = now + 10000L;
+            }
+            if (lastNear && !near) {
+                holdUntil = now + 5000L;
+            }
+            lastNear = near;
+            updateAlpha(now);
             int[] ic = new int[icon.length];
             for (int i = 0; i < icon.length; i++) {
                 ic[i] = icon[i];
@@ -504,6 +524,119 @@ public final class TtPanel {
                 liveShown = true;
                 prerender(k);
                 post(k, false);
+            }
+            startFader();
+        } catch (Throwable ignored) {
+        }
+    }
+
+    // ---- v45: banner only near turns on the CarPlay map, translucent background ------------
+    /** Set by RgdBus before every live(): the next turn is close (RgdBus.nearTurn). */
+    static volatile boolean near = true;
+    private static boolean lastNear = true;
+    private static volatile long holdUntil;
+    private static volatile long startUntil;
+    /** Banner always shown (kit: sh tt.sh banner always). */
+    private static final java.io.File ALWAYS = new java.io.File("/tmp/tt-panel-always");
+    /** Background opacity in percent on the CarPlay map (kit: sh tt.sh banner alpha N), default 65. */
+    private static final java.io.File ALPHA = new java.io.File("/tmp/tt-panel-alpha");
+    private static long alphaReadAt;
+    private static int alphaPct = 65;
+    private static boolean faderRunning;
+    /** Opacity currently applied to our panel on the HMI thread (0 = hidden). */
+    private static float fadeNow = 1f;
+    private static boolean shownLogged = true;
+
+    /** Whether the panel should be visible now. */
+    static boolean wantVisible() {
+        if (!liveShown || ALWAYS.exists() || !Layers.on() || near) {
+            return true;
+        }
+        long now = System.currentTimeMillis();
+        return now < holdUntil || now < startUntil;
+    }
+
+    /** Background alpha: solid look off the map, the chosen opacity on the CarPlay map. */
+    private static void updateAlpha(long now) {
+        if (now - alphaReadAt > 2000L) {
+            alphaReadAt = now;
+            int p = 65;
+            java.io.FileInputStream in = null;
+            try {
+                if (ALPHA.exists()) {
+                    in = new java.io.FileInputStream(ALPHA);
+                    byte[] b = new byte[16];
+                    int n = in.read(b);
+                    p = Integer.parseInt(new String(b, 0, Math.max(0, n)).trim());
+                }
+            } catch (Throwable t) {
+                p = 65;
+            } finally {
+                try {
+                    if (in != null) {
+                        in.close();
+                    }
+                } catch (Throwable ignored) {
+                }
+            }
+            alphaPct = p < 0 ? 0 : (p > 100 ? 100 : p);
+        }
+        int a = Layers.on() ? alphaPct * 255 / 100 : 0xF2;
+        if (a != PanelArt.bgAlpha) {
+            PanelArt.bgAlpha = a;
+            liveKey = null;
+        }
+    }
+
+    private static synchronized void endFader() {
+        faderRunning = false;
+    }
+
+    private static synchronized void startFader() {
+        if (faderRunning) {
+            return;
+        }
+        faderRunning = true;
+        Thread t = new Thread(new PanelFade(), "ttPanelFade");
+        t.setDaemon(true);
+        t.start();
+    }
+
+    /** Steps the panel opacity towards wantVisible() (about 0.3 s per fade) while a route runs. */
+    static void fadeLoop() {
+        float cur = 1f;
+        try {
+            while (liveShown) {
+                float target = wantVisible() ? 1f : 0f;
+                if (cur != target) {
+                    cur = target > cur ? Math.min(1f, cur + 0.25f) : Math.max(0f, cur - 0.25f);
+                    post(new StringBuffer("fade ").append(cur).toString(), false);
+                    if (cur == target) {
+                        RgdBus.note(target > 0f ? "panel: shown (turn near)" : "panel: hidden until the next turn");
+                    }
+                    Thread.sleep(80L);
+                } else {
+                    Thread.sleep(250L);
+                }
+            }
+        } catch (Throwable ignored) {
+        } finally {
+            endFader();
+            fadeNow = 1f;
+        }
+    }
+
+    /** HMI thread: apply fadeNow to our panel (also after it was rebuilt). */
+    private static void applyFade() {
+        if (mainRoot == null) {
+            return;
+        }
+        try {
+            if (fadeNow <= 0f) {
+                mainRoot.setVisible(false);
+            } else {
+                mainRoot.setOpacity(fadeNow);
+                mainRoot.setVisible(true);
             }
         } catch (Throwable ignored) {
         }
@@ -635,6 +768,7 @@ public final class TtPanel {
     }
 
     private static String turn(EALManager m, TurnSpec t, boolean verbose) {
+        updateAlpha(System.currentTimeMillis());
         lastTurn = rebuildArg(t.icon, t.metres, t.bar, t.lanes, t.destM, t.eta, t.exit, t.street);
         int mode = currentMode();
         if (mode != shownMode) {
@@ -739,7 +873,8 @@ public final class TtPanel {
                 destRoot.setVisible(false);
             }
         }
-        mainRoot.setVisible(true);
+        // v45: visible, or faded/hidden far from a turn on the CarPlay map.
+        applyFade();
         kdkPanelUp = kdkMode;
         if (topVp != null && parentMode.equals("top")) {
             try {

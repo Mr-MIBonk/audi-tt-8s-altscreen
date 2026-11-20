@@ -128,7 +128,8 @@ final class TurnSpec {
     String artKey(int mode) {
         StringBuffer b = new StringBuffer();
         b.append(mode == FLAP ? FULL : mode).append(',').append(main).append(',').append(dir).append(',')
-            .append(bar).append(',').append(lanes).append(',').append(exit).append(street.length() > 0 ? ",s" : ",-");
+            .append(bar).append(',').append(lanes).append(',').append(exit).append(street.length() > 0 ? ",s" : ",-")
+            .append(",a").append(PanelArt.bgAlpha);
         for (int i = 0; arms != null && i < arms.length; i++) {
             b.append(',').append(arms[i]);
         }

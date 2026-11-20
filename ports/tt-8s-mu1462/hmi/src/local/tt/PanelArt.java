@@ -190,6 +190,8 @@ public final class PanelArt {
     /** Optional background picture (alpha mask) on the car: "TTBG", u16 width, u16 height, alpha bytes. */
     public static final String BG_FILE = "/mnt/app/root/tt/panel-bg.a8";
     private static final float BG_ALPHA = 0.22f;
+    /** v45: alpha of the panel background (0xF2 solid look; less on the CarPlay map, TtPanel). */
+    static volatile int bgAlpha = 0xF2;
     /** Where loadBg() looks (BG_FILE on the car; the PC preview points it elsewhere). */
     static String bgPath = BG_FILE;
     private static float[] bgMask;
@@ -212,7 +214,8 @@ public final class PanelArt {
         String label = KdkLayout.badgeLabel(exit);
         KdkLayout l = new KdkLayout(w, h, hasLanes, label.length() > 0, hasStreet);
         StringBuffer k = new StringBuffer().append(w).append('x').append(h).append(',').append(main).append(',')
-            .append(dir).append(',').append(label).append(',').append(hasStreet).append(',').append(framed);
+            .append(dir).append(',').append(label).append(',').append(hasStreet).append(',').append(framed)
+            .append(",a").append(bgAlpha);
         for (int i = 0; arms != null && i < arms.length; i++) {
             k.append(',').append(arms[i]);
         }
@@ -257,6 +260,7 @@ public final class PanelArt {
                           int[] laneStatus, String label, boolean framed) {
         int n = w * h;
         int cut = framed ? 18 : 0;
+        int ba = bgAlpha;
         for (int y = 0; y < h; y++) {
             int c = lerpRgb(0x262C33, 0x0A0D11, h <= 1 ? 0f : (float) y / (h - 1));
             for (int x = 0; x < w; x++) {
@@ -264,7 +268,7 @@ public final class PanelArt {
                 if (cut > 0) {
                     cov = clamp(((w - cut + y) - (x + 0.5f)) * 0.7071f + 0.5f);
                 }
-                dst[y * w + x] = cov <= 0f ? 0 : ((int) (0xF2 * cov) << 24) | c;
+                dst[y * w + x] = cov <= 0f ? 0 : ((int) (ba * cov) << 24) | c;
             }
         }
         // The user's picture, centred, proportions kept.
