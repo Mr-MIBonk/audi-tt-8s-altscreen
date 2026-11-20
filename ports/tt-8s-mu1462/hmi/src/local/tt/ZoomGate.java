@@ -32,6 +32,19 @@ public final class ZoomGate {
     private static int lastDirection = -1;
     private static int skinState = -1;
     private static int smallState = -1;
+    /**
+     * v53 zoom memory (run46: "whenever the card turns on and off the zoom changes, and it does not
+     * remember itself"). The iPhone draws a fresh map at its default zoom after every showUI (card
+     * switch) and every connect. level = net steps the driver and AutoZoom asked for (+ out, - in),
+     * applied = what the current iPhone map has. After a reset, the difference is sent again once
+     * the map draws. /tmp/tt-zoom-noremember turns it off.
+     */
+    private static final File NOREMEMBER = new File("/tmp/tt-zoom-noremember");
+    private static final int LEVEL_MAX = 10;
+    private static int level;
+    private static int applied;
+    private static long restoreAt;
+    private static long restoreUntil;
 
     private ZoomGate() {
     }
@@ -192,7 +205,98 @@ public final class ZoomGate {
         return send(source, INVERT.exists() ? -steps : steps);
     }
 
+    /** Card: a showUI was sent, so the iPhone map is back at its default zoom. */
+    static void mapReset(String why) {
+        long now = System.currentTimeMillis();
+        int want;
+        synchronized (LOCK) {
+            applied = 0;
+            want = level;
+            if (want != 0) {
+                restoreAt = now + 2500L;
+                restoreUntil = now + 60000L;
+            }
+        }
+        if (want != 0) {
+            log(new StringBuffer("zoom memory: ").append(why).append(", ").append(want)
+                .append(" steps to restore").toString());
+        }
+    }
+
+    /** RgdBus: the iPhone connected again (new session, default zoom). */
+    static void connected() {
+        mapReset("iPhone connected");
+    }
+
+    /** Layers loop, every second: sends a pending restore once the CarPlay map draws. */
+    static void tick() {
+        int diff;
+        synchronized (LOCK) {
+            long now = System.currentTimeMillis();
+            if (restoreAt == 0L || now < restoreAt) {
+                return;
+            }
+            if (now > restoreUntil) {
+                restoreAt = 0L;
+                return;
+            }
+            diff = level - applied;
+            if (diff == 0) {
+                restoreAt = 0L;
+                return;
+            }
+        }
+        if (NOREMEMBER.exists()) {
+            synchronized (LOCK) {
+                restoreAt = 0L;
+                level = 0;
+            }
+            return;
+        }
+        if (raw("zoom memory restore", diff)) {
+            synchronized (LOCK) {
+                applied += diff;
+                restoreAt = 0L;
+            }
+        }
+    }
+
+    /** Every zoom request: counted in the memory, sent now unless a restore is pending. */
     private static boolean send(String source, int steps) {
+        boolean pending;
+        synchronized (LOCK) {
+            pending = restoreAt != 0L && !NOREMEMBER.exists();
+        }
+        if (pending && steps != 0 && fresh()) {
+            synchronized (LOCK) {
+                level = clamp(level + steps);
+            }
+            log(new StringBuffer(source).append(" steps=").append(steps).append(" queued for the restore").toString());
+            return true;
+        }
+        boolean ok = raw(source, steps);
+        if (ok) {
+            synchronized (LOCK) {
+                int before = level;
+                level = clamp(level + steps);
+                applied += level - before;
+            }
+        }
+        return ok;
+    }
+
+    private static int clamp(int v) {
+        return v > LEVEL_MAX ? LEVEL_MAX : (v < -LEVEL_MAX ? -LEVEL_MAX : v);
+    }
+
+    /** The CarPlay map renderer drew within the last 3 s. */
+    private static boolean fresh() {
+        long stamp = ACTIVE.lastModified();
+        long now = System.currentTimeMillis();
+        return stamp > 0 && now >= stamp && now - stamp < 3000;
+    }
+
+    private static boolean raw(String source, int steps) {
         StringBuffer b = new StringBuffer(source);
         b.append(" steps=").append(steps);
         try {

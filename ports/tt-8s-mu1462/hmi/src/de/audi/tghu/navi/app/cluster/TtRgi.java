@@ -571,9 +571,16 @@ public final class TtRgi {
                 if (etaUtcSeconds != eta) {
                     eta = etaUtcSeconds;
                     if (etaUtcSeconds > 0L) {
+                        // v53: the ETA is on this unit's System clock (RgdBus calibration); the
+                        // cockpit clock plus the time left gives local time (UTC offset is 0 here).
                         long local = etaUtcSeconds * 1000L;
                         try {
-                            local = cs.env.getFramework().convertUTCTimeToLocalTime(local);
+                            long kombi = cs.env.getFramework().getKombiTime();
+                            if (kombi > 0L) {
+                                local = kombi + (local - System.currentTimeMillis());
+                            } else {
+                                local = cs.env.getFramework().convertUTCTimeToLocalTime(local);
+                            }
                         } catch (Throwable t) {
                             b.append(" (utc)");
                         }

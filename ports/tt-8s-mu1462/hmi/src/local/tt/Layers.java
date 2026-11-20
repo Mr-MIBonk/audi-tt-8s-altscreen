@@ -91,6 +91,7 @@ public final class Layers implements Runnable {
                 if (n % 5 == 0) {
                     Card.tick();
                     AutoZoom.tick();
+                    ZoomGate.tick();
                 }
                 // every 2 s, or at once after the iPhone went
                 if (n++ % 10 == 0 || (goneAt > 0 && on && System.currentTimeMillis() - goneAt < 1000L)) {

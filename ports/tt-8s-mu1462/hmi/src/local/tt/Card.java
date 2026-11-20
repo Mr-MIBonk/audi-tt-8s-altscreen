@@ -83,6 +83,8 @@ public final class Card {
                 live = sessionReady();
                 if (live) {
                     write(SHOW, "1\n");
+                    // v53 (run46): the iPhone rebuilds the map at its default zoom on every showUI.
+                    ZoomGate.mapReset("card switch");
                 }
             }
             RgdBus.note(new StringBuffer("card: ").append(want == 0 ? "shown (turn near)" : "map only")

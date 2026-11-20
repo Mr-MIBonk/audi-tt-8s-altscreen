@@ -169,6 +169,7 @@ public final class RgdBus implements Runnable {
                     STATE.clear();
                 }
                 log("hook connected");
+                ZoomGate.connected();
                 Thread t = new Thread(new RgdBus(s, false), "tt-rgd-reader");
                 t.setDaemon(true);
                 t.start();
@@ -362,8 +363,11 @@ public final class RgdBus implements Runnable {
                     continue;
                 }
                 String key = line.substring(0, a);
-                STATE.put(key, line.substring(b + 1));
-                if (key.equals("time_remaining_seconds")) {
+                String val = line.substring(b + 1);
+                Object old = STATE.put(key, val);
+                // v53 (run46: the arrival time crept later every second): the phone re-sends an
+                // unchanged time remaining with every update; only a new value is a new snapshot.
+                if (key.equals("time_remaining_seconds") && !val.equals(old)) {
                     remainingAt = System.currentTimeMillis();
                 }
                 if (key.startsWith("lg")) {
@@ -502,9 +506,15 @@ public final class RgdBus implements Runnable {
                 dropOldLanes(first, now);
                 // v43: Google sends lane_guidance_showing, 1 while it shows lanes itself (on the
                 // approach); with 0 there are none to show. Apple Maps always sends 0: ignored.
-                boolean googleOff = str("source_name").indexOf("Google") >= 0
-                    && "0".equals(str("lane_guidance_showing").trim());
-                lanes = googleOff ? "-" : laneSpec(first);
+                // v53 (run46: a right turn showed the left turn's lanes): lane sets are numbered by
+                // their own counter, lane_guidance_index, not by maneuver id (maneuver 2 used set 1).
+                boolean showing = "1".equals(str("lane_guidance_showing").trim());
+                boolean google = str("source_name").indexOf("Google") >= 0;
+                if (showing) {
+                    lanes = laneSpec(str("lane_guidance_index").trim());
+                } else {
+                    lanes = google ? "-" : laneSpec(first);
+                }
                 StringBuffer ep = new StringBuffer("m").append(first).append('_');
                 int eplen = ep.length();
                 exit = exitNumber(str(ep.append("name").toString()));

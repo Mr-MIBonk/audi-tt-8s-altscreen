@@ -23,6 +23,9 @@ public final class AutoZoom {
     private static String zoomedFor;
     /** When to zoom back out (0 = not scheduled). */
     private static long outAt;
+    /** v53: the current maneuver id and since when (its distance is stale for a moment). */
+    private static String curMan = "";
+    private static long curSince;
 
     private AutoZoom() {
     }
@@ -31,6 +34,11 @@ public final class AutoZoom {
     static void route(boolean on, int main, int turn, String man) {
         long now = System.currentTimeMillis();
         synchronized (LOCK) {
+            String m = man == null ? "" : man;
+            if (!m.equals(curMan)) {
+                curMan = m;
+                curSince = now;
+            }
             if (zoomed > 0) {
                 boolean passed = man == null || !man.equals(zoomedFor);
                 if (!on) {
@@ -56,6 +64,11 @@ public final class AutoZoom {
                 return;
             }
             if (man.equals(zoomedFor)) {
+                return;
+            }
+            // v53 (run46 zoomed in at "15 m" and out again at once): right after the maneuver
+            // changes the phone still sends the old distance. Wait 3 s, and never under 40 m.
+            if (now - curSince < 3000L || turn < 40) {
                 return;
             }
             if (turn <= (motorway(main) ? 600 : 250)) {
