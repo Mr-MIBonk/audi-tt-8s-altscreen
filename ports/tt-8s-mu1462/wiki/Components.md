@@ -108,3 +108,13 @@ renderer start delay on the map view (read at the next connect). dio_manager get
 for every CarPlay session (so the hook's constructor runs once per session). A real fix needs
 the native renderer (keep its video output across the CarPlay tab instead of closing and
 reopening it) and the hook (close-on-exec on its listening sockets).
+
+Native build (2026-11-19, WSL + qnx65-armv7-toolchain GCC 4.9.4): upstream
+`carplay/src/native` rebuilt unchanged gives the shipped `libaltscreen111.so` and
+`cluster_runtime` byte for byte in every loaded section (only debug info differs).
+Hook TT build 1 (`sh tt.sh hookfix`, sha `028b4a73...`): `-DMU1462_TT_SAFE_H320` (all three
+views 400x320 at 520,110, same as the h320 preset), listening sockets `FD_CLOEXEC`, and the
+stock `AirPlayReceiverSession*` functions looked up first so a fail-closed start still leaves
+plain CarPlay. Compared with the h320 build: same imports/exports, same strings and data
+(strings reordered), 136 bytes more code. Supervisor v6 = v5 plus the test switch
+`/tmp/mu1462-keep-renderer` (keep the renderer on the CarPlay tab).

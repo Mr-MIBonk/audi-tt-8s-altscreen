@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Make supervisor v5 from the installed 4776-byte cluster_supervisor.sh v2 (sha 9175a6de...).
+"""Make supervisor v6 from the installed 4776-byte cluster_supervisor.sh v2 (sha 9175a6de...).
 
-usage: python3 -I mksup.py altscreen-cluster_supervisor.sh out/cluster_supervisor-v5.sh
+usage: python3 -I mksup.py altscreen-cluster_supervisor.sh out/cluster_supervisor-v6.sh
 
 Car tests (runs 33-37): opening the CarPlay tab could leave it black until CarPlay gave up and
 dropped the session; with the renderer switched off it never happened (55 openings).
@@ -15,7 +15,12 @@ v5: v2, but the renderer starts only while a map view shows. tt-zoom.jar v41+ wr
 CarPlay tab therefore never start it, and on the map it starts 1 s after the car has the screen
 (/tmp/mu1462-start-delay: other whole seconds). Without that file it behaves like v2. It still
 stops the renderer whenever the CarPlay tab takes the screen, keeps the switch to 901, checks
-that "sleep 0.2" really sleeps and logs its version.
+that "sleep 0.2" really sleeps and logs its version. Run40: no crash in car <-> CarPlay tab
+flips; map view -> CarPlay tab still dropped once (0.76 s after a renderer start).
+
+v6: v5 plus a test switch, /tmp/mu1462-keep-renderer: never stop the renderer for the CarPlay
+tab (can both share the video hardware? then there is no start/stop to collide). Without the
+file v6 behaves exactly like v5.
 """
 import hashlib
 import sys
@@ -35,9 +40,10 @@ def rep(a, b):
 
 
 rep("# (mode_screen=2), and show it in place of the stock map (context 10).\n",
-    "# (mode_screen=2), and show it in place of the stock map (context 10). tt v5: start it only\n"
+    "# (mode_screen=2), and show it in place of the stock map (context 10). tt v6: start it only\n"
     "# while a map view shows (/tmp/tt-map-view from tt-zoom.jar), so flips between the car tab\n"
-    "# and the CarPlay tab never start it (run38: the crash came while one was starting up).\n")
+    "# and the CarPlay tab never start it (run38: the crash came while one was starting up).\n"
+    "# Test switch /tmp/mu1462-keep-renderer: keep it running on the CarPlay tab.\n")
 rep("screen=\nlast_screen=x",
     "# \"sleep 0.2\" must really sleep; otherwise poll once a second.\n"
     "s0=$SECONDS\n"
@@ -50,6 +56,8 @@ rep("screen=\nlast_screen=x",
     "fi\n"
     "START_POLLS=$((START_SECS * PER_SEC))\n"
     "MAPVIEW=/tmp/tt-map-view\n"
+    "KEEP=/tmp/mu1462-keep-renderer\n"
+    "if test -e \"$KEEP\"; then keep=yes; else keep=no; fi\n"
     "# No file (tt-zoom.jar not running): behave like v2.\n"
     "map_view() {\n"
     "    test -r \"$MAPVIEW\" || return 0\n"
@@ -60,7 +68,9 @@ rep("screen=\nlast_screen=x",
     "\n"
     "screen=\nlast_screen=x")
 rep('log "supervisor $$ started for parent $parent_pid (dc attempts $i, pty [$PTY_N])"',
-    'log "supervisor v5 $$ started for parent $parent_pid (dc attempts $i, pty [$PTY_N], nap $NAP, start ${START_SECS}s on the map view)"')
+    'log "supervisor v6 $$ started for parent $parent_pid (dc attempts $i, pty [$PTY_N], nap $NAP, start ${START_SECS}s on the map view, keep $keep)"')
+rep("    elif test -n \"$screen\"; then\n        car_polls=0\n        stop_child\n",
+    "    elif test -n \"$screen\"; then\n        car_polls=0\n        test -e \"$KEEP\" || stop_child\n")
 rep('    if test -z "$child_pid" && test "$car_polls" -ge 5; then',
     '    if test -z "$child_pid" && test "$car_polls" -ge "$START_POLLS" && map_view; then')
 rep("    sleep 0.2\ndone\n", "    sleep \"$NAP\"\ndone\n")

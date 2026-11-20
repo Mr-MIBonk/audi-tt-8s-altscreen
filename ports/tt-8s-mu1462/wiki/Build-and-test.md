@@ -23,6 +23,8 @@ luka-dev/qnx65-armv7-toolchain, long, once) and `native` (compiles `carplay/src/
 upstream's `compile-native.sh` and compares exports/imports with `carplay/bin`). Run as root
 in WSL: `wsl -d Ubuntu-24.04 -u root sh <path>/scripts/wsl-native-build.sh <step>`.
 Built binaries are not committed.
+Result: the toolchain reproduces upstream's shipped hook and renderer exactly (all loaded
+sections identical), so source changes are the only changes. `tt` builds the TT hook.
 
 ## Toolkit (`kit/tt.sh`)
 

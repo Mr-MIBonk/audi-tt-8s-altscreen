@@ -40,12 +40,15 @@ SUP_V2=9175a6deaff6acf2c4f35b61b245476ba8827e7f4b74977b48cdafc2c7c6f57c
 SUP_V3=4c37a375954a387e4938fbabcad868bb2fcc4207a97bcbe599421974e75f06bd
 SUP_V4=d520d1971e843bdbdc2898a7e64b09b2fbb3d6b7495a6374a420769446bbb8ed
 SUP_V5=5a746386705da855b4d88c33042122d54e44ebbd8516165325bf3839e0627282
+SUP_V6=de728b175607fe702393297b7e6a73be5efea32ea29d86b23398f6f1938557d4
 HOOK=/mnt/app/root/lib-target/libaltscreen111.so
 # CarPlay hook builds: shipped, h320 safe-area preset (what the TT runs), and their fix1 versions
 HOOK_STOCK=9a8c01ec8323d5de7695e212ff6168b0bb7df99d8554c9971f5449c5a21d6256
 HOOK_H320=36aedadb8e0680ad03a9a511f3844e629ca3b2ffaaf40c9745298f730fc0b3f8
 FIX_STOCK=9e4b13c12895c8bddc36586661ecd82bde71666e15a847b617993d7fcb8f0dee
 FIX_H320=64f700f5fffb8f91a0e5ee0fedfa9e132eb2c6fb65da3c16a063e832421792e8
+# built from source (scripts/wsl-native-build.sh tt): h320 + close-on-exec + stock delegates
+HOOK_TT1=028b4a73a2e6b8e6eba5e4df4a058848c7059ebdf9433815d54bb4c86f908bf3
 T=$K/altscreen-sha256
 
 say(){ echo "$*"; }
@@ -75,7 +78,7 @@ setup)
     for f in altscreen-sha256 tt-zoom-v41.jar stock-replay.txt catalogue.txt komo-test.txt panel-test.txt kdk-test.txt fit-test.txt win-test.txt new-test.txt map-test.txt place-test.txt; do
         cp "/tmp/$f" "$K/$f" || { say "missing /tmp/$f"; ro; exit 1; }
     done
-    for f in tt-zoom-v12.jar tt-zoom-v14.jar tt-zoom-v15.jar tt-zoom-v16.jar tt-zoom-v17.jar tt-zoom-v18.jar tt-zoom-v19.jar tt-zoom-v20.jar tt-zoom-v21.jar tt-zoom-v22.jar tt-zoom-v23.jar tt-zoom-v24.jar tt-zoom-v25.jar tt-zoom-v26.jar tt-zoom-v27.jar tt-zoom-v28.jar tt-zoom-v29.jar tt-zoom-v30.jar tt-zoom-v31.jar tt-zoom-v32.jar tt-zoom-v33.jar tt-zoom-v34.jar tt-zoom-v35.jar tt-zoom-v36.jar tt-zoom-v37.jar tt-zoom-v39.jar tt-zoom-v40.jar libaltscreen111-fix1.so libaltscreen111-h320-fix1.so cluster_supervisor-v5.sh; do
+    for f in tt-zoom-v12.jar tt-zoom-v14.jar tt-zoom-v15.jar tt-zoom-v16.jar tt-zoom-v17.jar tt-zoom-v18.jar tt-zoom-v19.jar tt-zoom-v20.jar tt-zoom-v21.jar tt-zoom-v22.jar tt-zoom-v23.jar tt-zoom-v24.jar tt-zoom-v25.jar tt-zoom-v26.jar tt-zoom-v27.jar tt-zoom-v28.jar tt-zoom-v29.jar tt-zoom-v30.jar tt-zoom-v31.jar tt-zoom-v32.jar tt-zoom-v33.jar tt-zoom-v34.jar tt-zoom-v35.jar tt-zoom-v36.jar tt-zoom-v37.jar tt-zoom-v39.jar tt-zoom-v40.jar libaltscreen111-tt1.so cluster_supervisor-v6.sh; do
         test -f "/tmp/$f" && cp "/tmp/$f" "$K/$f"
     done
     # Optional panel background picture (made with scripts/mkbg.py; kept on the car, not in git).
@@ -282,7 +285,8 @@ check)
     finish
     ;;
 hookfix)
-    # CarPlay hook fix1 (scripts/patch_hook.py): a busy renderer port no longer blocks CarPlay.
+    # CarPlay hook TT build 1 (carplay/src/native, scripts/wsl-native-build.sh tt): h320 safe
+    # area, listening sockets close-on-exec (no busy port after a crash), stock delegates first.
     # Writes one file on flash, keeps the original next to the kit. Takes effect after an MMI restart.
     cur=$("$T" "$HOOK" 2>/dev/null)
     case "${2:-}" in
@@ -292,9 +296,8 @@ hookfix)
             case "$want" in $HOOK_STOCK|$HOOK_H320) ;; *) say 'Saved original is damaged - nothing changed.'; exit 1;; esac;;
         "")
             case "$cur" in
-                $HOOK_STOCK) src="$K/libaltscreen111-fix1.so"; want=$FIX_STOCK;;
-                $HOOK_H320) src="$K/libaltscreen111-h320-fix1.so"; want=$FIX_H320;;
-                $FIX_STOCK|$FIX_H320) say 'Already in place.'; exit 0;;
+                $HOOK_STOCK|$HOOK_H320|$FIX_STOCK|$FIX_H320) src="$K/libaltscreen111-tt1.so"; want=$HOOK_TT1;;
+                $HOOK_TT1) say 'Already in place.'; exit 0;;
                 *) say "Unknown hook on the car ($cur) - nothing changed."; exit 1;;
             esac
             test -f "$src" || { say "missing $src - copy the kit and run setup again."; exit 1; }
@@ -311,13 +314,14 @@ hookfix)
     test $r = 0 && say 'Done. Restart the MMI (hold the MMI knob) to load it.' || say 'Copy failed - check with: sh tt.sh report'
     ;;
 sup)
-    # Supervisor v5 (scripts/mksup.py): v2, but the cockpit renderer starts only while a map
-    # view shows (tt-zoom v41 writes /tmp/tt-map-view). One file on flash, v2 kept; next replug.
+    # Supervisor v6 (scripts/mksup.py): v2, but the cockpit renderer starts only while a map
+    # view shows (tt-zoom v41 writes /tmp/tt-map-view); test switch /tmp/mu1462-keep-renderer.
+    # One file on flash, v2 kept; next replug.
     cur=$("$T" "$SUP" 2>/dev/null)
     case "${2:-}" in
         undo) src="$K/cluster_supervisor.sh.v2"; want=$SUP_V2; test -f "$src" || { say 'Nothing to undo.'; exit 1; };;
-        "") src="$K/cluster_supervisor-v5.sh"; want=$SUP_V5
-            case "$cur" in $SUP_V2|$SUP_V3|$SUP_V4|$SUP_V5) ;; *) say "Unknown supervisor on the car ($cur) - nothing changed."; exit 1;; esac;;
+        "") src="$K/cluster_supervisor-v6.sh"; want=$SUP_V6
+            case "$cur" in $SUP_V2|$SUP_V3|$SUP_V4|$SUP_V5|$SUP_V6) ;; *) say "Unknown supervisor on the car ($cur) - nothing changed."; exit 1;; esac;;
         *) say 'Usage: sh tt.sh sup   |   sh tt.sh sup undo'; exit 2;;
     esac
     test "$cur" = "$want" && { say 'Already in place.'; exit 0; }
@@ -331,7 +335,7 @@ sup)
     ;;
 crash)
     # v41 + supervisor v5 check: tab flips, map return speed, unplug and replug.
-    finish(){ mark 'crash test end'; say ''; say '== Saving the logs.'; sh "$0" save; say 'Done. Send the newest logs folder.'; }
+    finish(){ rm -f /tmp/mu1462-keep-renderer; mark 'crash test end'; say ''; say '== Saving the logs.'; sh "$0" save; say 'Done. Send the newest logs folder.'; }
     next(){ while :; do echo "      [Enter] next step, c = something went wrong just now, q = stop and save"; read a; case "$a" in q|Q) finish; exit 0;; c|C) mark "problem (step $S)";; *) return;; esac; done; }
     step(){ S=${1%%:*}; S=${S%% *}; say ''; say "== $1"; mark "step $S"; }
     say "Check. $(sh "$0" report 2>/dev/null | grep -E 'jar:|supervisor')"
@@ -344,6 +348,12 @@ crash)
     next
     step 'U2: PLUG it back in, stay on the MAP view. CarPlay connects (no flicker) and the CarPlay map comes back?'
     next
+    touch /tmp/mu1462-keep-renderer
+    step 'K0: keep switch ON. UNPLUG the iPhone, wait 5 s, PLUG it back in (the supervisor reads the switch at connect).'
+    next
+    step 'K1: MAP view (CarPlay map) -> CarPlay tab -> MAP view, 6 times, quick and slow. CarPlay tab OK? Map back at once?'
+    next
+    rm -f /tmp/mu1462-keep-renderer
     finish
     ;;
 unstick)
@@ -440,8 +450,8 @@ report)
     say "== jar: $(which_jar)    (v41 is the current one)"
     say "== layers: map 10 = $(ctxlist 10)  map+banner 89 = $(ctxlist 89)  (v37 with CarPlay: 16 60 / 20 16 60)"
     grep "layers:" /tmp/tt-rgd.log 2>/dev/null | tail -3
-    h=$("$T" "$HOOK" 2>/dev/null); case "$h" in $HOOK_STOCK) say '== CarPlay hook: original';; $HOOK_H320) say '== CarPlay hook: original (h320 preset)';; $FIX_STOCK|$FIX_H320) say '== CarPlay hook: fix1 (busy port no longer blocks CarPlay)';; *) say "== CarPlay hook: unknown ($h)";; esac
-    h=$("$T" "$SUP" 2>/dev/null); case "$h" in $SUP_V2) say '== supervisor: v2 (switches the display to 901)';; $SUP_V3) say '== supervisor: v3 (no display switch: no CarPlay map in the map views - replace it)';; $SUP_V4) say '== supervisor: v4 (4 s start delay: slow map - replace with v5)';; $SUP_V5) say "== supervisor: v5 (renderer only on the map view; map view now: $(cat /tmp/tt-map-view 2>/dev/null))";; *) say "== supervisor: unknown ($h)";; esac
+    h=$("$T" "$HOOK" 2>/dev/null); case "$h" in $HOOK_STOCK) say '== CarPlay hook: original';; $HOOK_H320) say '== CarPlay hook: original (h320 preset)';; $FIX_STOCK|$FIX_H320) say '== CarPlay hook: fix1 (old byte patch - replace with: sh tt.sh hookfix)';; $HOOK_TT1) say '== CarPlay hook: TT build 1 (from source: no port leak, always falls back to plain CarPlay)';; *) say "== CarPlay hook: unknown ($h)";; esac
+    h=$("$T" "$SUP" 2>/dev/null); case "$h" in $SUP_V2) say '== supervisor: v2 (switches the display to 901)';; $SUP_V3) say '== supervisor: v3 (no display switch: no CarPlay map in the map views - replace it)';; $SUP_V4) say '== supervisor: v4 (4 s start delay: slow map - replace with v5)';; $SUP_V5) say "== supervisor: v5 (renderer only on the map view)";; $SUP_V6) say "== supervisor: v6 (renderer only on the map view$(test -e /tmp/mu1462-keep-renderer && echo ', KEEP switch ON'); map view now: $(cat /tmp/tt-map-view 2>/dev/null))";; *) say "== supervisor: unknown ($h)";; esac
     tail -3 /tmp/mu1462-supervisor.log 2>/dev/null
     test -f "$K/panel-bg.a8" && say '== panel background: installed' || say '== panel background: none'
     say '== switches:'
@@ -481,8 +491,8 @@ save)
     say 'sh tt.sh play arrows | stop  arrow catalogue / stop playback'
     say 'sh tt.sh test                the full guided test, Enter for each step, then saves the logs'
     say 'sh tt.sh check               v38 guided check (Enter for each step, c marks a CarPlay crash)'
-    say 'sh tt.sh hookfix [undo]      CarPlay hook fix1: a busy port no longer blocks CarPlay (flash, then MMI restart)'
-    say 'sh tt.sh sup [undo]          supervisor v5 for the CarPlay-tab crash (flash, then replug)'
+    say 'sh tt.sh hookfix [undo]      CarPlay hook TT build 1: reconnect after a crash (flash, then MMI restart)'
+    say 'sh tt.sh sup [undo]          supervisor v6 for the CarPlay-tab crash (flash, then replug)'
     say 'sh tt.sh crash               check: tab flips, map return, unplug and replug'
     say 'sh tt.sh unstick             after a crash, when CarPlay will not reconnect: clear the old session'
     say 'sh tt.sh delay SECONDS       renderer start delay on the map view (default 1)'
