@@ -524,6 +524,7 @@ public final class RgdBus implements Runnable {
         try {
             String result = TtRgi.update(on, declare, stockSafe(icon), mState, turn, bar, dest, eta, road, next);
             TtPanel.near = nearTurn(main, turn);
+            Card.route(on, TtPanel.near);
             // Lanes only while approaching the turn, like stock.
             TtPanel.live(on, icon, turn, glideBar, mState >= 3 ? lanes : "-", dest, eta, exit, next);
             if (result != null) {

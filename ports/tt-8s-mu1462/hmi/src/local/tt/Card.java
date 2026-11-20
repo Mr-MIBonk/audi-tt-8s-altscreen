@@ -5,44 +5,87 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 
 /**
- * v44: the iPhone's own maneuver card on the cockpit CarPlay map, per view.
+ * The iPhone's own maneuver card on the cockpit CarPlay map.
  *
- * Classic (large view): map with the card ("base" surface; its position comes from the hook's
- * maneuverLayout setting, e.g. sh tt.sh card left). Sport (small view): map only ("map"
- * surface), the card would cover the small map window.
+ * v44: per view (Classic with card, Sport map only). v46 (user's choice): in both views the card
+ * shows only near a turn, the same rule as RgdBus.nearTurn (next turn or destination within 1 km,
+ * motorway exits and forks 2 km), plus 10 s at route start and 5 s after a turn; otherwise map
+ * only ("map" surface). Its position comes from the hook's maneuverLayout setting (sh tt.sh card top).
  *
  * The hook reads /tmp/mibr-alt111-url-mode when CarPlay connects and on every showUI it sends;
  * touching /tmp/mibr-alt111-show-only makes it send showUI again with the current address, so the
- * iPhone switches while connected. Only done when the view really changes and a CarPlay session
- * is up. /tmp/tt-card-fixed (set by the kit's manual card commands) turns this off.
+ * iPhone switches while connected. At most one switch per 4 s. /tmp/tt-card-fixed (set by the
+ * kit's manual card commands) turns this off.
  */
 public final class Card {
     private static final File MODE = new File("/tmp/mibr-alt111-url-mode");
     private static final File SHOW = new File("/tmp/mibr-alt111-show-only");
     private static final File FIXED = new File("/tmp/tt-card-fixed");
     private static final File STATUS = new File("/tmp/mibr-alt111-gen2.status");
+    /** -1 not set yet, 0 card ("base"), 1 map only ("map"). */
     private static int last = -1;
+    private static long lastSwitch;
+    private static boolean routeOn;
+    private static boolean nearNow;
+    private static boolean lastNear;
+    private static long startUntil;
+    private static long holdUntil;
 
     private Card() {
     }
 
-    /** ZoomGate.stage: the cockpit view size changed (also once at MMI start). */
+    /** RgdBus, on every iPhone update: whether a route runs and whether its next turn is near. */
+    static void route(boolean on, boolean near) {
+        long now = System.currentTimeMillis();
+        synchronized (MODE) {
+            if (on && !routeOn) {
+                startUntil = now + 10000L;
+            }
+            if (lastNear && !near) {
+                holdUntil = now + 5000L;
+            }
+            lastNear = near;
+            routeOn = on;
+            nearNow = near;
+        }
+        update(now);
+    }
+
+    /** Layers loop, every second: lets the start/after-turn holds run out while nothing is sent. */
+    static void tick() {
+        update(System.currentTimeMillis());
+    }
+
+    /** ZoomGate.stage: the cockpit view size changed (also once at MMI start). Same rule in both views. */
     static void view(boolean small) {
+        update(System.currentTimeMillis());
+    }
+
+    private static void update(long now) {
         try {
             if (FIXED.exists()) {
                 return;
             }
-            int want = small ? 1 : 0;
-            if (want == last) {
-                return;
+            int want;
+            boolean live;
+            synchronized (MODE) {
+                boolean card = routeOn && (nearNow || now < startUntil || now < holdUntil);
+                want = card ? 0 : 1;
+                if (want == last) {
+                    return;
+                }
+                if (last != -1 && now - lastSwitch < 4000L) {
+                    return;
+                }
+                last = want;
+                lastSwitch = now;
+                write(MODE, want == 0 ? "base\n" : "map\n");
+                live = sessionReady();
+                if (live) {
+                    write(SHOW, "1\n");
+                }
             }
-            last = want;
-            write(MODE, small ? "map\n" : "base\n");
-            boolean live = sessionReady();
-            if (live) {
-                write(SHOW, "1\n");
-            }
-            RgdBus.note(new StringBuffer("card: ").append(small ? "Sport, map only" : "Classic, with card")
+            RgdBus.note(new StringBuffer("card: ").append(want == 0 ? "shown (turn near)" : "map only")
                 .append(live ? " (sent to the iPhone)" : " (from the next connect)").toString());
         } catch (Throwable t) {
             RgdBus.note(new StringBuffer("card: ").append(String.valueOf(t)).toString());

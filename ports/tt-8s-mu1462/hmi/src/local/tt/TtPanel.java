@@ -536,12 +536,12 @@ public final class TtPanel {
     private static boolean lastNear = true;
     private static volatile long holdUntil;
     private static volatile long startUntil;
-    /** Banner always shown (kit: sh tt.sh banner always). */
-    private static final java.io.File ALWAYS = new java.io.File("/tmp/tt-panel-always");
-    /** Background opacity in percent on the CarPlay map (kit: sh tt.sh banner alpha N), default 65. */
+    /** v46: hiding far from turns is opt-in (kit: sh tt.sh banner auto); default always shown. */
+    private static final java.io.File AUTO = new java.io.File("/tmp/tt-panel-auto");
+    /** Background opacity in percent on the CarPlay map (kit: sh tt.sh banner alpha N), default 95 (as before). */
     private static final java.io.File ALPHA = new java.io.File("/tmp/tt-panel-alpha");
     private static long alphaReadAt;
-    private static int alphaPct = 65;
+    private static int alphaPct = 95;
     private static boolean faderRunning;
     /** Opacity currently applied to our panel on the HMI thread (0 = hidden). */
     private static float fadeNow = 1f;
@@ -549,7 +549,7 @@ public final class TtPanel {
 
     /** Whether the panel should be visible now. */
     static boolean wantVisible() {
-        if (!liveShown || ALWAYS.exists() || !Layers.on() || near) {
+        if (!liveShown || !AUTO.exists() || !Layers.on() || near) {
             return true;
         }
         long now = System.currentTimeMillis();
@@ -560,7 +560,7 @@ public final class TtPanel {
     private static void updateAlpha(long now) {
         if (now - alphaReadAt > 2000L) {
             alphaReadAt = now;
-            int p = 65;
+            int p = 95;
             java.io.FileInputStream in = null;
             try {
                 if (ALPHA.exists()) {
@@ -570,7 +570,7 @@ public final class TtPanel {
                     p = Integer.parseInt(new String(b, 0, Math.max(0, n)).trim());
                 }
             } catch (Throwable t) {
-                p = 65;
+                p = 95;
             } finally {
                 try {
                     if (in != null) {

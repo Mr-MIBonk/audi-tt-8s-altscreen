@@ -51,6 +51,9 @@ whenever the hook sends `showUI`; touching `/tmp/mibr-alt111-show-only` makes it
 again while connected. There is no option for map tilt or auto zoom (only zoom steps,
 `changeMapZoomLevel`). tt-zoom v44 switches the surface per view: Classic with card, Sport map
 only (`sh tt.sh card`).
+v46 switches it by distance instead: the card shows only near a turn (1 km, motorway exits
+and forks 2 km, plus 10 s at route start and 5 s after a turn), map only otherwise, in both views.
+The card cannot be made see-through: the iPhone draws it into the video.
 
 ## How far ahead the map shows
 
