@@ -1,0 +1,7 @@
+# Files that run on the head unit or in Linux must keep Unix line endings on every checkout
+# (git on Windows with core.autocrlf=true otherwise writes CRLF, which breaks sh on the car).
+*.sh text eol=lf
+*.py text eol=lf
+ports/tt-8s-mu1462/kit/*.txt text eol=lf
+carplay/src/native/** text eol=lf
+androidauto/src/native/** text eol=lf
