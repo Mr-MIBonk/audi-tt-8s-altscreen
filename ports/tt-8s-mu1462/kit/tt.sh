@@ -53,6 +53,8 @@ FIX_STOCK=9e4b13c12895c8bddc36586661ecd82bde71666e15a847b617993d7fcb8f0dee
 FIX_H320=64f700f5fffb8f91a0e5ee0fedfa9e132eb2c6fb65da3c16a063e832421792e8
 # built from source (scripts/wsl-native-build.sh tt): h320 + close-on-exec + stock delegates
 HOOK_TT1=028b4a73a2e6b8e6eba5e4df4a058848c7059ebdf9433815d54bb4c86f908bf3
+# TT build 2: build 1 + test overrides /tmp/tt-hook-mm and /tmp/tt-hook-safe (sh tt.sh look)
+HOOK_TT2=347a911454a48cc494851178d4298c29b71d8854fd3087ce6cb403e51c7885c5
 T=$K/altscreen-sha256
 
 say(){ echo "$*"; }
@@ -82,7 +84,7 @@ setup)
     for f in altscreen-sha256 tt-zoom-v44.jar stock-replay.txt catalogue.txt komo-test.txt panel-test.txt kdk-test.txt fit-test.txt win-test.txt new-test.txt map-test.txt place-test.txt; do
         cp "/tmp/$f" "$K/$f" || { say "missing /tmp/$f"; ro; exit 1; }
     done
-    for f in tt-zoom-v12.jar tt-zoom-v14.jar tt-zoom-v15.jar tt-zoom-v16.jar tt-zoom-v17.jar tt-zoom-v18.jar tt-zoom-v19.jar tt-zoom-v20.jar tt-zoom-v21.jar tt-zoom-v22.jar tt-zoom-v23.jar tt-zoom-v24.jar tt-zoom-v25.jar tt-zoom-v26.jar tt-zoom-v27.jar tt-zoom-v28.jar tt-zoom-v29.jar tt-zoom-v30.jar tt-zoom-v31.jar tt-zoom-v32.jar tt-zoom-v33.jar tt-zoom-v34.jar tt-zoom-v35.jar tt-zoom-v36.jar tt-zoom-v37.jar tt-zoom-v42.jar tt-zoom-v43.jar libaltscreen111-tt1.so cluster_supervisor-v7.sh; do
+    for f in tt-zoom-v12.jar tt-zoom-v14.jar tt-zoom-v15.jar tt-zoom-v16.jar tt-zoom-v17.jar tt-zoom-v18.jar tt-zoom-v19.jar tt-zoom-v20.jar tt-zoom-v21.jar tt-zoom-v22.jar tt-zoom-v23.jar tt-zoom-v24.jar tt-zoom-v25.jar tt-zoom-v26.jar tt-zoom-v27.jar tt-zoom-v28.jar tt-zoom-v29.jar tt-zoom-v30.jar tt-zoom-v31.jar tt-zoom-v32.jar tt-zoom-v33.jar tt-zoom-v34.jar tt-zoom-v35.jar tt-zoom-v36.jar tt-zoom-v37.jar tt-zoom-v42.jar tt-zoom-v43.jar libaltscreen111-tt1.so libaltscreen111-tt2.so cluster_supervisor-v7.sh; do
         test -f "/tmp/$f" && cp "/tmp/$f" "$K/$f"
     done
     # Optional panel background picture (made with scripts/mkbg.py; kept on the car, not in git).
@@ -289,8 +291,9 @@ check)
     finish
     ;;
 hookfix)
-    # CarPlay hook TT build 1 (carplay/src/native, scripts/wsl-native-build.sh tt): h320 safe
-    # area, listening sockets close-on-exec (no busy port after a crash), stock delegates first.
+    # CarPlay hook TT build 2 (carplay/src/native, scripts/wsl-native-build.sh tt): h320 safe
+    # area, listening sockets close-on-exec (no busy port after a crash), stock delegates first;
+    # build 2 adds the RAM-only test overrides of sh tt.sh look.
     # Writes one file on flash, keeps the original next to the kit. Takes effect after an MMI restart.
     cur=$("$T" "$HOOK" 2>/dev/null)
     case "${2:-}" in
@@ -300,8 +303,8 @@ hookfix)
             case "$want" in $HOOK_STOCK|$HOOK_H320) ;; *) say 'Saved original is damaged - nothing changed.'; exit 1;; esac;;
         "")
             case "$cur" in
-                $HOOK_STOCK|$HOOK_H320|$FIX_STOCK|$FIX_H320) src="$K/libaltscreen111-tt1.so"; want=$HOOK_TT1;;
-                $HOOK_TT1) say 'Already in place.'; exit 0;;
+                $HOOK_STOCK|$HOOK_H320|$FIX_STOCK|$FIX_H320|$HOOK_TT1) src="$K/libaltscreen111-tt2.so"; want=$HOOK_TT2;;
+                $HOOK_TT2) say 'Already in place.'; exit 0;;
                 *) say "Unknown hook on the car ($cur) - nothing changed."; exit 1;;
             esac
             test -f "$src" || { say "missing $src - copy the kit and run setup again."; exit 1; }
@@ -379,6 +382,30 @@ card)
            say "   now: $(test -e /tmp/tt-card-fixed && echo fixed || echo auto), surface $(cat /tmp/mibr-alt111-url-mode 2>/dev/null || echo base), position $(cat $LAYOUT 2>/dev/null || echo default)"
            exit 2;;
     esac
+    ;;
+look)
+    # How much road the cockpit CarPlay map shows (hook TT build 2). RAM only, read by the hook
+    # when the iPhone connects: replug after a change; an MMI restart forgets it.
+    #   1..4           screen size the iPhone is told: 1 = 320x120 mm (built in), 2 = 430x160,
+    #                  3 = 580x215, 4 = 780x290. A bigger screen should make iOS draw smaller.
+    #   mm W H         any size
+    #   safe X Y W H   the safe window (built in 520 110 400 320)
+    #   reset          built-in values
+    test "$("$T" "$HOOK" 2>/dev/null)" = "$HOOK_TT2" || say 'Note: needs hook TT build 2 (sh tt.sh hookfix) - the current hook ignores this.'
+    MM=/tmp/tt-hook-mm; SAFE=/tmp/tt-hook-safe
+    case "${2:-}" in
+        1) rm -f $MM;;
+        2) echo '430 160' > $MM;;
+        3) echo '580 215' > $MM;;
+        4) echo '780 290' > $MM;;
+        mm) test -n "${4:-}" || { say 'Usage: sh tt.sh look mm W H'; exit 2; }; echo "$3 $4" > $MM;;
+        safe) test -n "${6:-}" || { say 'Usage: sh tt.sh look safe X Y W H'; exit 2; }; echo "$3 $4 $5 $6" > $SAFE;;
+        reset) rm -f $MM $SAFE;;
+        *) say 'Usage: sh tt.sh look 1|2|3|4 | mm W H | safe X Y W H | reset'
+           say "   now: mm $(cat $MM 2>/dev/null || echo 320 120), safe $(cat $SAFE 2>/dev/null || echo 520 110 400 320)"
+           exit 2;;
+    esac
+    say "Screen $(cat $MM 2>/dev/null || echo 320 120) mm, safe window $(cat $SAFE 2>/dev/null || echo 520 110 400 320). Unplug the iPhone, wait 5 s, plug it back in."
     ;;
 unstick)
     # After a crash the next connections fail ("cannot bind renderer tee port"): something from
@@ -474,7 +501,7 @@ report)
     say "== jar: $(which_jar)    (v44 is the current one)"
     say "== layers: map 10 = $(ctxlist 10)  map+banner 89 = $(ctxlist 89)  (v37 with CarPlay: 16 60 / 20 16 60)"
     grep "layers:" /tmp/tt-rgd.log 2>/dev/null | tail -3
-    h=$("$T" "$HOOK" 2>/dev/null); case "$h" in $HOOK_STOCK) say '== CarPlay hook: original';; $HOOK_H320) say '== CarPlay hook: original (h320 preset)';; $FIX_STOCK|$FIX_H320) say '== CarPlay hook: fix1 (old byte patch - replace with: sh tt.sh hookfix)';; $HOOK_TT1) say '== CarPlay hook: TT build 1 (from source: no port leak, always falls back to plain CarPlay)';; *) say "== CarPlay hook: unknown ($h)";; esac
+    h=$("$T" "$HOOK" 2>/dev/null); case "$h" in $HOOK_STOCK) say '== CarPlay hook: original';; $HOOK_H320) say '== CarPlay hook: original (h320 preset)';; $FIX_STOCK|$FIX_H320) say '== CarPlay hook: fix1 (old byte patch - replace with: sh tt.sh hookfix)';; $HOOK_TT1) say '== CarPlay hook: TT build 1 (from source: no port leak, always falls back to plain CarPlay)';; $HOOK_TT2) say "== CarPlay hook: TT build 2 (build 1 + look tests: mm $(cat /tmp/tt-hook-mm 2>/dev/null || echo 320 120), safe $(cat /tmp/tt-hook-safe 2>/dev/null || echo 520 110 400 320))";; *) say "== CarPlay hook: unknown ($h)";; esac
     h=$("$T" "$SUP" 2>/dev/null); case "$h" in $SUP_V2) say '== supervisor: v2 (switches the display to 901)';; $SUP_V3) say '== supervisor: v3 (no display switch: no CarPlay map in the map views - replace it)';; $SUP_V4) say '== supervisor: v4 (4 s start delay: slow map - replace with v5)';; $SUP_V5) say "== supervisor: v5 (renderer only on the map view)";; $SUP_V6) say '== supervisor: v6 (test switch version - replace with v7)';; $SUP_V7) say '== supervisor: v7 (renderer runs all session, no display switching)';; *) say "== supervisor: unknown ($h)";; esac
     tail -3 /tmp/mu1462-supervisor.log 2>/dev/null
     test -f "$K/panel-bg.a8" && say '== panel background: installed' || say '== panel background: none'
@@ -515,7 +542,8 @@ save)
     say 'sh tt.sh play arrows | stop  arrow catalogue / stop playback'
     say 'sh tt.sh test                the full guided test, Enter for each step, then saves the logs'
     say 'sh tt.sh check               v38 guided check (Enter for each step, c marks a CarPlay crash)'
-    say 'sh tt.sh hookfix [undo]      CarPlay hook TT build 1: reconnect after a crash (flash, then MMI restart)'
+    say 'sh tt.sh hookfix [undo]      CarPlay hook TT build 2 (flash, then MMI restart)'
+    say 'sh tt.sh look 1|2|3|4|reset  how much road the cockpit map shows (next replug, RAM only)'
     say 'sh tt.sh sup [undo]          supervisor v7: renderer runs all session (flash, then replug)'
     say 'sh tt.sh crash               check: tab flips, map return, unplug and replug'
     say 'sh tt.sh card auto|off|on|left|right|top|default  the iPhone card on the cockpit map (applies at once)'

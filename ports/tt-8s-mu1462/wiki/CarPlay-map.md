@@ -51,3 +51,21 @@ whenever the hook sends `showUI`; touching `/tmp/mibr-alt111-show-only` makes it
 again while connected. There is no option for map tilt or auto zoom (only zoom steps,
 `changeMapZoomLevel`). tt-zoom v44 switches the surface per view: Classic with card, Sport map
 only (`sh tt.sh card`).
+
+## How far ahead the map shows
+
+The iPhone is told the stream is 1440 x 540 px on a 320 x 120 mm screen, with a 400 x 320 safe
+window at (520,110) (car logs: `physical=320x120`, `safe=400x320@520,110`). The real 12.3" panel
+is about 292 x 110 mm. With the card on the side (`card left|right`) the card takes about half of
+the 400 px safe window, and the map and the app's ETA bar move over (car photos, v44).
+
+Hook TT build 2 (`sh tt.sh hookfix`, sha 347a9114…) reads two RAM-only test files when the
+iPhone connects, so sizes can be tried with a replug and no flash write:
+
+| File | Content | Kit command |
+|---|---|---|
+| `/tmp/tt-hook-mm` | `W H`, screen size in mm told to the iPhone | `sh tt.sh look 1..4` (320x120, 430x160, 580x215, 780x290), `look mm W H` |
+| `/tmp/tt-hook-safe` | `X Y W H`, safe window for all three views | `sh tt.sh look safe X Y W H` |
+
+The idea under test: a bigger reported screen means a lower pixel density, so iOS should draw
+the cluster map and its labels smaller and show more road. Not yet confirmed on the car.

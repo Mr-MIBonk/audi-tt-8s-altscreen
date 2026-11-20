@@ -261,6 +261,9 @@ static const struct alt111_rect g_audi_safe[3] = {
     {360,87,720,297}, {520,87,400,297}, {114,88,350,296}
 };
 #endif
+/* tt2: optional safe window from /tmp/tt-hook-safe, read in the constructor. */
+static struct alt111_rect g_tt_safe;
+static int g_tt_safe_set;
 static unsigned audi_requested_view(void)
 {
     if(MU1438_RUNTIME)return 1; /* user-selected, verified classic profile */
@@ -1894,6 +1897,7 @@ static void add_audi_viewareas(CFMutableDictionaryRef alt)
     for(i=0;i<3;++i){
         CFMutableDictionaryRef view=dict_new(), safe=dict_new();
         CFStringRef key;
+        const struct alt111_rect *r=g_tt_safe_set ? &g_tt_safe : &g_audi_safe[i];
         if(!view || !safe){
             if(view)p_CFRelease(view);
             if(safe)p_CFRelease(safe);
@@ -1902,18 +1906,17 @@ static void add_audi_viewareas(CFMutableDictionaryRef alt)
         }
         set_i64(view,"widthPixels",1440); set_i64(view,"heightPixels",540);
         set_i64(view,"originXPixels",0); set_i64(view,"originYPixels",0);
-        set_i64(safe,"widthPixels",g_audi_safe[i].width);
-        set_i64(safe,"heightPixels",g_audi_safe[i].height);
-        set_i64(safe,"originXPixels",g_audi_safe[i].x);
-        set_i64(safe,"originYPixels",g_audi_safe[i].y);
+        set_i64(safe,"widthPixels",r->width);
+        set_i64(safe,"heightPixels",r->height);
+        set_i64(safe,"originXPixels",r->x);
+        set_i64(safe,"originYPixels",r->y);
         /* Vendor 0x1718 uses safe dictionary; 0x1728 uses view dictionary. */
         set_false(safe,"drawUIOutsideSafeArea");
         set_false(view,"viewAreaTransitionControl");
         key=s_cf("safeArea"); p_CFDictionarySetValue(view,key,safe); p_CFRelease(key);
         p_CFArrayAppendValue(areas,view);
         p_CFRelease(safe); p_CFRelease(view);
-        logf_u2("MU1438 Audi view=%u safe=%ux%u@%u,%u",i,g_audi_safe[i].width,
-                g_audi_safe[i].height,g_audi_safe[i].x,g_audi_safe[i].y);
+        logf_u2("MU1438 Audi view=%u safe=%ux%u@%u,%u",i,r->width,r->height,r->x,r->y);
     }
     { CFStringRef key=s_cf("viewAreas"); p_CFDictionarySetValue(alt,key,areas); p_CFRelease(key); }
     set_i64(alt,"initialViewArea",audi_requested_view());
@@ -3610,6 +3613,27 @@ static void altscreen111_init(void)
     if(MU1438_PASSIVE)goto install_lifecycle_observers;
 
     alt111_profile_mu1440(&g2_profile,0);
+    /* tt2: test overrides read at every CarPlay connect (dio_manager starts per session), RAM
+     * only, gone after an MMI restart. /tmp/tt-hook-mm "W H": the screen size in mm the iPhone
+     * is told (a bigger screen makes iOS draw the cluster map smaller, so more road shows).
+     * /tmp/tt-hook-safe "X Y W H": the safe window for all three views. */
+    {
+        char v[64];
+        int a=0,b=0,c=0,d=0;
+        if(read_trimmed_value("/tmp/tt-hook-mm",v,sizeof(v))==0 &&
+           sscanf(v,"%d %d",&a,&b)==2 && a>=100 && a<=2000 && b>=40 && b<=1000){
+            g_width_mm=a; g_height_mm=b;
+            logf_u2("tt2 physical override %dx%d mm",a,b);
+        }
+        if(read_trimmed_value("/tmp/tt-hook-safe",v,sizeof(v))==0 &&
+           sscanf(v,"%d %d %d %d",&a,&b,&c,&d)==4 && a>=0 && b>=0 && c>=100 && d>=100 &&
+           a+c<=1440 && b+d<=540){
+            g_tt_safe.x=(uint32_t)a; g_tt_safe.y=(uint32_t)b;
+            g_tt_safe.width=(uint32_t)c; g_tt_safe.height=(uint32_t)d;
+            g_tt_safe_set=1;
+            logf_u2("tt2 safe override %dx%d@%d,%d",c,d,a,b);
+        }
+    }
     if(g_width<=0 || g_height<=0 || g_width_mm<=0 || g_height_mm<=0 ||
        g_fps<=0 || g_fps>60){
         logf_u2("gen2 invalid runtime geometry/fps %dx%d physical=%dx%d fps=%d",
@@ -3640,7 +3664,7 @@ static void altscreen111_init(void)
         g2_profile.initial_view=audi_requested_view();
         for(i=0;i<3;++i){
             g2_profile.views[i].area=g2_profile.views[0].area;
-            g2_profile.views[i].safe=g_audi_safe[i];
+            g2_profile.views[i].safe=g_tt_safe_set ? g_tt_safe : g_audi_safe[i];
         }
     }
     if(alt111_profile_validate(&g2_profile)!=ALT111_OK){
