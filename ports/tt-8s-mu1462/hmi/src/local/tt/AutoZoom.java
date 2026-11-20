@@ -36,7 +36,7 @@ public final class AutoZoom {
                 if (!on) {
                     zoomOut("route ended");
                 } else if (passed) {
-                    if (turnLike(main) && turn >= 0 && turn <= (motorway(main) ? 600 : 250)) {
+                    if (turnLike(main) && turn > 0 && turn <= (motorway(main) ? 600 : 250)) {
                         // the next turn is close too: stay zoomed in for it
                         zoomedFor = man;
                         outAt = 0L;
@@ -51,7 +51,8 @@ public final class AutoZoom {
             if (!on) {
                 zoomedFor = null;
             }
-            if (!on || OFF.exists() || man == null || man.length() == 0 || turn < 0 || !turnLike(main)) {
+            // v52 (run45): never at 0 m - route start (42) and maneuver changes report 0 for a moment.
+            if (!on || OFF.exists() || man == null || man.length() == 0 || turn <= 0 || !turnLike(main)) {
                 return;
             }
             if (man.equals(zoomedFor)) {
@@ -84,8 +85,13 @@ public final class AutoZoom {
         outAt = 0L;
     }
 
+    /**
+     * v52 (run45 zoomed in on "start of route", code 42, at 0 m): only real turns - turns, exits,
+     * forks and roundabouts (13-27) and end of road (41). Not follow road, arrival, merge, start,
+     * lane change or ferry.
+     */
     private static boolean turnLike(int main) {
-        return main >= 12 && main != 28 && main != 29 && main != 30 && main != 31;
+        return main >= 13 && main <= 27 || main == 41;
     }
 
     private static boolean motorway(int main) {
