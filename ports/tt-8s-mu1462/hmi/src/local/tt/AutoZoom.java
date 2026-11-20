@@ -8,9 +8,10 @@ import java.io.FileInputStream;
  * the same path as the steering-wheel zoom (ZoomGate.send: "MZ01" to the hook, which asks the
  * iPhone for changeMapZoomLevel). The phone apps have no auto-zoom switch for the cluster map.
  *
- * In: a turn-like maneuver (RgdBus.nearTurn codes) within 250 m, motorway exits and forks 600 m,
- * once per maneuver. Out: 3 s after that maneuver is passed (the iPhone moves on to the next one),
- * the route ends, or the distance jumps back up (reroute). Steps: /tmp/tt-autozoom-steps (1-6,
+ * In: a turn-like maneuver within 330 m (the iPhone's "0.2 mi" step), motorway exits and forks
+ * 800 m, once per maneuver. Out: 5 s after that maneuver is passed (with the iPhone's card, which
+ * hides then: v55 shows the card for exactly this stretch, so the map changes once going in and
+ * once coming out), the route ends, or the distance jumps back up (reroute). Steps: /tmp/tt-autozoom-steps (1-6,
  * default 2); /tmp/tt-autozoom-off turns it off. Every action is logged to /tmp/tt-zoom.log.
  */
 public final class AutoZoom {
@@ -27,7 +28,32 @@ public final class AutoZoom {
     private static String curMan = "";
     private static long curSince;
 
+    /** v55: zoom (and card) distances, city and motorway. */
+    private static final int IN_CITY = 330;
+    private static final int IN_MOTORWAY = 800;
+
     private AutoZoom() {
+    }
+
+    /**
+     * v55: the stretch before a turn where the map zooms in; Card shows the iPhone's card for the
+     * same stretch. Arrival counts too (card only: turnLike decides the zoom).
+     */
+    static boolean inRange(int main, int turn) {
+        if (turn < 0) {
+            return false;
+        }
+        boolean arrival = main >= 2 && main <= 5 || main == 38;
+        return (turnLike(main) || arrival) && turn <= (motorway(main) ? IN_MOTORWAY : IN_CITY);
+    }
+
+    /** Card: the card was hidden after a turn; zoom out now so the map changes only once. */
+    static void cardHidden() {
+        synchronized (LOCK) {
+            if (zoomed > 0 && outAt > 0L) {
+                zoomOut("turn passed, card hidden");
+            }
+        }
     }
 
     /** RgdBus, every iPhone update. man = current maneuver id ("" when none). */
@@ -44,15 +70,22 @@ public final class AutoZoom {
                 if (!on) {
                     zoomOut("route ended");
                 } else if (passed) {
-                    if (turnLike(main) && turn > 0 && turn <= (motorway(main) ? 600 : 250)) {
-                        // the next turn is close too: stay zoomed in for it
+                    // v55 (run47: the Barker Cypress turn never zoomed): right after a turn the
+                    // phone sends the old "15 m" with the next maneuver for a moment. Only a
+                    // distance 3 s after the change counts as "the next turn is close too".
+                    if (turnLike(main) && now - curSince >= 3000L && turn >= 40
+                        && turn <= (motorway(main) ? IN_MOTORWAY : IN_CITY)) {
                         zoomedFor = man;
                         outAt = 0L;
                     } else if (outAt == 0L) {
-                        outAt = now + 3000L;
+                        // the card hides about 5 s after the turn and zooms out with it
+                        // (cardHidden); this is the fallback without the card
+                        outAt = now + 6000L;
                     }
-                } else if (turn > (motorway(main) ? 900 : 450)) {
+                } else if (turn > (motorway(main) ? IN_MOTORWAY + 500 : IN_CITY + 250)) {
                     zoomOut("turn far again");
+                    // may zoom in again for the same maneuver when it gets close
+                    zoomedFor = null;
                 }
                 return;
             }
@@ -71,7 +104,7 @@ public final class AutoZoom {
             if (now - curSince < 3000L || turn < 40) {
                 return;
             }
-            if (turn <= (motorway(main) ? 600 : 250)) {
+            if (turn <= (motorway(main) ? IN_MOTORWAY : IN_CITY)) {
                 int n = steps();
                 String why = new StringBuffer("auto zoom in (turn ").append(turn).append(" m)").toString();
                 if (ZoomGate.autoZoom(why, -n)) {

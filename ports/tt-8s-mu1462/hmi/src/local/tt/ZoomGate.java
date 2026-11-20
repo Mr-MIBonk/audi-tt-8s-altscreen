@@ -212,10 +212,10 @@ public final class ZoomGate {
         synchronized (LOCK) {
             applied = 0;
             want = level;
-            if (want != 0) {
-                restoreAt = now + 2500L;
-                restoreUntil = now + 60000L;
-            }
+            // v55: always wait for the new map, so a zoom asked for meanwhile (the auto zoom-in
+            // that comes with the card) is not lost; tick() just clears it when nothing is due.
+            restoreAt = now + 2500L;
+            restoreUntil = now + 60000L;
         }
         if (want != 0) {
             log(new StringBuffer("zoom memory: ").append(why).append(", ").append(want)

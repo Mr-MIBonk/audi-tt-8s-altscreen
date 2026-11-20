@@ -85,6 +85,10 @@ public final class Card {
                     write(SHOW, "1\n");
                     // v53 (run46): the iPhone rebuilds the map at its default zoom on every showUI.
                     ZoomGate.mapReset("card switch");
+                    if (want == 1) {
+                        // v55: the auto zoom-out goes into the same map rebuild
+                        AutoZoom.cardHidden();
+                    }
                 }
             }
             RgdBus.note(new StringBuffer("card: ").append(want == 0 ? "shown (turn near)" : "map only")
