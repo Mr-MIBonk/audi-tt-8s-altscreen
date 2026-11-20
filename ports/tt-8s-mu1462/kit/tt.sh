@@ -423,6 +423,16 @@ banner)
            exit 2;;
     esac
     ;;
+eta)
+    # The phone app's own ETA bar on the cockpit map (user choice 2026-11-20: off; the car's bottom
+    # strip shows the same). One small settings file on flash; sent to the iPhone at once.
+    F=/mnt/app/root/mibr-carplay111-nav.showETA
+    case "${2:-}" in
+        off) rw; echo no > $F; ro; touch /tmp/mibr-alt111-show-only; say 'App ETA bar off.';;
+        on) if test -f $F; then rw; rm -f $F; ro; fi; touch /tmp/mibr-alt111-show-only; say 'App ETA bar on.';;
+        *) say "Usage: sh tt.sh eta on | off   (now: $(test "$(cat $F 2>/dev/null)" = no && echo off || echo on))"; exit 2;;
+    esac
+    ;;
 look)
     # How much road the cockpit CarPlay map shows (hook TT build 2). RAM only, read by the hook
     # when the iPhone connects: replug after a change; an MMI restart forgets it.
@@ -595,6 +605,7 @@ save)
     say 'sh tt.sh hookfix [undo]      CarPlay hook TT build 2 (flash, then MMI restart)'
     say 'sh tt.sh autozoom on|off|steps N  zoom the map in near turns, out after'
     say 'sh tt.sh banner always|auto|alpha N  our banner always / only near turns, background opacity'
+    say 'sh tt.sh eta on|off             the phone app'"'"'s own ETA bar on the cockpit map'
     say 'sh tt.sh look 1|2|3|4|reset  how much road the cockpit map shows (next replug, RAM only)'
     say 'sh tt.sh sup [v6|v7|undo]    renderer supervisor: v6 (keeps the display switch), v7, or back to v2 (flash, then replug)'
     say 'sh tt.sh crash               check: tab flips, map return, unplug and replug'

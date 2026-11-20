@@ -68,6 +68,13 @@ v46 switches it by distance instead: the card shows only near a turn (1 km, moto
 and forks 2 km, plus 10 s at route start and 5 s after a turn), map only otherwise, in both views.
 The card cannot be made see-through: the iPhone draws it into the video.
 
+Defaults (user, 2026-11-20): card at the top (`sh tt.sh card top`), the app's own ETA bar off
+(`sh tt.sh eta off` writes `no` to `/mnt/app/root/mibr-carplay111-nav.showETA`; the car's bottom
+strip already shows ETA/distance), standard safe window. The map options are sent only while
+`/mnt/app/root/mibr-carplay111-nav-query.enabled` exists; the SD installer creates it.
+Tried: `look low1` (safe window 520,110 400x360) puts the car lower during guidance but the app's ETA
+bar then sits behind the car's bottom strip.
+
 ## How far ahead the map shows
 
 The iPhone is told the stream is 1440 x 540 px on a 320 x 120 mm screen, with a 400 x 320 safe

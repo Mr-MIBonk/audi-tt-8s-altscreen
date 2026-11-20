@@ -52,6 +52,7 @@ RGD=/mnt/app/root/rgd
 LAYOUT=/mnt/app/root/mibr-carplay111-nav.maneuverLayout
 # the hook sends the map options (card position, ETA bar) only while this marker exists
 QUERY=/mnt/app/root/mibr-carplay111-nav-query.enabled
+ETA=/mnt/app/root/mibr-carplay111-nav.showETA
 BACKUPS=/mnt/app/root/tt-backups
 PF_DIR=/mnt/system/etc
 BLOCK='block drop in quick on carplay0 all'
@@ -242,9 +243,11 @@ stage tt.sh "$K/tt.sh" 755 "$NEW_KIT" "$P/tt.sh"
 stage altscreen-sha256 "$K/altscreen-sha256" 755 "$SHA_TOOL" "$P/altscreen-sha256"
 printf 'top\n' > /tmp/tt-ps.$$
 stage maneuverLayout "$LAYOUT" 644 "$(hash /tmp/tt-ps.$$)" /tmp/tt-ps.$$
-printf '1
-' > /tmp/tt-ps.$$
+printf '1\n' > /tmp/tt-ps.$$
 stage nav-query "$QUERY" 644 "$(hash /tmp/tt-ps.$$)" /tmp/tt-ps.$$
+# the app's own ETA bar off by default (the car's bottom strip shows the same); sh tt.sh eta on
+printf 'no\n' > /tmp/tt-ps.$$
+stage showETA "$ETA" 644 "$(hash /tmp/tt-ps.$$)" /tmp/tt-ps.$$
 for t in /tmp/tt-pf.$$.*; do
     test -f "$t" || continue
     b=${t##*.$$.}
