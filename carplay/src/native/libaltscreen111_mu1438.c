@@ -251,9 +251,16 @@ static uint64_t g_capture_drops;
 #define MU1438_RUNTIME 0
 #endif
 /* Both user-supplied MIBSI p5087/p5092: table 0xbb50, builder 0x14e0. */
+#ifdef MU1462_TT_SAFE_H320
+/* tt: Audi TT 8S (MU1462): the "h320" preset the car runs; one window for all three views. */
+static const struct alt111_rect g_audi_safe[3] = {
+    {520,110,400,320}, {520,110,400,320}, {520,110,400,320}
+};
+#else
 static const struct alt111_rect g_audi_safe[3] = {
     {360,87,720,297}, {520,87,400,297}, {114,88,350,296}
 };
+#endif
 static unsigned audi_requested_view(void)
 {
     if(MU1438_RUNTIME)return 1; /* user-selected, verified classic profile */
@@ -1031,6 +1038,10 @@ static int bind_listener_ipv4(int preferred, int *out_port, int loopback, int al
     socklen_t sl = sizeof(sa);
     fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (fd < 0) return -1;
+    /* tt: close-on-exec. The supervisor spawned at the end of the constructor inherited this
+     * listener and kept 127.0.0.1:19820 busy after the session died, so every reconnect
+     * failed to bind it (TT runs 32-40). */
+    (void)fcntl(fd, F_SETFD, FD_CLOEXEC);
     setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));
     memset(&sa, 0, sizeof(sa));
     sa.sin_family = AF_INET;
@@ -1054,6 +1065,7 @@ static int bind_listener_stream111(int preferred, int *out_port, int allow_ephem
     socklen_t sl6=sizeof(sa6);
     fd=socket(AF_INET6,SOCK_STREAM,IPPROTO_TCP);
     if(fd>=0){
+        (void)fcntl(fd,F_SETFD,FD_CLOEXEC); /* tt: see bind_listener_ipv4 */
         setsockopt(fd,SOL_SOCKET,SO_REUSEADDR,&one,sizeof(one));
 #ifdef IPV6_V6ONLY
         (void)setsockopt(fd,IPPROTO_IPV6,IPV6_V6ONLY,&off,sizeof(off));
@@ -3558,6 +3570,15 @@ static void altscreen111_init(void)
     g_alt_port=env_i("ALTSCREEN111_PORT",6031);
     g_tee_port=env_i("ALTSCREEN111_TEE_PORT",19820);
     g_capture_port=env_i("ALTSCREEN111_CAPTURE_PORT",19821);
+    /* tt: look the stock session functions up first. The exported replacements below take
+     * these calls even when the constructor returns early "fail-closed"; without delegates
+     * every setup failed ("FATAL no stock SessionSetup delegate") and CarPlay never
+     * connected (TT run32). With them a disabled AltScreen still leaves plain CarPlay. */
+    g_real_setup=(fn_setup_t)sym_next("AirPlayReceiverSessionSetup");
+    g_real_start=(fn_start_t)sym_next("AirPlayReceiverSessionStart");
+    g_real_teardown=(fn_teardown_t)sym_next("AirPlayReceiverSessionTearDown");
+    g_real_platform_control=(fn_platform_control_t)sym_next("AirPlayReceiverSessionPlatformControl");
+    g_real_session_control=(fn_session_control_t)sym_next("AirPlayReceiverSessionControl");
     g_width=env_i("ALTSCREEN111_WIDTH",1440);
     g_height=env_i("ALTSCREEN111_HEIGHT",540);
     /* Keep MU-target physical geometry; Audi 290x90 is not portable evidence. */

@@ -7,6 +7,7 @@
 #   tools    install Docker in the WSL Ubuntu (once)
 #   image    build the QNX 6.5 GCC 4.9 toolchain image from qnx65-armv7-toolchain (once, long:
 #            it compiles GCC; every download in its Dockerfile is pinned by sha256)
+#   tt       the TT hook (tt fixes, h320 safe area) into carplay/out/tt
 #   native   compile carplay/src/native with upstream's scripts/compile-native.sh into
 #            carplay/out/native, then compare with the shipped binaries in carplay/bin
 #
@@ -51,6 +52,14 @@ native)
         rm -f "bin/$f.syms" "out/native/$f.syms"
     done
     ;;
+tt)
+    # The TT hook: upstream source with the tt fixes, h320 safe area. Output carplay/out/tt/.
+    cd "$REPO/carplay"
+    mkdir -p out/tt
+    docker run --rm --platform=linux/amd64 -v "$PWD:/w" -w /w "$UPSTREAM_TAG"         qcc -shared -fPIC -mfloat-abi=softfp -O2 -g -std=gnu99 -Wall -Wextra         -DMU1438_PASSIVE=0 -DMU1438_AUDI_GEOMETRY=1 -DMU1438_RUNTIME=3 -DMU1462_TT_SAFE_H320         -Isrc/native -Isrc/native/alt111/include         src/native/libaltscreen111_mu1438.c src/native/alt111/src/alt111_profile.c         src/native/alt111/src/alt111_control.c src/native/alt111/src/alt111_video.c         src/native/alt111/src/alt111_resync.c -Wl,-soname,libaltscreen111.so -lsocket         -o out/tt/libaltscreen111.so
+    ls -l out/tt/libaltscreen111.so
+    sha256sum out/tt/libaltscreen111.so
+    ;;
 *)
-    echo 'usage: wsl-native-build.sh tools | image | native'; exit 2;;
+    echo 'usage: wsl-native-build.sh tools | image | native | tt'; exit 2;;
 esac
