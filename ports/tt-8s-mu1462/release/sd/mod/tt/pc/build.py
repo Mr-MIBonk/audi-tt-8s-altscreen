@@ -96,14 +96,18 @@ def mkjar(src, out):
     names = sorted(os.path.relpath(os.path.join(r, f), src).replace(os.sep, "/")
                    for r, _, fs in os.walk(src) for f in fs)
     with zipfile.ZipFile(out, "w") as z:
-        zi = zipfile.ZipInfo("META-INF/MANIFEST.MF", (2026, 1, 1, 0, 0, 0))
-        zi.compress_type = zipfile.ZIP_STORED
-        z.writestr(zi, b"Manifest-Version: 1.0\r\n\r\n")
-        for n in names:
+        entries = [("META-INF/MANIFEST.MF", None)] + [(n, n) for n in names]
+        for n, path in entries:
+            if path is None:
+                data = b"Manifest-Version: 1.0\r\n\r\n"
+            else:
+                with open(os.path.join(src, *path.split("/")), "rb") as f:
+                    data = f.read()
+            # stored + fixed create_system: the same bytes on every PC (deflate differs by zlib build)
             zi = zipfile.ZipInfo(n, (2026, 1, 1, 0, 0, 0))
-            zi.compress_type = zipfile.ZIP_DEFLATED
-            with open(os.path.join(src, *n.split("/")), "rb") as f:
-                z.writestr(zi, f.read())
+            zi.compress_type = zipfile.ZIP_STORED
+            zi.create_system = 0
+            z.writestr(zi, data)
 
 
 def patch_dio(src, dst):
