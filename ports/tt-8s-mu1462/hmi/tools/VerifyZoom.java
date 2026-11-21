@@ -35,8 +35,14 @@ public final class VerifyZoom {
             "de/audi/tghu/navi/app/cluster/ClusterViewMode.class",
             "de/audi/tghu/navi/app/cluster/KOMOService.class"
         };
+        // every class of ours as well, so a new one cannot slip past (v59)
+        java.util.List<String> all = new java.util.ArrayList<>(java.util.Arrays.asList(classes));
+        try (java.util.stream.Stream<Path> s = Files.list(out.resolve("local/tt"))) {
+            s.map(f -> "local/tt/" + f.getFileName()).filter(n -> n.endsWith(".class")).sorted()
+                .filter(n -> !all.contains(n)).forEach(all::add);
+        }
         boolean ok = true;
-        for (String c : classes) {
+        for (String c : all) {
             byte[] b = Files.readAllBytes(out.resolve(c));
             java.io.StringWriter sw = new java.io.StringWriter();
             CheckClassAdapter.verify(new ClassReader(b), loader, false, new PrintWriter(sw));

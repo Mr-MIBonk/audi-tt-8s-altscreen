@@ -343,6 +343,8 @@ public final class ZoomGate {
             boolean append = LOG.length() < 32768;
             FileOutputStream out = new FileOutputStream(LOG.getPath(), append);
             try {
+                // v59: and into the route recording
+                RouteRec.note(new StringBuffer("zoom ").append(line).toString());
                 // v57: same clock as tt-rgd.log, so zoom and view steps line up with the route
                 out.write(new StringBuffer().append(System.currentTimeMillis() % 100000000L).append(' ')
                     .append(line).toString().getBytes());

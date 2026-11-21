@@ -121,6 +121,7 @@ public final class RgdBus implements Runnable {
             k.setDaemon(true);
             k.start();
             RgiPlayer.start();
+            RouteRec.start();
         } catch (Throwable t) {
             log(new StringBuffer("start failed ").append(String.valueOf(t)).toString());
         }
@@ -210,6 +211,7 @@ public final class RgdBus implements Runnable {
                         updates++;
                         writeLast(payload);
                         logUpdate(updates, payload);
+                        RouteRec.message(payload);
                         merge(payload);
                         catalogue();
                         feed(true);
@@ -481,6 +483,7 @@ public final class RgdBus implements Runnable {
             }
             on = wantOn && !RGI_OFF.exists();
             lastOn = on;
+            RouteRec.route(on);
             turn = (int) num("dist_maneuver_m", -1);
             dest = (int) num("dist_dest_m", -1);
             eta = num("eta_seconds", -1);
@@ -1004,7 +1007,28 @@ public final class RgdBus implements Runnable {
         log(line);
     }
 
+    /** v59: the merged state as one "|"-separated update (RouteRec's seed; types are not kept). */
+    static String stateDump() {
+        StringBuffer b = new StringBuffer();
+        synchronized (STATE) {
+            java.util.Enumeration e = STATE.keys();
+            while (e.hasMoreElements()) {
+                Object k = e.nextElement();
+                String v = String.valueOf(STATE.get(k)).replace('|', '/').replace((char) 10, ' ');
+                if (b.length() > 0) {
+                    b.append('|');
+                }
+                b.append(k).append(":s:").append(v);
+            }
+        }
+        return b.toString();
+    }
+
     private static void log(String line) {
+        // v59: notes go into the route recording too (the cut "rgd #" copies do not)
+        if (line != null && !line.startsWith("rgd #")) {
+            RouteRec.note(line);
+        }
         try {
             if (LOG.length() >= LOG_LIMIT) {
                 LOG_OLD.delete();
