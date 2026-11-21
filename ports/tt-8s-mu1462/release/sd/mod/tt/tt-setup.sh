@@ -53,6 +53,8 @@ LAYOUT=/mnt/app/root/mibr-carplay111-nav.maneuverLayout
 # the hook sends the map options (card position, ETA bar) only while this marker exists
 QUERY=/mnt/app/root/mibr-carplay111-nav-query.enabled
 ETA=/mnt/app/root/mibr-carplay111-nav.showETA
+# the hook's persistent surface: "map" = no iPhone turn card (its own fallback is the card)
+SURFACE=/mnt/app/root/mibr-carplay111-nav.surface
 BACKUPS=/mnt/app/root/tt-backups
 PF_DIR=/mnt/system/etc
 BLOCK='block drop in quick on carplay0 all'
@@ -248,6 +250,9 @@ stage nav-query "$QUERY" 644 "$(hash /tmp/tt-ps.$$)" /tmp/tt-ps.$$
 # the app's own ETA bar off by default (the car's bottom strip shows the same); sh tt.sh eta on
 printf 'no\n' > /tmp/tt-ps.$$
 stage showETA "$ETA" 644 "$(hash /tmp/tt-ps.$$)" /tmp/tt-ps.$$
+# the iPhone's turn card off by default, also before the HMI has started (sh tt.sh card auto|on)
+printf 'map\n' > /tmp/tt-ps.$$
+stage navSurface "$SURFACE" 644 "$(hash /tmp/tt-ps.$$)" /tmp/tt-ps.$$
 for t in /tmp/tt-pf.$$.*; do
     test -f "$t" || continue
     b=${t##*.$$.}
