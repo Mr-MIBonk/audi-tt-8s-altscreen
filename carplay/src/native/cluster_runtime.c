@@ -83,6 +83,12 @@ static uint64_t self_checked;
 static uint64_t shown_at;
 static int checks_done;
 static uint64_t show_due;
+/* Build 5 (run58: the read-back of byte 60 is always 0, and the user's blank/blink marks
+ * alternated perfectly with 5 writes per return): writing attribute byte 60 = 1 TOGGLES the
+ * output, 0 leaves it alone. The renderer keeps the state itself (vis) and writes 1 only to
+ * change it. /tmp/mu1438-attr-cmd (sh tt.sh attr ...) runs one attribute test on the car. */
+static int vis;
+static uint64_t attr_checked;
 static uint64_t resume_began;
 static int applied_shift=-1;
 static uint64_t rt_ms(void) { struct timespec t;clock_gettime(CLOCK_REALTIME,&t);return (uint64_t)t.tv_sec*1000+t.tv_nsec/1000000; }
@@ -193,16 +199,14 @@ static int prepare_renderer(void)
     memset(attrs,0,sizeof(attrs));if(get_attrs(video_handle,attrs)!=0)goto fail;
     attrs[8]=1;put32(attrs,12,0);put32(attrs,16,0);put32(attrs,20,1440);put32(attrs,24,540);
     put32(attrs,28,0);put32(attrs,32,0);put32(attrs,36,1440);put32(attrs,40,540);
-#ifdef MU1462_TT
-    self_update();
-    hidden=pause_wanted && pause_mode()==MODE_HIDE;
-    attrs[60]=hidden?0:1;
-#else
     attrs[60]=1;
-#endif
     attrs[61]=0;if(set_attrs(video_handle,attrs)!=0)goto fail;
 #ifdef MU1462_TT
-    applied_shift=0;
+    applied_shift=0;vis=1;hidden=0;
+    {
+        unsigned char d[64];int i;memset(d,0,sizeof(d));
+        if(get_attrs(video_handle,d)==0){ts();printf("attributes:");for(i=0;i<64;i++)printf(" %02x",d[i]);printf("\n");}
+    }
 #endif
 #ifdef MU1462_TT
     ts();printf("decoder prepared in %lu ms\n",(unsigned long)(millis()-began));
@@ -224,8 +228,8 @@ static void apply_shift(void)
     memset(attrs,0,sizeof(attrs));if(get_attrs(video_handle,attrs)!=0)return;
     attrs[8]=1;put32(attrs,12,(uint32_t)want);put32(attrs,16,0);put32(attrs,20,(uint32_t)(1440-want));put32(attrs,24,540);
     put32(attrs,28,0);put32(attrs,32,0);put32(attrs,36,(uint32_t)(1440-want));put32(attrs,40,540);
-    attrs[60]=hidden?0:1;attrs[61]=0;
-    if(set_attrs(video_handle,attrs)==0){applied_shift=want;printf("crop shift %d\n",want);}
+    attrs[60]=0;attrs[61]=0;
+    if(set_attrs(video_handle,attrs)==0){applied_shift=want;ts();printf("crop shift %d (byte 60 = 0, no toggle)\n",want);}
 }
 static void write_paused(void)
 {
@@ -248,14 +252,29 @@ static void do_pause(void)
 static void set_visible(int on)
 {
     unsigned char attrs[64];uint64_t began=rt_ms(),sig=on?resume_signal_at:pause_signal_at;int rc;
+    if(vis==on){ts();printf("%s: already %s\n",on?"show":"hide",on?"visible":"hidden");return;}
     memset(attrs,0,sizeof(attrs));
     if(!video_handle || get_attrs(video_handle,attrs)!=0){ts();puts("hide: no attributes");return;}
-    attrs[60]=on?1:0;rc=set_attrs(video_handle,attrs);
+    attrs[60]=1;rc=set_attrs(video_handle,attrs);
+    if(rc==0)vis=on;
     ts();printf("%s: rc=%d %lu ms after the %s (set took %lu ms)\n",on?"shown":"hidden",rc,
         (unsigned long)(rt_ms()-sig),self_watch?"screen change":"signal",(unsigned long)(rt_ms()-began));
 }
 #endif
 #ifdef MU1462_TT
+static void attr_test(void)
+{
+    char c[32];unsigned char a[64];int rc=-1,i;FILE *f=fopen("/tmp/mu1438-attr-cmd","r");
+    memset(c,0,sizeof(c));if(f){if(!fgets(c,sizeof(c),f))c[0]=0;fclose(f);}
+    unlink("/tmp/mu1438-attr-cmd");
+    memset(a,0,sizeof(a));
+    if(!video_handle || get_attrs(video_handle,a)!=0){ts();puts("attr test: no attributes");return;}
+    if(!strncmp(c,"toggle",6)){a[60]=1;rc=set_attrs(video_handle,a);if(rc==0)vis=!vis;}
+    else if(!strncmp(c,"zero",4)){a[60]=0;rc=set_attrs(video_handle,a);}
+    else if(!strncmp(c,"crop",4)){int x=atoi(c+4);a[8]=1;put32(a,12,(uint32_t)x);put32(a,20,(uint32_t)(1440-x));put32(a,36,(uint32_t)(1440-x));a[60]=0;rc=set_attrs(video_handle,a);}
+    ts();printf("attr test '%s': rc=%d, tracked state %s; attributes:",strtok(c,"\r\n")?c:"dump",rc,vis?"visible":"hidden");
+    for(i=0;i<64;i++)printf(" %02x",a[i]);printf("\n");
+}
 static const unsigned check_at[4]={100,300,700,1500};
 /* something for play_stream to do now: hide, a (delayed) show, or a visibility check */
 static int switch_due(void)
@@ -270,7 +289,6 @@ static int switch_due(void)
         }
         return now>=show_due;
     }
-    if(!hidden && shown_at && checks_done<4 && now-shown_at>=check_at[checks_done])return 1;
     return 0;
 }
 #endif
@@ -322,16 +340,9 @@ static void play_stream(int fd)
                 shown_at=rt_ms();if(!shown_at)shown_at=1;checks_done=0;show_due=0;
             }
         }else if(pause_wanted)show_due=0;
-        if(!hidden && shown_at){
-            if(checks_done<4 && rt_ms()-shown_at>=check_at[checks_done]){
-                unsigned char a[64];int got;
-                memset(a,0,sizeof(a));
-                got=video_handle && get_attrs(video_handle,a)==0;
-                ts();printf("check +%u ms: output %s\n",check_at[checks_done],!got?"unknown":(a[60]?"on":"OFF"));
-                if(got && (!a[60] || access("/tmp/mu1438-reshow",F_OK)==0)){a[60]=1;printf("   re-shown rc=%d\n",set_attrs(video_handle,a));}
-                checks_done++;
-                if(checks_done>=4)shown_at=0;
-            }
+        if(rt_ms()-attr_checked>=200){
+            attr_checked=rt_ms();
+            if(access("/tmp/mu1438-attr-cmd",F_OK)==0)attr_test();
         }
         at_header=1;rc=read_exact_frame(fd,header,8);at_header=0;
         if(rc==2)continue;
