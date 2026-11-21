@@ -106,6 +106,24 @@ change it. `sh tt.sh attr toggle` shows it on the car.
 To the eye, everything from build 5 on feels immediate: the cockpit's own screen transition is
 slower than we are.
 
+## The same problems in RTOS terms
+
+Mostly not scheduling: resource ownership and synchronisation, with one deadline problem.
+
+| What happened | Classic name | Textbook fix | Here |
+|---|---|---|---|
+| Two video players fight over a hardware display window; the second gets "in use" and stalls | Shared resource without mutual exclusion (no owner, no arbiter) | One owner, or an explicit acquire/release protocol | The renderer keeps its window for the whole session |
+| The supervisor killed the renderer only after it saw the tab open | Race condition: release and acquire not ordered | A handshake: the acquirer waits for the holder's release | Not needed once nothing is released; the hook could still gate it (stage 2) |
+| Poll up to 200 ms + kill + close 100-300 ms (800 ms under load), vs the head unit taking its window 30-300 ms after the tab opens | Missed deadline: worst-case time of the release path > deadline | Shorten the critical path, or remove it | Removed: hiding the picture takes about 40 ms and releases nothing |
+| The 0.2 s poll never saw 25 ms CarPlay views during light-speed flipping | Sampling instead of events (aliasing) | Event-driven notification | 25 ms self-watch; a hook pulse would be the full fix |
+| The supervisor stuck forever in `dmdt`, waiting on the display manager | Unbounded blocking on synchronous IPC (QNX: client REPLY-blocked), no watchdog | IPC timeouts (`TimerTimeout`), async pulses, a watchdog | No `dmdt` in the loop at all |
+| Byte 60: writing 1 flips the output, reading back always 0 | Write-only, edge-triggered register treated as a level | Shadow register: keep the state, write only on change | Build 5 |
+| Light-speed flipping still crashes | Thrashing: requests faster than the system settles | Debounce, hysteresis, rate limiting | Accepted as out of scope |
+
+Where scheduling does come in: closing an output took 100-250 ms normally but up to 800 ms while the
+head unit decoded at the same time (CPU/GPU contention sets the worst case), and the display
+manager's hang may have been a priority inversion inside it; our logs only show our side.
+
 ## What we learned (the honest version)
 
 | Mistake | Better |

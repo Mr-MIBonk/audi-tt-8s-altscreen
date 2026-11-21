@@ -22,6 +22,7 @@ Everything marked "works" was checked on one car (US TT, MU1462), November 2026.
 ## Pages
 
 **The car**
+- [System architecture](Architecture.md): every part involved, with a diagram
 - [How the TT differs](TT-differences.md): one display, MMI-Kombi, contexts, firewall
 - [Components](Components.md): what is installed where
 
