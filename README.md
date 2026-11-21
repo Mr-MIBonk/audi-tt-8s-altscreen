@@ -12,6 +12,34 @@ of the work.
 > and can stop CarPlay working. Do not install it on any other firmware. You need
 > root SSH or M.I.B. access, a parked car and stable power.
 
+## Made for the TT
+
+The TT is not like the cars the upstream project targets. It has **one screen** (the cockpit is
+the head unit's own picture), an **MMI-Kombi** cockpit that ignores BAP turn data, and a stock nav
+banner that only draws routes from Audi's own nav engine. A straight port shows a map and nothing
+else.
+
+This port was built on the car itself: **more than 60 versions** (HMI jar v1-v56, renderer builds,
+supervisors), each tried on a real TT, with **over 30 hours of in-car testing and logging**. That
+includes drives, parked tests and crash hunts with a live system-log recorder. Every feature below
+was made for the TT's screen, views and software, not carried over from another car.
+
+This version adds:
+
+| | What it does | Why the TT needs it |
+|---|---|---|
+| **Turn panel where Audi puts its own** | Our guidance panel sits in the stock banner position: 3D turn arrows, lane arrows (preferred lane highlighted), exit badge ("EXIT 12A"), distance, arrival time, progress bar. It uses the stock frame on the car tab, its own frame over the map, and moves next to the tach in the Sport view | The stock banner cannot show iPhone turns: [8 attempts](ports/tt-8s-mu1462/wiki/Stock-guidance-dead-ends.md) proved it draws only from Audi's own route |
+| **Route guidance from the iPhone** | Google Maps and Apple Maps send turns, lanes, distances and ETA over iAP2. We receive them in the HMI, keep the merged state, pick the right lane set and convert the ETA to the cockpit clock | Without it there is no turn data on the head unit at all ([how](ports/tt-8s-mu1462/wiki/Turn-by-turn-data.md)) |
+| **Instructions in the stock bottom strip** | The cockpit's own strip reads "Left to Hwy 6 N" or "Right to Alpha St" as you approach a turn, then shows the current road again | Reads like the stock nav and lets the iPhone's card stay off |
+| **iPhone card optional** | The map shows full width by default; `card auto` brings the app's card back near turns | The card can't be made see-through and hides a lot of a 1440x540 screen |
+| **Sport (small) view layout** | When the cockpit shrinks the map to the side of the big tach, the picture shifts 453 px so the route stays visible | iOS ignores a change of the safe area mid-session; [shifting in the renderer](ports/tt-8s-mu1462/wiki/CarPlay-map.md#small-view-layout) does work |
+| **Steering-wheel zoom** | The scroll wheel zooms the CarPlay map; optional auto zoom near turns | The stock zoom only scales Audi's map |
+| **Real-time display handover** | The CarPlay tab and our cockpit map share the display controller's few hardware windows. Our renderer keeps its window for the whole session and only switches its picture (about 40 ms). It watches the screen state itself every 25 ms and keeps a shadow of a write-only toggle register. The supervisor has no blocking IPC left. The map comes back in about a third of a second | This was the "CarPlay goes black, then the iPhone disconnects" crash. It is gone in normal switching ([the whole story, with diagrams and the RTOS view](ports/tt-8s-mu1462/wiki/Display-window-handover.md)) |
+| **TT plumbing** | Video output 0 on display 0, layer 60 in the TT's map contexts (including map + banner), TCP 6031 opened in the stock firewall, MMI-Kombi code paths handled | The upstream values are for a different display layout ([differences](ports/tt-8s-mu1462/wiki/TT-differences.md)) |
+| **Test kit** | `tt.sh`: one-command install and undo, a live system-log recorder that survives crashes, timestamped marks, parked tests | Rare faults are found from evidence, not guesses |
+
+How the parts fit together: [system architecture](ports/tt-8s-mu1462/wiki/Architecture.md).
+
 ## What works
 
 | Feature | State |
@@ -19,13 +47,17 @@ of the work.
 | CarPlay map on the cockpit map tab, switched automatically | Works |
 | Large and small (tach-centred) cockpit views | Works |
 | Steering-wheel scroll zoom on the CarPlay map | Works |
-| Turn-by-turn panel: 3D arrows, lanes, exit badge, distance, ETA | Works; first drives in progress |
+| Turn-by-turn panel: 3D arrows, lanes, exit badge, distance, ETA | Works |
+| Bottom strip with the next turn ("Left to Alpha St"), auto zoom near turns | Works |
+| Switching between the map and the CarPlay tab without drops | Works for normal switching ([how it was fixed](ports/tt-8s-mu1462/wiki/Display-window-handover.md)) |
 | Android Auto | Not ported to the TT |
 
 Details, the dead ends and what is next: **[the TT wiki](ports/tt-8s-mu1462/wiki/Home.md)**.
 Built with Claude Code; how, and how to start on your own car: [Working with Claude](ports/tt-8s-mu1462/wiki/Working-with-Claude.md).
 
-![The turn panel on the cockpit](ports/tt-8s-mu1462/docs/photos/car-tab-exit-lanes.jpg)
+<p>
+<img src="ports/tt-8s-mu1462/docs/photos/cockpit-small-view.jpg" width="49%" alt="CarPlay map in the TT's small cockpit view, with the turn card, arrival time, bottom strip and our turn panel"> <img src="ports/tt-8s-mu1462/docs/photos/cockpit-large-view.jpg" width="49%" alt="Google Maps across the full Virtual Cockpit, with our turn panel and lane arrows and the bottom strip reading 'Left to Hwy 6 N'">
+</p>
 
 ![Turn panel pictures](ports/tt-8s-mu1462/docs/panel-preview-v32.png)
 
