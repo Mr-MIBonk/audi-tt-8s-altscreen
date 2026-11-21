@@ -883,7 +883,9 @@ tostock)
     if test "$bad" = 1; then mount -ur /mnt/system 2>/dev/null; ro; say 'NOT clean - send me this output. Our files were left in place.'; exit 1; fi
     # our remaining files out of the way (kept, not deleted); the kit itself last
     mkdir -p "$A"
-    for f in /mnt/app/root/mibr-carplay111-* /mnt/app/root/tt-rec-off /mnt/app/root/rgd /mnt/app/root/mu1438-cluster /mnt/app/root/lib-target; do
+    # NOT lib-target: it is a stock folder (NVIDIA video/media libraries CarPlay needs); our hook
+    # in it was already removed by the package restore. Moving it broke stock CarPlay (2026-11-21).
+    for f in /mnt/app/root/mibr-carplay111-* /mnt/app/root/tt-rec-off /mnt/app/root/rgd /mnt/app/root/mu1438-cluster; do
         test -e "$f" && mv "$f" "$A/" 2>/dev/null
     done
     mv "$K" "$A/tt"; mv /mnt/app/root/tt.sh "$A/tt.sh" 2>/dev/null
