@@ -1,0 +1,10 @@
+#!/bin/sh
+# TT cockpit CarPlay: MIB2 Toolbox green-menu button for the '@@ACTION@@' step.
+# Runs mod/custom.sh (which runs mod/tt/tt-setup.sh @@ACTION@@ on the MMX side).
+# Output: mod/tt/last-run.txt on the card.
+case $0 in */*) G=${0%/*};; *) G=.;; esac
+T=${G%/gem}
+# the Toolbox mounts the card read-only; make it writable like its own scripts do
+mount -uw "${T%/mod/tt}" 2>/dev/null
+echo @@ACTION@@ > "$T/action.txt"
+exec /bin/sh "${T%/tt}/custom.sh"

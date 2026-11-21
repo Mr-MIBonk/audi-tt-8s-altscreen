@@ -1,0 +1,54 @@
+###########################################################################################
+#
+# TT cockpit CarPlay installer - MIB2 Toolbox Green Engineering Menu screen
+# Import once: Main -> MQBCoding -> Customization -> GreenMenu (this file in Custom/GreenMenu
+# on the Toolbox SD card), then restart the green menu.
+# Main -> MQBCoding -> Customization -> TTCarPlay
+# Each button runs mod/tt/tt-setup.sh with that action from the SD card in slot 1.
+# Results: mod/tt/last-run.txt on the card. Free software (GPL-3.0).
+#
+###########################################################################################
+screen   TTCarPlay Customization
+
+keyValue
+    value   String sys 0x00000000 0
+    label   "TT cockpit CarPlay @@VERSION@@ - SD card in slot 1, car parked, phone unplugged."
+    poll    0
+
+keyValue
+    value   String sys 0x00000000 0
+    label   "Results go to mod/tt/last-run.txt on the card. Steps: see mod/tt/README.txt"
+    poll    0
+
+keyValue
+    value   String sys 0x00000000 0
+    label   ""
+    poll    0
+
+script
+   value    sys 1 0x0100 "/net/mmx/fs/sda0/mod/tt/gem/check.sh"
+   label    "1. check - is this car supported? (read-only)"
+
+script
+   value    sys 1 0x0100 "/net/mmx/fs/sda0/mod/tt/gem/export.sh"
+   label    "2. export - copy 2 files to the card for the PC builder (read-only)"
+
+script
+   value    sys 1 0x0100 "/net/mmx/fs/sda0/mod/tt/gem/install.sh"
+   label    "3. install - after the PC build (writes flash, then restart the MMI)"
+
+script
+   value    sys 1 0x0100 "/net/mmx/fs/sda0/mod/tt/gem/restore.sh"
+   label    "restore - undo the install (writes flash, then restart the MMI)"
+
+script
+   value    sys 1 0x0100 "/net/mmx/fs/sda0/mod/tt/gem/logs.sh"
+   label    "logs - save logs and route recordings to the card"
+
+script
+   value    sys 1 0x0100 "/net/mmx/fs/sda0/mod/tt/gem/recoff.sh"
+   label    "route recorder off (recon: on)"
+
+script
+   value    sys 1 0x0100 "/net/mmx/fs/sda0/mod/tt/gem/recon.sh"
+   label    "route recorder on"

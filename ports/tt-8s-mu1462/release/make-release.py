@@ -89,8 +89,9 @@ def main():
     stage = tempfile.mkdtemp(prefix="tt-release-")
     root = os.path.join(stage, "tt-cockpit-carplay-v" + o.version)
     tt = os.path.join(root, "mod", "tt")
-    for d in ("payload", "pc/classes/gate", "pc/classes/tools", "export", "build", "user"):
+    for d in ("payload", "pc/classes/gate", "pc/classes/tools", "export", "build", "user", "gem"):
         os.makedirs(os.path.join(tt, d))
+    os.makedirs(os.path.join(root, "Custom", "GreenMenu"))
     sd = os.path.join(HERE, "sd")
 
     def put(src, dst, text_sub=None, lf=True):
@@ -107,6 +108,12 @@ def main():
     for name in ("README.txt", "action.txt"):
         put(os.path.join(sd, "mod", "tt", name), os.path.join(tt, name), sub)
     put(os.path.join(sd, "mod", "tt", "user", "README.txt"), os.path.join(tt, "user", "README.txt"), sub)
+    # MIB2 Toolbox: green-menu screen (imported once via Customization -> GreenMenu) + one button script per action
+    put(os.path.join(sd, "Custom", "GreenMenu", "tt-carplay.esd"), os.path.join(root, "Custom", "GreenMenu", "tt-carplay.esd"), sub)
+    gem = open(os.path.join(sd, "mod", "tt", "gem.sh.template"), encoding="utf-8").read().replace("\r\n", "\n")
+    for action in ("check", "export", "install", "restore", "logs", "recoff", "recon"):
+        with open(os.path.join(tt, "gem", action + ".sh"), "w", encoding="utf-8", newline="\n") as f:
+            f.write(gem.replace("@@ACTION@@", action))
     for src, name in ((o.hook, "libaltscreen111.so"), (o.runtime, "cluster_runtime"),
                       (o.supervisor, "cluster_supervisor.sh"), (o.sha_tool, "altscreen-sha256"), (kit, "tt.sh")):
         shutil.copyfile(src, os.path.join(tt, "payload", name))

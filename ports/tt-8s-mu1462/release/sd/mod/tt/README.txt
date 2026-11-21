@@ -5,9 +5,16 @@ this, you were scammed. Full guide: https://github.com/Tristar10/audi-tt-8s-alts
 You need: the M.I.B. (More Incredible Bash) SD card, a computer with Python 3.8+ and
 Java 11+, a parked car with the engine running or a charger on the battery.
 
-Every step: write the step's name into mod/tt/action.txt, put the card in the car,
-M.I.B. -> Advanced Settings -> Run Custom Script. The output is also saved in
-mod/tt/last-run.txt. Nothing restarts by itself.
+Copy this card's mod/ and Custom/ folders to the root of your SD card (slot 1).
+
+How to run a step:
+  - M.I.B.: write the step's name into mod/tt/action.txt, put the card in the car,
+    M.I.B. -> Advanced Settings -> Run Custom Script.
+  - MIB2 Toolbox (green engineering menu): once, import the screen with
+    MQBCoding -> Customization -> GreenMenu, then restart the green menu. After that
+    MQBCoding -> Customization -> TTCarPlay has one button per step (card in slot 1).
+The output of every step is saved in mod/tt/last-run.txt on the card. Nothing restarts
+by itself.
 
  1. check     Is your car supported? Read-only.
  2. export    Copies two files from your head unit to mod/tt/export/ (read-only).

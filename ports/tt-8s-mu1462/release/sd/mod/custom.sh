@@ -1,5 +1,6 @@
 #!/bin/sh
-# M.I.B. -> Advanced Settings -> Run Custom Script.
+# M.I.B. -> Advanced Settings -> Run Custom Script, or the MIB2 Toolbox green-menu screen
+# (Customization -> TTCarPlay, buttons in mod/tt/gem/).
 # TT cockpit CarPlay: runs mod/tt/tt-setup.sh with the action written in mod/tt/action.txt
 # (check, export, install, restore or logs). The output is also saved to mod/tt/last-run.txt.
 # Never restarts the MMI.
@@ -8,6 +9,8 @@ D=$(cd "$D" && pwd)
 if test ! -d /mnt/app/eso/hmi/lsd && test -d /net/mmx/mnt/app/eso/hmi/lsd; then
     exec on -f mmx /bin/sh "$D/custom.sh" "$@"
 fi
+# the card may be mounted read-only (export, logs and last-run.txt write to it)
+mount -uw "${D%/*}" 2>/dev/null || :
 a=check
 if test -f "$D/tt/action.txt"; then
     read -r a < "$D/tt/action.txt" || :
