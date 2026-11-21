@@ -15,10 +15,10 @@
 #   recoff   route recorder off for good (one small file on flash); recon turns it back on
 # Never restarts the MMI; do that yourself afterwards (hold the MMI knob).
 #
-# Route recorder (in the HMI jar): every route is saved to the SD card in this slot's
-# tt-routes/ folder (last 20; without a card: RAM until the MMI restarts). A recording holds
-# what the phone sent for that route, street names and the destination included. It stays on
-# the card, is never sent anywhere, and is only needed for bug reports.
+# Route recorder (in the HMI jar): every route is kept in RAM (/tmp/tt-routes, last 3) until
+# the MMI restarts, or on a card if the HMI can write one; 'logs' copies it to this card. A
+# recording holds what the phone sent for that route, street names and the destination
+# included. It is never sent anywhere and is only needed for bug reports.
 set -u
 PATH=/proc/boot:/bin:/usr/bin:/sbin:/usr/sbin:/mnt/app/armle/bin:/mnt/app/armle/usr/bin:/mnt/app/armle/sbin:/mnt/app/armle/usr/sbin
 export PATH
@@ -124,7 +124,7 @@ if test "$action" = logs; then
         pidin ar 2>/dev/null | grep -E 'dio_manager|cluster_runtime|mm-ipod|supervisor'
     } > "$L/report.txt" 2>&1
     say "Logs saved to the SD card: mod/tt/logs/$n"
-    say 'Route recordings on a card are in its tt-routes/ folder (they include street names and the destination).'
+    say 'Route recordings (they include street names and the destination) are in that folder too.'
     exit 0
 fi
 

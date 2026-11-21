@@ -37,7 +37,7 @@ This version adds:
 | **Real-time display handover** | The CarPlay tab and our cockpit map share the display controller's few hardware windows. Our renderer keeps its window for the whole session and only switches its picture (about 40 ms). It watches the screen state itself every 25 ms and keeps a shadow of a write-only toggle register. The supervisor has no blocking IPC left. The map comes back in about a third of a second | This was the "CarPlay goes black, then the iPhone disconnects" crash. It is gone in normal switching ([the whole story, with diagrams and the RTOS view](ports/tt-8s-mu1462/wiki/Display-window-handover.md)) |
 | **TT plumbing** | Video output 0 on display 0, layer 60 in the TT's map contexts (including map + banner), TCP 6031 opened in the stock firewall, MMI-Kombi code paths handled | The upstream values are for a different display layout ([differences](ports/tt-8s-mu1462/wiki/TT-differences.md)) |
 | **Test kit** | `tt.sh`: one-command install and undo, a live system-log recorder that survives crashes, timestamped marks, parked tests | Rare faults are found from evidence, not guesses |
-| **Route recorder** | Every route is saved to the SD card as a replayable file: everything the iPhone sent, plus what our code did | A fault seen once on the road can be replayed parked, exactly as it happened |
+| **Route recorder** | Every route is kept as a replayable file: everything the iPhone sent, plus what our code did | A fault seen once on the road can be replayed parked, exactly as it happened |
 
 How the parts fit together: [system architecture](ports/tt-8s-mu1462/wiki/Architecture.md).
 
@@ -82,8 +82,8 @@ long drive. After switching to the Sport view during a route, the cockpit's righ
 Audi's own guidance picture (a plain straight arrow, with our distance and arrival time) instead
 of our panel. It stayed until the MMI was restarted (hold the MMI knob). It has not been
 reproduced parked, not even by replaying the recorded messages from that drive, so the cause is
-still open. The route recorder (below) is there to catch it: if you see it, a recording of that
-route is the most useful bug report there is.
+still open. The route recorder (below) is there to catch it: if you see it, save the logs before
+restarting the MMI; a recording of that route is the most useful bug report there is.
 
 ## Route recorder and bug reports
 
@@ -91,15 +91,18 @@ The release records every route, so a fault on the road can be replayed and fixe
 
 - **What:** everything the iPhone sends for the route (turns, lanes, distances, street names,
   the destination), plus what our cockpit code did (panel state, view and screen changes, zoom).
-- **Where:** on the SD card in the head unit's slot, folder `tt-routes/`, one file per route,
-  the last 20. Without a card it is kept in RAM until the MMI restarts.
+- **Where:** in the head unit's RAM (`/tmp/tt-routes/`, the last 3 routes) until the MMI
+  restarts. The M.I.B. action `logs` copies them to the SD card, so save before you restart. (Where
+  the head unit lets the HMI write to a card, it saves to `tt-routes/` on the card directly; on
+  the test car it does not.)
 - **Privacy:** it never leaves the card. Share a recording only if you choose to, and look at it
   first: it is plain text and shows your route.
-- **Off:** M.I.B. action `recoff`, then restart the MMI. `recon` turns it back on. To remove
-  old recordings, delete `tt-routes/` from the card.
+- **Off:** M.I.B. action `recoff`, then restart the MMI. `recon` turns it back on. Copies you
+  saved are in `mod/tt/logs/` on the card; delete them when you no longer need them.
 
-To report a bug, open an issue with what you saw, the cockpit clock time and, if you are happy
-to share it, the `route-NNNN.txt` from that drive.
+To report a bug: **don't restart the MMI first.** Park, run the M.I.B. action `logs` (or
+`sh tt.sh bug what you saw` over SSH), then open an issue with what you saw, the cockpit clock
+time and, if you are happy to share it, the `route-NNNN.txt` from the saved logs.
 
 ## Where things are
 

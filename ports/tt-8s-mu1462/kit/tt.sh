@@ -826,6 +826,12 @@ seen)
         sed -n 's/.* type=\([0-9]*\).*/\1/p' /tmp/tt-rgd-cat.txt | sort -n | uniq -c
     else say 'Nothing captured yet: start a route on the iPhone (parked is fine).'; fi
     ;;
+bug)
+    # one command after a fault: marker in every log, status report, then save (route recording included)
+    shift; mark "BUG ${*:-}"
+    sh "$0" report > /tmp/tt-report.txt 2>&1
+    sh "$0" save
+    ;;
 routes)
     for d in $ROUTEDIRS; do test -d "$d" && { say "== $d"; ls -l "$d" | grep route-; }; done
     test -e /tmp/tt-rec-off -o -e /mnt/app/root/tt-rec-off && say "Recorder is OFF (sh tt.sh routerec on)" || say "Recorder is on: one file per route, newest last. Replay one: sh tt.sh play route N"
@@ -842,7 +848,7 @@ save)
     n=1; while test -e "$K/logs/run$n"; do n=$((n+1)); done
     sloginfo 2>/dev/null | tail -4000 > /tmp/tt-slog.txt
     rw; mkdir -p "$K/logs/run$n"
-    for f in /tmp/tt-rgd.log /tmp/tt-rgd.log.1 /tmp/tt-nav.log /tmp/tt-zoom.log /tmp/tt-rgd.txt /tmp/tt-rgd-cat.txt /tmp/tt-route.txt /tmp/tt-dmdt.txt /tmp/altscreen111.log /tmp/mu1438-cluster-runtime.log /tmp/mibr-alt111-gen2.status /tmp/mibr-carplay111.state /tmp/tt-diag.txt /tmp/tt-slog.txt /tmp/mu1462-supervisor.log /tmp/tt-slog-marks.txt /tmp/tt-slog-live.txt /tmp/tt-slog-live.txt.1 /tmp/tt-procwatch.txt /tmp/tt-procwatch.txt.1 /tmp/tt-routes/route-*.txt; do test -f "$f" && cp "$f" "$K/logs/run$n/"; done
+    for f in /tmp/tt-rgd.log /tmp/tt-rgd.log.1 /tmp/tt-nav.log /tmp/tt-zoom.log /tmp/tt-rgd.txt /tmp/tt-rgd-cat.txt /tmp/tt-route.txt /tmp/tt-dmdt.txt /tmp/altscreen111.log /tmp/mu1438-cluster-runtime.log /tmp/mibr-alt111-gen2.status /tmp/mibr-carplay111.state /tmp/tt-diag.txt /tmp/tt-slog.txt /tmp/mu1462-supervisor.log /tmp/tt-slog-marks.txt /tmp/tt-slog-live.txt /tmp/tt-slog-live.txt.1 /tmp/tt-procwatch.txt /tmp/tt-procwatch.txt.1 /tmp/tt-report.txt /tmp/tt-routes/route-*.txt; do test -f "$f" && cp "$f" "$K/logs/run$n/"; done
     ro
     say "Saved to $K/logs/run$n (kept across MMI restarts). On the Mac, this run only:"
     say "scp -O -r -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedAlgorithms=+ssh-rsa root@10.173.189.1:$K/logs/run$n ~/Downloads/"
@@ -852,6 +858,7 @@ save)
     say 'sh tt.sh use v60             switch version (v60 ... v12), then restart the MMI'
     say 'sh tt.sh play map|new|fit|win|kdk|panel|komo|stock  parked tests'
     say 'sh tt.sh play arrows | stop  arrow catalogue / stop playback'
+    say 'sh tt.sh bug [what you saw]  after a fault: marks the logs, writes a report, saves everything (before any MMI restart)'
     say 'sh tt.sh routes              list the automatic route recordings (SD card or RAM)'
     say 'sh tt.sh play route [N]      replay recording N (newest without N) through the live path'
     say 'sh tt.sh test                the full guided test, Enter for each step, then saves the logs'

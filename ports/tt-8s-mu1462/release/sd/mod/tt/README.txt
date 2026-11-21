@@ -19,8 +19,8 @@ mod/tt/last-run.txt. Nothing restarts by itself.
     logs      Saves logs to mod/tt/logs/ for a bug report.
     recoff    Route recorder off for good (recon: on again).
 
-Route recorder: while a route runs, everything the phone sends for it is saved to the SD
-card in the head unit (folder tt-routes/, the last 20 routes; without a card it is kept in
-RAM until the MMI restarts). This includes street names and the destination. It never leaves
-the card; it is there so a bug can be replayed and fixed. Send one with a bug report only if
-you want to. Off for good: action 'recoff' (back on: 'recon'), then restart the MMI.
+Route recorder: while a route runs, everything the phone sends for it is kept in the head
+unit's RAM (last 3 routes) until the MMI restarts; the 'logs' action copies it to this card.
+After a fault, run 'logs' BEFORE restarting the MMI. A recording includes street names and the
+destination; it never leaves the car or card unless you send it. Off for good: action 'recoff'
+(back on: 'recon'), then restart the MMI.
