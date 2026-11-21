@@ -986,7 +986,7 @@ public final class TtPanel {
             if (exit.length() > 0 && street.length() > 0) {
                 sub = new StringBuffer("Exit ").append(exit).append("  ").append(street).toString();
             }
-            text1 = setText(m, mainRoot, text1, "ttTurnDist", distance(t.metres), 2, 40, 40f, (float) (ph - 158), pw - 56);
+            text1 = setText(m, mainRoot, text1, "ttTurnDist", turnDistance(t.metres), 2, 40, 40f, (float) (ph - 158), pw - 56);
             text2 = setText(m, mainRoot, text2, "ttTurnSub", sub, 1, 24, 40f, (float) (ph - 106), pw - 56);
             text3 = setText(m, mainRoot, text3, "ttTurnDest", destLine, 1, 22, 60f, (float) (ph - 44), pw - 76);
             if (destRoot != null) {
@@ -996,7 +996,7 @@ public final class TtPanel {
             int s = t.hasLanes() ? ph - 62 : ph - 14;
             int tx = s + 14;
             int tw = pw - tx - 20;
-            text1 = setText(m, mainRoot, text1, "ttTurnDist", distance(t.metres), 2, 34, (float) tx, 10f, tw);
+            text1 = setText(m, mainRoot, text1, "ttTurnDist", turnDistance(t.metres), 2, 34, (float) tx, 10f, tw);
             text2 = setText(m, mainRoot, text2, "ttTurnSub", sub, 1, 21, (float) tx, 56f, tw);
             if (destLine.length() > 0) {
                 if (destRoot == null) {
@@ -1009,7 +1009,7 @@ public final class TtPanel {
                 }
                 if (destRoot != null) {
                     place(destRoot, "right");
-                    dest1 = setText(m, destRoot, dest1, "ttDestDist", distance(t.destM), 2, 28, 76f, 6f, RIGHT_W - 90);
+                    dest1 = setText(m, destRoot, dest1, "ttDestDist", destDistance(t.destM), 2, 28, 76f, 6f, RIGHT_W - 90);
                     dest2 = setText(m, destRoot, dest2, "ttDestEta", clock(m, t.eta), 1, 22, 76f, 42f, RIGHT_W - 90);
                     destRoot.setVisible(true);
                 }
@@ -1170,7 +1170,7 @@ public final class TtPanel {
     private static String destText(EALManager m, int destM, long eta) {
         StringBuffer b = new StringBuffer();
         if (destM >= 0) {
-            b.append(distance(destM));
+            b.append(destDistance(destM));
         }
         String c = clock(m, eta);
         if (c.length() > 0) {
@@ -1384,6 +1384,31 @@ public final class TtPanel {
     }
 
     /** US units: feet below 1000 ft (50 ft steps), then miles. */
+    /** v62: the phone's own distance texts and the metres they belong to (RgdBus, before live()). */
+    private static volatile int phoneTurnM = -1;
+    private static volatile String phoneTurn;
+    private static volatile int phoneDestQ = -1;
+    private static volatile String phoneDest;
+
+    static void phoneDistances(int turnM, String turnText, int destM, String destText) {
+        phoneTurn = turnText;
+        phoneTurnM = turnM;
+        phoneDest = destText;
+        // live() keys the destination in 160 m steps; match the same value
+        phoneDestQ = destM < 0 ? -1 : (destM / 160) * 160;
+    }
+
+    /** The phone's text for this turn distance when it sent one, else our own rounding. */
+    static String turnDistance(int metres) {
+        String s = phoneTurn;
+        return s != null && metres == phoneTurnM ? s : distance(metres);
+    }
+
+    static String destDistance(int metres) {
+        String s = phoneDest;
+        return s != null && metres == phoneDestQ ? s : distance(metres);
+    }
+
     static String distance(int metres) {
         if (metres < 0) {
             return "";
@@ -1914,7 +1939,7 @@ public final class TtPanel {
      * big bold number with a small unit; it shrinks instead of being cut ("1.2..." in v28).
      */
     private static void kdkTexts(EALManager m, TurnSpec t, KdkLayout l, String destLine) {
-        String d = distance(t.metres);
+        String d = turnDistance(t.metres);
         int sp = d.indexOf(' ');
         String num = sp < 0 ? d : d.substring(0, sp);
         String unit = sp < 0 ? "" : d.substring(sp + 1);

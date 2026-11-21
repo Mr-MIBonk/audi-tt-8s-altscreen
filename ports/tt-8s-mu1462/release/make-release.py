@@ -39,7 +39,7 @@ TESTED = {
     "NEW_LIB": "347a911454a48cc494851178d4298c29b71d8854fd3087ce6cb403e51c7885c5",   # hook TT build 2
     "NEW_RT": "54b1a576c09a3f62765c78f940002e64cfc9cdffcdfa149e261dcbca1b649471",    # renderer TT build 6 (handover; run60)
     "NEW_SUP": "04787ee28e63d315919b7467263c4cdea55862aa3dac521381a7afbfab4d3c1d",   # supervisor v9 (no dmdt; run59/60)
-    "NEW_JAR": "bd4cb99d71019f3503d853f389572a44ed319844ee10d5a38987f3647b9bd6f7",   # tt-zoom v61 = v56 + diagnostics + route recorder + banner ETA fix (car test pending)
+    "NEW_JAR": "4e1446f14ba9a2fe751d76f07ebb1bf92806d12ba3510f9b6616de43623397e2",   # tt-zoom v62 = v56 + diagnostics + route recorder + banner ETA (car-tested in v61) + phone distance text
 }
 
 

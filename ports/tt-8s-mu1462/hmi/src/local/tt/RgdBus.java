@@ -422,6 +422,21 @@ public final class RgdBus implements Runnable {
         }
     }
 
+    /**
+     * v62 (drive 61: "0.1 mi" on the phone, "550 ft" on our banner): the phone's own distance text,
+     * e.g. "0.1 mi" or "500 ft", from PREFIX_str and PREFIX_units (iAP2: 0 km, 1 mi, 2 m, 3 yd,
+     * 4 ft); null when the phone sent none.
+     */
+    private static String phoneText(String prefix) {
+        String s = str(new StringBuffer(prefix).append("_str").toString()).trim();
+        if (s.length() == 0) {
+            return null;
+        }
+        long u = num(new StringBuffer(prefix).append("_units").toString(), -1);
+        String unit = u == 0 ? "km" : u == 1 ? "mi" : u == 2 ? "m" : u == 3 ? "yd" : u == 4 ? "ft" : null;
+        return unit == null ? null : new StringBuffer(s).append(' ').append(unit).toString();
+    }
+
     private static String str(String key) {
         Object v = STATE.get(key);
         return v == null ? "" : (String) v;
@@ -461,6 +476,8 @@ public final class RgdBus implements Runnable {
         String lanes = "-";
         String exit = "";
         String manId = "";
+        String turnText = null;
+        String destText = null;
         long now = System.currentTimeMillis();
         synchronized (STATE) {
             if (!fromBus && offSince < 0L && !wantOn && !lastOn && !RgiPlayer.playing()) {
@@ -486,6 +503,8 @@ public final class RgdBus implements Runnable {
             RouteRec.route(on);
             turn = (int) num("dist_maneuver_m", -1);
             dest = (int) num("dist_dest_m", -1);
+            turnText = phoneText("dist_maneuver");
+            destText = phoneText("dist_dest");
             eta = num("eta_seconds", -1);
             // v48 (car photo: arrival 4:09 AM for 22:09): the HMI's UTC offset is 0 on the TT, so
             // the UTC ETA showed as UTC. With the phone's time remaining, the ETA is re-based on this
@@ -616,6 +635,7 @@ public final class RgdBus implements Runnable {
             Card.route(on, TtPanel.near);
             AutoZoom.route(on, main, turn, manId);
             // Lanes only while approaching the turn, like stock.
+            TtPanel.phoneDistances(turn, turnText, dest, destText);
             TtPanel.live(on, icon, turn, glideBar, mState >= 3 ? lanes : "-", dest, eta, exit, next);
             if (result != null) {
                 log(result);
