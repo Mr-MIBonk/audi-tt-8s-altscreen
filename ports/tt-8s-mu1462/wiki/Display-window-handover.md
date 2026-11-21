@@ -7,9 +7,15 @@
 > or closing its window while the other wanted it. The fix was to stop opening and closing:
 > the renderer keeps its window for the whole session and only switches its picture on and off.
 
-Status (November 2026): fixed for normal switching with renderer build 5 + supervisor v9 (car run59);
-build 6 (faster map return, faster Sport shift) and the 100-opening stability run are pending. Switching faster than about every half second can still drop CarPlay; that is
-accepted as out of scope.
+Status (November 2026): fixed for normal switching with renderer build 5 + supervisor v9 (run59)
+and build 6 (run60: 26 of 27 openings fine, map back 11-93 ms after the screen change, no
+"Window is in use"). Build 6 + v9 + tt-zoom v56 is the v1.0.0 release set.
+
+Switching faster than about every half second can still drop CarPlay. In run60 the drop came on
+the third tab flip in 2 s, with a different signature from the old crash: no "Window is in use".
+The head unit's screen stream started its decoder 0.16 s after the previous teardown and got
+`kConnectionErr` (-6753) at once; the session restarted by itself about 8 s later. This is
+accepted as out of scope, with no fix planned.
 
 ## What it looked like
 

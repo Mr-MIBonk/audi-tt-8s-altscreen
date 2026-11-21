@@ -3,7 +3,7 @@
 
     python3 make-release.py VERSION OUT_DIR \\
         --stock-jar mu1462-stock.jar --asm-dir dl_maven --jdk-bin "C:/Program Files/Java/jdk-17/bin" \\
-        --hook libaltscreen111-tt2.so --runtime cluster_runtime-sport --supervisor cluster_supervisor.sh \\
+        --hook libaltscreen111-tt2.so --runtime cluster_runtime-tt6 --supervisor ../carplay/cluster_supervisor-v9.sh \\
         --sha-tool altscreen-sha256 [--test-jxe lsd.jxe --test-dio dio_manager]
 
 The zip holds only GPL code built by this project (CarPlay hook, renderer, supervisor,
@@ -37,9 +37,9 @@ STOCK = {
 # The tested set for this release (update together with a car test).
 TESTED = {
     "NEW_LIB": "347a911454a48cc494851178d4298c29b71d8854fd3087ce6cb403e51c7885c5",   # hook TT build 2
-    "NEW_RT": "24bf08142cc43a18330550ca448f4635e10d5ab3ed38475e80d450a469991a7f",    # renderer, Sport shift
-    "NEW_SUP": None,   # set with --supervisor-sha after the car test (v6 de728b17 / v7 e8dbabca)
-    "NEW_JAR": "ac5f1958763d70f4890f83ad0659807f6b18b7a67992acacaa36d4b6738b141e",   # tt-zoom v50 (pending car test)
+    "NEW_RT": "54b1a576c09a3f62765c78f940002e64cfc9cdffcdfa149e261dcbca1b649471",    # renderer TT build 6 (handover; run60)
+    "NEW_SUP": "04787ee28e63d315919b7467263c4cdea55862aa3dac521381a7afbfab4d3c1d",   # supervisor v9 (no dmdt; run59/60)
+    "NEW_JAR": "909ab2a72d066c7a1a255699d2b84387b5dfb5d9ba9dbcfde01cebaf7cb8d2e3",   # tt-zoom v56 (card off by default)
 }
 
 
@@ -68,7 +68,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("version")
     ap.add_argument("out")
-    for a in ("stock-jar", "asm-dir", "jdk-bin", "hook", "runtime", "supervisor", "sha-tool", "supervisor-sha"):
+    for a in ("stock-jar", "asm-dir", "jdk-bin", "hook", "runtime", "supervisor", "sha-tool"):
         ap.add_argument("--" + a, required=True)
     ap.add_argument("--test-jxe")
     ap.add_argument("--test-dio")
@@ -76,7 +76,6 @@ def main():
 
     sub = dict(STOCK)
     sub.update(TESTED)
-    sub["NEW_SUP"] = o.supervisor_sha
     sub["VERSION"] = "v" + o.version
     checks = [(o.hook, "NEW_LIB"), (o.runtime, "NEW_RT"), (o.supervisor, "NEW_SUP"), (o.sha_tool, "SHA_TOOL")]
     for path, key in checks:

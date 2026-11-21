@@ -61,6 +61,21 @@ Built with Claude Code; how, and how to start on your own car: [Working with Cla
 
 ![Turn panel pictures](ports/tt-8s-mu1462/docs/panel-preview-v32.png)
 
+## Known issues
+
+**Very fast switching between the map and the CarPlay tab can drop CarPlay.** This means flipping
+back and forth several times within a couple of seconds, staying on the CarPlay tab for less than
+about half a second each time. When it happens, the CarPlay session ends and restarts on its own
+after about 10 seconds; rarely the phone needs a replug.
+
+- Normal switching is not affected. In the last test (run60) 26 of 27 CarPlay-tab openings were
+  fine; the one drop was the third tab flip in 2 seconds.
+- It is not the old crash. There is no display-window conflict. The CarPlay video connection
+  itself fails when the tab reopens 0.15 s after it closed.
+- **No fix is planned for now.** Nobody switches like that while driving, and chasing it would
+  mean changing timing in the stock CarPlay stack for no real-world gain. Background:
+  [Display-window handover](ports/tt-8s-mu1462/wiki/Display-window-handover.md).
+
 ## Where things are
 
 | Path | Contents |
