@@ -818,7 +818,7 @@ public final class TtPanel {
         }
         return a.append(' ').append(metres).append(' ').append(bar).append(' ')
             .append(lanes == null || lanes.length() == 0 ? "-" : lanes).append(' ')
-            .append(destM).append(' ').append(eta).append(' ')
+            .append(destM).append(" @").append(eta).append(' ')
             .append(exit == null || exit.length() == 0 ? "-" : exit).append(' ')
             .append(street == null ? "" : street).toString();
     }

@@ -79,12 +79,17 @@ final class TurnSpec {
         }
         t.destM = num(w[5]);
         long eta = -1L;
+        // v61 (drive 61: the banner's arrival time moved later by the time driven): the live
+        // path sends an absolute time marked with '@'. The head unit's clock starts near 1970,
+        // so a live arrival time (about 4000 s) also passed the "< 100000000 = seconds from now"
+        // test meant for test scripts, and the banner showed "now + time left at the start".
+        boolean absolute = w[6].startsWith("@");
         try {
-            eta = Long.parseLong(w[6]);
+            eta = Long.parseLong(absolute ? w[6].substring(1) : w[6]);
         } catch (Throwable ignored) {
             eta = -1L;
         }
-        if (eta > 0L && eta < 100000000L) {
+        if (!absolute && eta > 0L && eta < 100000000L) {
             eta = System.currentTimeMillis() / 1000L + eta;
         }
         t.eta = eta;
