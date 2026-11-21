@@ -132,3 +132,25 @@ Supervisor v7: renderer started once after 3 s of car screen, never stopped for 
 tab, no display switching. tt-zoom v42: the layer re-apply also works with the banner up
 (context 0 -> 79 and back to 89). Failed reconnects in run41 ended before any CarPlay session
 setup (USB/iAP2 level, not the hook): try another cable/port.
+
+## Window handover stage 1 (runs 50-51)
+
+Crash mechanism, caught with `sh tt.sh rec on`: the head unit's own CarPlay video and our
+renderer cannot hold a display window at the same time. When the CarPlay tab opens while the
+renderer still has one, nvdisp logs `Window is in use`, the head unit's decoder times out
+(`NVSS_STATUS_TIMED_OUT`) and the iPhone ends the session about 4.5 s later. Supervisor v6 made
+this likely two ways: it killed the renderer only after polling (0.2 s, sometimes too late), and
+its `dmdt gs` call hung forever whenever the display manager stopped answering (process watch:
+dmdt blocked on the display manager), after which nothing stopped or started the renderer.
+
+Stage 1:
+- `cluster_runtime` built with `-DMU1462_TT` (carplay/src/native/cluster_runtime.c): output 0,
+  the Sport crop shift in C (was scripts/mkrt.py), and pause/resume. SIGUSR1 closes the video
+  output and drops the stream connection, SIGUSR2 opens it again; the log gives both times.
+- `cluster_supervisor-v8.sh` (ports/tt-8s-mu1462/carplay): starts the renderer once, pauses it
+  on every non-map screen, resumes it on the map view, restarts it only if it exits. No dmdt.
+- Kit: `sh tt.sh handover` / `handover undo` (flash, two files), `sh tt.sh manual on|off` and
+  `sh tt.sh pause|resume` for timing tests by hand.
+
+Stage 2 (after stage 1 numbers): the hook pauses the renderer when the tab opens and holds the
+head unit's video setup until the window is free.
