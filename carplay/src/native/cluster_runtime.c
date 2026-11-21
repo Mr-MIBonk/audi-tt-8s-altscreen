@@ -75,6 +75,14 @@ static int paused,hidden,mode_now=-1,at_header;
 #define NO_SELF_FILE "/tmp/mu1438-no-selfwatch"
 static int self_watch=1;
 static uint64_t self_checked;
+/* Build 4 (run57: "many times a blank map after switching back from CarPlay"; the output was
+ * shown 2-60 ms after the screen change, while the head unit was still stopping its own video
+ * and the display library re-created its outputs). After every show the output state is read
+ * back at +100/+300/+700/+1500 ms and switched on again if it was turned off. Test switch
+ * /tmp/mu1438-show-delay MS: show only MS ms after the screen change. */
+static uint64_t shown_at;
+static int checks_done;
+static uint64_t show_due;
 static uint64_t resume_began;
 static int applied_shift=-1;
 static uint64_t rt_ms(void) { struct timespec t;clock_gettime(CLOCK_REALTIME,&t);return (uint64_t)t.tv_sec*1000+t.tv_nsec/1000000; }
@@ -247,6 +255,25 @@ static void set_visible(int on)
         (unsigned long)(rt_ms()-sig),self_watch?"screen change":"signal",(unsigned long)(rt_ms()-began));
 }
 #endif
+#ifdef MU1462_TT
+static const unsigned check_at[4]={100,300,700,1500};
+/* something for play_stream to do now: hide, a (delayed) show, or a visibility check */
+static int switch_due(void)
+{
+    uint64_t now=rt_ms();
+    if(pause_wanted && !hidden)return pause_mode()==MODE_HIDE;
+    if(!pause_wanted && hidden){
+        if(!show_due){
+            char d[16];FILE *f=fopen("/tmp/mu1438-show-delay","r");unsigned long ms=0;
+            if(f){if(fgets(d,sizeof(d),f))ms=strtoul(d,NULL,10);fclose(f);}
+            show_due=resume_signal_at+(ms>2000?2000:ms);if(!show_due)show_due=1;
+        }
+        return now>=show_due;
+    }
+    if(!hidden && shown_at && checks_done<4 && now-shown_at>=check_at[checks_done])return 1;
+    return 0;
+}
+#endif
 /* EOF is a transport event, not proof that CarPlay projection ended. Retain the
  * last decoded surface during a bounded reconnect; never feed partial pictures
  * or hold a stale projection indefinitely after its session has ended. */
@@ -258,7 +285,7 @@ static int read_exact_frame(int fd,unsigned char *dst,size_t size)
 #ifdef MU1462_TT
         timeout.tv_usec=25000;self_update();
         if(pause_wanted && pause_mode()!=MODE_HIDE)return 0;
-        if(at_header && pause_wanted!=hidden && !used)return 2;
+        if(at_header && !used && switch_due())return 2;
 #endif
         if(compositions && now-last_beat>=500)heartbeat();
         if(recovery_start && now-recovery_start>=3000)return -1;
@@ -290,7 +317,21 @@ static void play_stream(int fd)
         if(pause_wanted && !hidden && pause_mode()==MODE_HIDE){
             set_visible(0);hidden=1;write_paused();
         }else if(!pause_wanted && hidden){
-            set_visible(1);hidden=0;mode_now=-1;unlink(PAUSED_FILE);
+            if(switch_due()){
+                set_visible(1);hidden=0;mode_now=-1;unlink(PAUSED_FILE);
+                shown_at=rt_ms();if(!shown_at)shown_at=1;checks_done=0;show_due=0;
+            }
+        }else if(pause_wanted)show_due=0;
+        if(!hidden && shown_at){
+            if(checks_done<4 && rt_ms()-shown_at>=check_at[checks_done]){
+                unsigned char a[64];int got;
+                memset(a,0,sizeof(a));
+                got=video_handle && get_attrs(video_handle,a)==0;
+                ts();printf("check +%u ms: output %s\n",check_at[checks_done],!got?"unknown":(a[60]?"on":"OFF"));
+                if(got && (!a[60] || access("/tmp/mu1438-reshow",F_OK)==0)){a[60]=1;printf("   re-shown rc=%d\n",set_attrs(video_handle,a));}
+                checks_done++;
+                if(checks_done>=4)shown_at=0;
+            }
         }
         at_header=1;rc=read_exact_frame(fd,header,8);at_header=0;
         if(rc==2)continue;

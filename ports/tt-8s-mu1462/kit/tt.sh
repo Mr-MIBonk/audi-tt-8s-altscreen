@@ -64,6 +64,7 @@ RT_SPORT=24bf08142cc43a18330550ca448f4635e10d5ab3ed38475e80d450a469991a7f
 RT_TT=55bc66f1fe3dc1578d2408b932d4806eaab13c415636f42256c566512ccdec56
 RT_TT2=400d50c84db5824e4a9cde5816c9c00139a0d35bdcff0d17c246edf66b9a19f7
 RT_TT3=fec73a33d0b0d947afd3a1202aa1e5dc53891737305fb95d9cc9292b433efbbd
+RT_TT4=28d73321002eb48c96f80bb85b320f944076d14f3be2b7e5e180ac251d39a8ab
 SUP_V9=04787ee28e63d315919b7467263c4cdea55862aa3dac521381a7afbfab4d3c1d
 HOOK=/mnt/app/root/lib-target/libaltscreen111.so
 # CarPlay hook builds: shipped, h320 safe-area preset (what the TT runs), and their fix1 versions
@@ -104,7 +105,7 @@ setup)
     for f in altscreen-sha256 tt-zoom-v56.jar stock-replay.txt catalogue.txt komo-test.txt panel-test.txt kdk-test.txt fit-test.txt win-test.txt new-test.txt map-test.txt place-test.txt; do
         cp "/tmp/$f" "$K/$f" || { say "missing /tmp/$f"; ro; exit 1; }
     done
-    for f in tt-zoom-v12.jar tt-zoom-v14.jar tt-zoom-v15.jar tt-zoom-v16.jar tt-zoom-v17.jar tt-zoom-v18.jar tt-zoom-v19.jar tt-zoom-v20.jar tt-zoom-v21.jar tt-zoom-v22.jar tt-zoom-v23.jar tt-zoom-v24.jar tt-zoom-v25.jar tt-zoom-v26.jar tt-zoom-v27.jar tt-zoom-v28.jar tt-zoom-v29.jar tt-zoom-v30.jar tt-zoom-v31.jar tt-zoom-v32.jar tt-zoom-v33.jar tt-zoom-v34.jar tt-zoom-v35.jar tt-zoom-v36.jar tt-zoom-v37.jar tt-zoom-v42.jar tt-zoom-v43.jar tt-zoom-v44.jar tt-zoom-v50.jar tt-zoom-v51.jar tt-zoom-v52.jar tt-zoom-v53.jar tt-zoom-v54.jar tt-zoom-v55.jar libaltscreen111-tt1.so libaltscreen111-tt2.so cluster_supervisor-v6.sh cluster_supervisor-v7.sh cluster_supervisor-v8.sh cluster_runtime-tt cluster_supervisor-v9.sh cluster_runtime-tt2 cluster_runtime-tt3; do
+    for f in tt-zoom-v12.jar tt-zoom-v14.jar tt-zoom-v15.jar tt-zoom-v16.jar tt-zoom-v17.jar tt-zoom-v18.jar tt-zoom-v19.jar tt-zoom-v20.jar tt-zoom-v21.jar tt-zoom-v22.jar tt-zoom-v23.jar tt-zoom-v24.jar tt-zoom-v25.jar tt-zoom-v26.jar tt-zoom-v27.jar tt-zoom-v28.jar tt-zoom-v29.jar tt-zoom-v30.jar tt-zoom-v31.jar tt-zoom-v32.jar tt-zoom-v33.jar tt-zoom-v34.jar tt-zoom-v35.jar tt-zoom-v36.jar tt-zoom-v37.jar tt-zoom-v42.jar tt-zoom-v43.jar tt-zoom-v44.jar tt-zoom-v50.jar tt-zoom-v51.jar tt-zoom-v52.jar tt-zoom-v53.jar tt-zoom-v54.jar tt-zoom-v55.jar libaltscreen111-tt1.so libaltscreen111-tt2.so cluster_supervisor-v6.sh cluster_supervisor-v7.sh cluster_supervisor-v8.sh cluster_runtime-tt cluster_supervisor-v9.sh cluster_runtime-tt2 cluster_runtime-tt3 cluster_runtime-tt4; do
         test -f "/tmp/$f" && cp "/tmp/$f" "$K/$f"
     done
     # Optional panel background picture (made with scripts/mkbg.py; kept on the car, not in git).
@@ -554,19 +555,19 @@ handover)
     rt=$("$T" "$RT" 2>/dev/null); sup=$("$T" "$SUP" 2>/dev/null)
     case "${2:-}" in
         "")
-            test "$rt" = "$RT_TT3" && test "$sup" = "$SUP_V9" && { say 'Already in place.'; exit 0; }
-            case "$rt" in $RT_SPORT|$RT_STAGE1|$RT_TT|$RT_TT2|$RT_TT3) ;; *) say "Unknown renderer on the car ($rt) - nothing changed."; exit 1;; esac
+            test "$rt" = "$RT_TT4" && test "$sup" = "$SUP_V9" && { say 'Already in place.'; exit 0; }
+            case "$rt" in $RT_SPORT|$RT_STAGE1|$RT_TT|$RT_TT2|$RT_TT3|$RT_TT4) ;; *) say "Unknown renderer on the car ($rt) - nothing changed."; exit 1;; esac
             case "$sup" in $SUP_V2|$SUP_V3|$SUP_V4|$SUP_V5|$SUP_V6|$SUP_V7|$SUP_V8|$SUP_V9) ;; *) say "Unknown supervisor on the car ($sup) - nothing changed."; exit 1;; esac
-            "$T" $RT_TT3 "$K/cluster_runtime-tt3" || { say 'cluster_runtime-tt3 missing or damaged - copy the kit and run setup.'; exit 1; }
+            "$T" $RT_TT4 "$K/cluster_runtime-tt4" || { say 'cluster_runtime-tt4 missing or damaged - copy the kit and run setup.'; exit 1; }
             "$T" $SUP_V9 "$K/cluster_supervisor-v9.sh" || { say 'cluster_supervisor-v9.sh missing or damaged - copy the kit and run setup.'; exit 1; }
             rw
             # only the files from before the first handover are kept for undo
-            case "$rt" in $RT_TT|$RT_TT2|$RT_TT3) ;; *) test -f "$K/cluster_runtime.before-handover" || cp "$RT" "$K/cluster_runtime.before-handover";; esac
+            case "$rt" in $RT_TT|$RT_TT2|$RT_TT3|$RT_TT4) ;; *) test -f "$K/cluster_runtime.before-handover" || cp "$RT" "$K/cluster_runtime.before-handover";; esac
             case "$sup" in $SUP_V8|$SUP_V9) ;; *) test -f "$K/cluster_supervisor.sh.before-handover" || cp "$SUP" "$K/cluster_supervisor.sh.before-handover";; esac
             # renderer first: an old renderer would be killed by the pause signal
-            cp "$K/cluster_runtime-tt3" "$RT.new" && chmod 755 "$RT.new" && mv "$RT.new" "$RT"
+            cp "$K/cluster_runtime-tt4" "$RT.new" && chmod 755 "$RT.new" && mv "$RT.new" "$RT"
             cp "$K/cluster_supervisor-v9.sh" "$SUP.new" && chmod 755 "$SUP.new" && mv "$SUP.new" "$SUP"
-            "$T" $RT_TT3 "$RT" && "$T" $SUP_V9 "$SUP" && r=0 || r=1
+            "$T" $RT_TT4 "$RT" && "$T" $SUP_V9 "$SUP" && r=0 || r=1
             ro
             test $r = 0 && say 'Done. Unplug the iPhone, wait 10 s, plug it back in. Undo: sh tt.sh handover undo' || say 'Copy failed - check with: sh tt.sh report'
             ;;
@@ -602,6 +603,22 @@ resumeon)
         map) rm -f /tmp/mu1462-resume-any; say 'Resume on the map view.';;
         any) touch /tmp/mu1462-resume-any; say 'Resume on any car screen.'; mark "resumeon any";;
         *) say "Usage: sh tt.sh resumeon map | any   (now: $(test -e /tmp/mu1462-resume-any && echo any || echo map))"; exit 2;;
+    esac
+    ;;
+showdelay)
+    # Renderer build 4 (RAM only, next show): show the map only MS ms after the screen change.
+    case "${2:-}" in
+        off|0) rm -f /tmp/mu1438-show-delay; say 'Show delay off.'; mark "showdelay 0";;
+        *[!0-9]*|'') say "Usage: sh tt.sh showdelay MS | off   (now: $(cat /tmp/mu1438-show-delay 2>/dev/null || echo 0))"; exit 2;;
+        *) echo "$2" > /tmp/mu1438-show-delay; say "Show delay $2 ms."; mark "showdelay $2";;
+    esac
+    ;;
+reshow)
+    # Renderer build 4 (RAM only): switch the output on again at every check after a show.
+    case "${2:-}" in
+        on) touch /tmp/mu1438-reshow; say 'Re-show on.'; mark "reshow on";;
+        off) rm -f /tmp/mu1438-reshow; say 'Re-show off.'; mark "reshow off";;
+        *) say "Usage: sh tt.sh reshow on | off   (now: $(test -e /tmp/mu1438-reshow && echo on || echo off))"; exit 2;;
     esac
     ;;
 selfwatch)
@@ -753,7 +770,7 @@ report)
     grep "layers:" /tmp/tt-rgd.log 2>/dev/null | tail -3
     h=$("$T" "$HOOK" 2>/dev/null); case "$h" in $HOOK_STOCK) say '== CarPlay hook: original';; $HOOK_H320) say '== CarPlay hook: original (h320 preset)';; $FIX_STOCK|$FIX_H320) say '== CarPlay hook: fix1 (old byte patch - replace with: sh tt.sh hookfix)';; $HOOK_TT1) say '== CarPlay hook: TT build 1 (from source: no port leak, always falls back to plain CarPlay)';; $HOOK_TT2) say "== CarPlay hook: TT build 2 (build 1 + look tests: mm $(cat /tmp/tt-hook-mm 2>/dev/null || echo 320 120), safe $(cat /tmp/tt-hook-safe 2>/dev/null || echo 520 110 400 320))";; *) say "== CarPlay hook: unknown ($h)";; esac
     h=$("$T" "$SUP" 2>/dev/null); case "$h" in $SUP_V2) say '== supervisor: v2 (switches the display to 901)';; $SUP_V3) say '== supervisor: v3 (no display switch: no CarPlay map in the map views - replace it)';; $SUP_V4) say '== supervisor: v4 (4 s start delay: slow map - replace with v5)';; $SUP_V5) say "== supervisor: v5 (renderer only on the map view)";; $SUP_V6) say '== supervisor: v6 (test switch version - replace with v7)';; $SUP_V7) say '== supervisor: v7 (renderer runs all session, no display switching)';; $SUP_V8) say '== supervisor: v8 (handover stage 1: pause/resume, no dmdt)';; $SUP_V9) say '== supervisor: v9 (handover stage 1b: 0.1 s polling, test switches)';; *) say "== supervisor: unknown ($h)";; esac
-    h=$("$T" "$RT" 2>/dev/null); case "$h" in $RT_STAGE1) say '== renderer: stage 1 (no Sport shift)';; $RT_SPORT) say '== renderer: Sport shift build (killed per tab)';; $RT_TT) say '== renderer: TT build (pause/resume, handover stage 1)';; $RT_TT2) say "== renderer: TT build 2 (pause modes, timestamps; mode $(cat /tmp/mu1438-pause-mode 2>/dev/null || echo close))";; $RT_TT3) say "== renderer: TT build 3 (hide by default, watches the screen itself; mode $(cat /tmp/mu1438-pause-mode 2>/dev/null || echo hide))";; *) say "== renderer: unknown ($h)";; esac
+    h=$("$T" "$RT" 2>/dev/null); case "$h" in $RT_STAGE1) say '== renderer: stage 1 (no Sport shift)';; $RT_SPORT) say '== renderer: Sport shift build (killed per tab)';; $RT_TT) say '== renderer: TT build (pause/resume, handover stage 1)';; $RT_TT2) say "== renderer: TT build 2 (pause modes, timestamps; mode $(cat /tmp/mu1438-pause-mode 2>/dev/null || echo close))";; $RT_TT4) say "== renderer: TT build 4 (hide, self watch, visibility checks; show delay $(cat /tmp/mu1438-show-delay 2>/dev/null || echo 0) ms)";; $RT_TT3) say "== renderer: TT build 3 (hide by default, watches the screen itself; mode $(cat /tmp/mu1438-pause-mode 2>/dev/null || echo hide))";; *) say "== renderer: unknown ($h)";; esac
     tail -3 /tmp/mu1462-supervisor.log 2>/dev/null
     test -f "$K/panel-bg.a8" && say '== panel background: installed' || say '== panel background: none'
     say '== switches:'
