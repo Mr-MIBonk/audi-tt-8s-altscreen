@@ -100,7 +100,7 @@ mark(){ echo "$*" >> /tmp/tt-mark; for f in /tmp/tt-rgd.log /tmp/altscreen111.lo
         { echo "===== MARK $*"; sloginfo 2>/dev/null | tail -300; } >> /tmp/tt-slog-marks.txt; say "Marked: $*"; }
 # v59 route recordings: SD card(s) first, then RAM
 ROUTEDIRS="/fs/sda0/tt-routes /fs/sdb0/tt-routes /tmp/tt-routes"
-routefile(){ if test -n "$1"; then n=$(printf "%04d" "$1" 2>/dev/null); for d in $ROUTEDIRS; do test -f "$d/route-$n.txt" && { echo "$d/route-$n.txt"; return; }; done; else l=$(for d in $ROUTEDIRS; do ls $d/route-*.txt 2>/dev/null; done); test -n "$l" && ls -t $l | head -1; fi; }
+routefile(){ if test -n "$1"; then n=$(echo "$1" | awk '{printf "%04d", $1}'); for d in $ROUTEDIRS; do test -f "$d/route-$n.txt" && { echo "$d/route-$n.txt"; return; }; done; else l=$(for d in $ROUTEDIRS; do ls $d/route-*.txt 2>/dev/null; done); test -n "$l" && ls -t $l | head -1; fi; }
 dmdump(){ { echo "===== $1"; echo '--- gs'; dm gs; echo '--- gc'; dm gc; echo '--- gd'; dm gd; } >> /tmp/tt-dmdt.txt 2>&1; }
 # Displayables of one context, from the newest gc dump.
 ctxlist(){ dm gc 2>/dev/null | awk -v c="$1" '$1==c && $2=="|" {f=1; next} f && /^[ \t]*-+/ {next} f && NF==0 {exit} f && $1 ~ /^-?[0-9]+$/ {printf "%s ", $1}'; }

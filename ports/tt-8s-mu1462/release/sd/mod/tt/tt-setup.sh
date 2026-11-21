@@ -169,7 +169,7 @@ if test "$action" = restore; then
     # reverse order: the route-guidance shim goes back before its real binary is removed
     : > /tmp/tt-ps.$$
     while IFS= read -r line; do
-        { printf '%s\n' "$line"; cat /tmp/tt-ps.$$; } > /tmp/tt-ps.$$.r && mv /tmp/tt-ps.$$.r /tmp/tt-ps.$$
+        { print -r -- "$line"; cat /tmp/tt-ps.$$; } > /tmp/tt-ps.$$.r && mv /tmp/tt-ps.$$.r /tmp/tt-ps.$$
     done < "$last/manifest"
     while IFS='|' read -r name dest mode old new; do
         if test "$old" = absent; then
@@ -219,8 +219,8 @@ for f in "$PF_DIR"/pf.conf "$PF_DIR"/pf.*.conf; do
     n=0
     : > "/tmp/tt-pf.$$.$b"
     while IFS= read -r line || test -n "$line"; do
-        case $line in "$BLOCK"*) printf '%s\n' "$RULE" >> "/tmp/tt-pf.$$.$b"; n=$((n+1));; esac
-        printf '%s\n' "$line" >> "/tmp/tt-pf.$$.$b"
+        case $line in "$BLOCK"*) print -r -- "$RULE" >> "/tmp/tt-pf.$$.$b"; n=$((n+1));; esac
+        print -r -- "$line" >> "/tmp/tt-pf.$$.$b"
     done < "$f"
     case $n in
         1) if pfctl -n -f "/tmp/tt-pf.$$.$b" >/dev/null 2>&1; then pf_count=$((pf_count+1)); else bad "firewall $b: new rule rejected"; fi;;
@@ -253,7 +253,7 @@ stage(){
     else old=absent; fi
     mkdir -p "${2%/*}"
     cp "$5" "$2.tt-new" && chmod "$3" "$2.tt-new" && is "$4" "$2.tt-new" || { say "Staging $2 failed"; exit 1; }
-    printf '%s|%s|%s|%s|%s\n' "$1" "$2" "$3" "$old" "$4" >> "$backup/manifest"
+    print -r -- "$1|$2|$3|$old|$4" >> "$backup/manifest"
 }
 stage dio_manager "$BIN" 777 "$NEW_DIO" "$B/dio_manager"
 stage libaltscreen111.so "$LIB" 755 "$NEW_LIB" "$P/libaltscreen111.so"
@@ -262,15 +262,15 @@ stage cluster_supervisor.sh "$SUP" 755 "$NEW_SUP" "$P/cluster_supervisor.sh"
 stage tt-zoom.jar "$JAR" 755 "$NEW_JAR" "$B/tt-zoom.jar"
 stage tt.sh "$K/tt.sh" 755 "$NEW_KIT" "$P/tt.sh"
 stage altscreen-sha256 "$K/altscreen-sha256" 755 "$SHA_TOOL" "$P/altscreen-sha256"
-printf 'top\n' > /tmp/tt-ps.$$
+print -r -- top > /tmp/tt-ps.$$
 stage maneuverLayout "$LAYOUT" 644 "$(h256 /tmp/tt-ps.$$)" /tmp/tt-ps.$$
-printf '1\n' > /tmp/tt-ps.$$
+print -r -- 1 > /tmp/tt-ps.$$
 stage nav-query "$QUERY" 644 "$(h256 /tmp/tt-ps.$$)" /tmp/tt-ps.$$
 # the app's own ETA bar off by default (the car's bottom strip shows the same); sh tt.sh eta on
-printf 'no\n' > /tmp/tt-ps.$$
+print -r -- no > /tmp/tt-ps.$$
 stage showETA "$ETA" 644 "$(h256 /tmp/tt-ps.$$)" /tmp/tt-ps.$$
 # the iPhone's turn card off by default, also before the HMI has started (sh tt.sh card auto|on)
-printf 'map\n' > /tmp/tt-ps.$$
+print -r -- map > /tmp/tt-ps.$$
 stage navSurface "$SURFACE" 644 "$(h256 /tmp/tt-ps.$$)" /tmp/tt-ps.$$
 for t in /tmp/tt-pf.$$.*; do
     test -f "$t" || continue

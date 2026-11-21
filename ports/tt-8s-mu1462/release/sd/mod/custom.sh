@@ -4,7 +4,7 @@
 # TT cockpit CarPlay: runs mod/tt/tt-setup.sh with the action written in mod/tt/action.txt
 # (check, export, install, restore or logs). The output is also saved to mod/tt/last-run.txt.
 # Never restarts the MMI.
-# the green menu starts scripts with a minimal PATH (no printf)
+# the green menu starts scripts with a minimal PATH (and the unit has no printf: use print)
 PATH=/proc/boot:/bin:/usr/bin:/sbin:/usr/sbin:/mnt/app/armle/bin:/mnt/app/armle/usr/bin:/mnt/app/armle/sbin:/mnt/app/armle/usr/sbin:$PATH
 export PATH
 case $0 in */*) D=${0%/*};; *) D=.;; esac
@@ -18,7 +18,7 @@ a=check
 if test -f "$D/tt/action.txt"; then
     read -r a < "$D/tt/action.txt" || :
 fi
-a=${a%"$(printf '\r')"}
+a=${a%"$(print -n '\r')"}
 set -- $a
 a=${1:-check}
 echo "TT cockpit CarPlay: action '$a' (park the car, phone unplugged)"
