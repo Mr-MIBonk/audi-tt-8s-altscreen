@@ -68,25 +68,59 @@ enum { MODE_CLOSE, MODE_KEEPKD, MODE_HIDE };
 static volatile sig_atomic_t pause_wanted;
 static volatile uint64_t pause_signal_at,resume_signal_at;
 static int paused,hidden,mode_now=-1,at_header;
+/* Stage 1c (run56: hide mode = map back in ~250 ms, no window conflicts in 22 openings): hide is
+ * the default, and the renderer watches the screen itself every 25 ms (hook status file
+ * mode_screen + the jar's /tmp/tt-map-view) instead of waiting for the supervisor's 0.1 s poll and
+ * signal. /tmp/mu1438-no-selfwatch: back to the supervisor's signals. */
+#define NO_SELF_FILE "/tmp/mu1438-no-selfwatch"
+static int self_watch=1;
+static uint64_t self_checked;
 static uint64_t resume_began;
 static int applied_shift=-1;
 static uint64_t rt_ms(void) { struct timespec t;clock_gettime(CLOCK_REALTIME,&t);return (uint64_t)t.tv_sec*1000+t.tv_nsec/1000000; }
 static void ts(void) { uint64_t m=rt_ms();printf("%lu.%03lu ",(unsigned long)(m/1000),(unsigned long)(m%1000)); }
 static void pause_handler(int sig)
 {
+    if(self_watch)return;
     pause_wanted=(sig==SIGUSR1);
     if(pause_wanted)pause_signal_at=rt_ms();else resume_signal_at=rt_ms();
+}
+/* 1 = keep the output off (CarPlay tab, other car screens), 0 = show (map view), -1 = unknown */
+static int screen_wants_hidden(void)
+{
+    char line[160];int screen=-1,map=1;FILE *f;
+    f=fopen("/tmp/mibr-alt111-gen2.status","r");if(!f)return -1;
+    while(fgets(line,sizeof(line),f))if(!strncmp(line,"mode_screen=",12))screen=atoi(line+12);
+    fclose(f);
+    if(screen<0)return -1;
+    if(screen!=2)return 1;
+    if(access("/tmp/mu1462-resume-any",F_OK)==0)return 0;
+    f=fopen("/tmp/tt-map-view","r");
+    if(f){if(fgets(line,sizeof(line),f))map=line[0]!='0';fclose(f);}
+    return map?0:1;
+}
+/* every 25 ms: follow the screen (sets pause_wanted like the signals did) */
+static void self_update(void)
+{
+    uint64_t now=rt_ms();int h;
+    if(!self_watch || now-self_checked<25)return;
+    self_checked=now;
+    h=screen_wants_hidden();
+    if(h<0 || h==pause_wanted)return;
+    if(h)pause_signal_at=now;else resume_signal_at=now;
+    pause_wanted=h;
 }
 /* The mode of the pause in progress: read once when the pause is first noticed. */
 static int pause_mode(void)
 {
     char m[16];FILE *f;
     if(mode_now>=0)return mode_now;
-    mode_now=MODE_CLOSE;
+    mode_now=MODE_HIDE;
     f=fopen(MODE_FILE,"r");
     if(f){
         if(fgets(m,sizeof(m),f)){
             if(!strncmp(m,"keepkd",6))mode_now=MODE_KEEPKD;
+            else if(!strncmp(m,"close",5))mode_now=MODE_CLOSE;
             else if(!strncmp(m,"hide",4))mode_now=MODE_HIDE;
         }
         fclose(f);
@@ -151,7 +185,14 @@ static int prepare_renderer(void)
     memset(attrs,0,sizeof(attrs));if(get_attrs(video_handle,attrs)!=0)goto fail;
     attrs[8]=1;put32(attrs,12,0);put32(attrs,16,0);put32(attrs,20,1440);put32(attrs,24,540);
     put32(attrs,28,0);put32(attrs,32,0);put32(attrs,36,1440);put32(attrs,40,540);
-    attrs[60]=1;attrs[61]=0;if(set_attrs(video_handle,attrs)!=0)goto fail;
+#ifdef MU1462_TT
+    self_update();
+    hidden=pause_wanted && pause_mode()==MODE_HIDE;
+    attrs[60]=hidden?0:1;
+#else
+    attrs[60]=1;
+#endif
+    attrs[61]=0;if(set_attrs(video_handle,attrs)!=0)goto fail;
 #ifdef MU1462_TT
     applied_shift=0;
 #endif
@@ -175,7 +216,7 @@ static void apply_shift(void)
     memset(attrs,0,sizeof(attrs));if(get_attrs(video_handle,attrs)!=0)return;
     attrs[8]=1;put32(attrs,12,(uint32_t)want);put32(attrs,16,0);put32(attrs,20,(uint32_t)(1440-want));put32(attrs,24,540);
     put32(attrs,28,0);put32(attrs,32,0);put32(attrs,36,(uint32_t)(1440-want));put32(attrs,40,540);
-    attrs[60]=1;attrs[61]=0;
+    attrs[60]=hidden?0:1;attrs[61]=0;
     if(set_attrs(video_handle,attrs)==0){applied_shift=want;printf("crop shift %d\n",want);}
 }
 static void write_paused(void)
@@ -202,8 +243,8 @@ static void set_visible(int on)
     memset(attrs,0,sizeof(attrs));
     if(!video_handle || get_attrs(video_handle,attrs)!=0){ts();puts("hide: no attributes");return;}
     attrs[60]=on?1:0;rc=set_attrs(video_handle,attrs);
-    ts();printf("%s: rc=%d %lu ms after the signal (set took %lu ms)\n",on?"shown":"hidden",rc,
-        (unsigned long)(rt_ms()-sig),(unsigned long)(rt_ms()-began));
+    ts();printf("%s: rc=%d %lu ms after the %s (set took %lu ms)\n",on?"shown":"hidden",rc,
+        (unsigned long)(rt_ms()-sig),self_watch?"screen change":"signal",(unsigned long)(rt_ms()-began));
 }
 #endif
 /* EOF is a transport event, not proof that CarPlay projection ended. Retain the
@@ -215,6 +256,7 @@ static int read_exact_frame(int fd,unsigned char *dst,size_t size)
     while(used<size && alive()){
         fd_set reads;struct timeval timeout={0,200000};int rc;ssize_t n;uint64_t now=millis();
 #ifdef MU1462_TT
+        timeout.tv_usec=25000;self_update();
         if(pause_wanted && pause_mode()!=MODE_HIDE)return 0;
         if(at_header && pause_wanted!=hidden && !used)return 2;
 #endif
@@ -244,10 +286,11 @@ static void play_stream(int fd)
     while(alive()){
         uint32_t n;struct input in;uint64_t began,elapsed;
 #ifdef MU1462_TT
+        self_update();
         if(pause_wanted && !hidden && pause_mode()==MODE_HIDE){
-            set_visible(0);hidden=1;release_map();write_paused();
+            set_visible(0);hidden=1;write_paused();
         }else if(!pause_wanted && hidden){
-            set_visible(1);hidden=0;mode_now=-1;unlink(PAUSED_FILE);resume_began=rt_ms();
+            set_visible(1);hidden=0;mode_now=-1;unlink(PAUSED_FILE);
         }
         at_header=1;rc=read_exact_frame(fd,header,8);at_header=0;
         if(rc==2)continue;
@@ -271,7 +314,7 @@ static void play_stream(int fd)
         if(rc){printf("decode failed 0x%x\n",rc);end_renderer();break;}
         frames++;recovery_start=0;
 #ifdef MU1462_TT
-        if(!compositions && !hidden){
+        if(!compositions){
             compositions=1;
             heartbeat();ts();puts("map ownership acquired, decoder accepting complete frames");
             if(resume_began){ts();printf("resumed: first frame %lu ms after the resume signal\n",(unsigned long)(rt_ms()-resume_began));resume_began=0;}
@@ -313,6 +356,8 @@ int main(int argc,char **argv)
         struct sigaction sa;memset(&sa,0,sizeof(sa));sa.sa_handler=pause_handler;sigemptyset(&sa.sa_mask);
         sigaction(SIGUSR1,&sa,NULL);sigaction(SIGUSR2,&sa,NULL);
         unlink(PAUSED_FILE);
+        self_watch=access(NO_SELF_FILE,F_OK)!=0;
+        printf("handover: %s, default pause mode hide\n",self_watch?"watching the screen every 25 ms":"supervisor signals");
     }
 #endif
     setenv("IPL_CONFIG_DIR","/etc/eso/production",1);
@@ -329,6 +374,7 @@ int main(int argc,char **argv)
     while(alive()){
         int fd;struct sockaddr_in a;
 #ifdef MU1462_TT
+        self_update();
         if(pause_wanted && pause_mode()!=MODE_HIDE){do_pause();usleep(20000);continue;}
         if(!pause_wanted && !paused && !hidden)mode_now=-1;
         if(paused){
