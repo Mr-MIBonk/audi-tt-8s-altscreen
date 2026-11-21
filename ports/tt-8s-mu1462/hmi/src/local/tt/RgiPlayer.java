@@ -60,6 +60,7 @@ public final class RgiPlayer implements Runnable {
                 sleep(2000);
             }
             if (!SCRIPT.exists() && playing) {
+                RgdBus.replayEnd();
                 RgdBus.note(TtRgi.raw("clear", ""));
                 RgdBus.note(TtPanel.cmd("off"));
                 playing = false;
@@ -100,8 +101,10 @@ public final class RgiPlayer implements Runnable {
                     // keep 1000
                 }
                 long end = System.currentTimeMillis() + ms;
-                while (System.currentTimeMillis() < end && SCRIPT.exists()) {
-                    sleep(100);
+                // v58: to the millisecond (replayed messages come 20-40 ms apart)
+                long left;
+                while ((left = end - System.currentTimeMillis()) > 0L && SCRIPT.exists()) {
+                    sleep(left < 100L ? (int) left : 100);
                 }
             } else if (cmd.equals("loop")) {
                 i = 0;
@@ -110,6 +113,11 @@ public final class RgiPlayer implements Runnable {
                 RgdBus.note(new StringBuffer("play: say ").append(arg).toString());
             } else if (cmd.equals("panel")) {
                 RgdBus.note(TtPanel.cmd(arg));
+            } else if (cmd.equals("rgd")) {
+                // v58: a recorded iPhone update through the live path (silent; RgdBus logs its own)
+                RgdBus.replay(arg);
+            } else if (cmd.equals("rgdclear")) {
+                RgdBus.note(RgdBus.replayClear());
             } else {
                 RgdBus.note(TtRgi.raw(cmd, arg));
             }
@@ -121,7 +129,7 @@ public final class RgiPlayer implements Runnable {
             FileInputStream in = new FileInputStream(SCRIPT.getPath());
             byte[] buf;
             try {
-                int len = (int) Math.min(SCRIPT.length(), 65536L);
+                int len = (int) Math.min(SCRIPT.length(), 1048576L);
                 buf = new byte[len];
                 int off = 0;
                 while (off < len) {

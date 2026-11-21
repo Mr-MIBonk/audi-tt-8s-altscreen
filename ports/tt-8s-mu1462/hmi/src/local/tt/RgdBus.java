@@ -204,7 +204,7 @@ public final class RgdBus implements Runnable {
                 byte[] payload = new byte[len];
                 in.readFully(payload);
                 frames++;
-                if (type == EVT_RGD_UPDATE) {
+                if (type == EVT_RGD_UPDATE && !replaying) {
                     if (last == null || !same(last, payload)) {
                         last = payload;
                         updates++;
@@ -232,10 +232,12 @@ public final class RgdBus implements Runnable {
             }
             if (mine) {
                 Layers.phoneGone();
-                synchronized (STATE) {
-                    STATE.clear();
+                if (!replaying) {
+                    synchronized (STATE) {
+                        STATE.clear();
+                    }
+                    feed(true);
                 }
-                feed(true);
             }
         }
     }
@@ -337,6 +339,44 @@ public final class RgdBus implements Runnable {
     }
 
     /** Applies one update: "@routeguidance" then "key:type:value" lines. */
+    /**
+     * v58: parked replay of recorded iPhone messages (RgiPlayer "rgd" lines). While true, the real
+     * hook's updates are read but ignored, and the replayed ones take the live path (merge, feed,
+     * TtRgi, TtPanel.live, Card, AutoZoom) exactly as the phone's would.
+     */
+    static volatile boolean replaying;
+
+    /** v58: one recorded update, its lines separated by '|'. */
+    static String replay(String text) {
+        replaying = true;
+        byte[] payload;
+        try {
+            payload = text.replace('|', '\n').getBytes("UTF-8");
+        } catch (Throwable t) {
+            payload = text.replace('|', '\n').getBytes();
+        }
+        merge(payload);
+        feed(true);
+        return "";
+    }
+
+    /** v58: forget the replayed state (as when the phone goes), feeding "no route" through. */
+    static String replayClear() {
+        synchronized (STATE) {
+            STATE.clear();
+        }
+        feed(true);
+        return "replay: state cleared";
+    }
+
+    /** v58: playback ended: clear the replayed route and give the display back to the phone. */
+    static void replayEnd() {
+        if (replaying) {
+            replayClear();
+            replaying = false;
+        }
+    }
+
     private static void merge(byte[] payload) {
         String text;
         try {
@@ -552,7 +592,7 @@ public final class RgdBus implements Runnable {
                 log(summary);
             }
         }
-        if (RgiPlayer.playing()) {
+        if (RgiPlayer.playing() && !replaying) {
             return;
         }
         try {
