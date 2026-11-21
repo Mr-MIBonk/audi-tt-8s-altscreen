@@ -84,6 +84,7 @@ This is a free, spare-time project: the code, the 60+ versions and the hours in 
 nothing to use. If it made your TT better and you'd like to give something back (a coffee, the AI
 tokens it was built with, the gas for test drives, or the time), you can:
 
+[![Buy me a coffee on Ko-fi](https://img.shields.io/badge/Buy%20me%20a%20coffee-Ko--fi-ff5e5b?logo=kofi&logoColor=white)](https://ko-fi.com/tristar10)
 [![Sponsor on GitHub](https://img.shields.io/badge/Sponsor-GitHub-ea4aaa?logo=githubsponsors&logoColor=white)](https://github.com/sponsors/Tristar10)
 
 Entirely optional. Bug reports with logs from your car help just as much.
