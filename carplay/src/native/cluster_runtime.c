@@ -108,7 +108,8 @@ static int screen_wants_hidden(void)
     fclose(f);
     if(screen<0)return -1;
     if(screen!=2)return 1;
-    if(access("/tmp/mu1462-resume-any",F_OK)==0)return 0;
+    /* build 6: show on any car screen (run59: the map flag came ~300 ms late) */
+    if(access("/tmp/mu1462-map-only",F_OK)!=0)return 0;
     f=fopen("/tmp/tt-map-view","r");
     if(f){if(fgets(line,sizeof(line),f))map=line[0]!='0';fclose(f);}
     return map?0:1;
@@ -378,7 +379,7 @@ static void play_stream(int fd)
         }
 #endif
 #ifdef MU1462_TT
-        if(frames%8==1)apply_shift();
+        apply_shift();
 #endif
         if(frames==1 || frames%120==0)printf("frames=%lu lastBytes=%u decodeMs=%llu worstMs=%llu\n",frames,n,(unsigned long long)elapsed,(unsigned long long)worst);
     }
