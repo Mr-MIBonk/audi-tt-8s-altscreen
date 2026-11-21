@@ -83,7 +83,8 @@ say "TT cockpit CarPlay $VERSION - $action"
 tool=/tmp/tt-sha.$$
 cp "$P/altscreen-sha256" "$tool" 2>/dev/null && chmod 755 "$tool" || { say 'payload/altscreen-sha256 missing - copy the whole release to the SD card again.'; exit 1; }
 is(){ "$tool" "$1" "$2" >/dev/null 2>&1; }
-hash(){ "$tool" "$1" 2>/dev/null; }
+# not "hash": that is a built-in alias in the car's shell (pdksh), a function of that name is a syntax error
+h256(){ "$tool" "$1" 2>/dev/null; }
 is "$SHA_TOOL" "$tool" || { say 'payload/altscreen-sha256 is damaged - copy the release again.'; rm -f "$tool"; exit 1; }
 
 rw_app=0
@@ -118,7 +119,7 @@ if test "$action" = logs; then
     {
         say "version $VERSION"
         for f in /ifs/lsd.jxe "$BIN" "$LIB" "$RT" "$SUP" "$JAR" "$MMIPOD" "$K/tt.sh"; do
-            say "$f $(hash "$f")"
+            say "$f $(h256 "$f")"
         done
         ls -l "$BACKUPS" 2>/dev/null
         pidin ar 2>/dev/null | grep -E 'dio_manager|cluster_runtime|mm-ipod|supervisor'
@@ -189,7 +190,7 @@ case "$action" in check|install) ;; *) say "Unknown action '$action' (check, exp
 
 # ---- check / install -----------------------------------------------------------------------
 firmware
-cur=$(hash "$BIN")
+cur=$(h256 "$BIN")
 if test "$cur" = "$STOCK_DIO"; then ok 'dio_manager is stock'
 elif test "$cur" = "$NEW_DIO"; then bad 'already installed (dio_manager is patched) - run restore first'
 else bad 'dio_manager is modified by something else'; fi
@@ -247,7 +248,7 @@ mkdir -p "$backup" || exit 1
 # name dest mode newhash source
 stage(){
     if test -e "$2"; then
-        old=$(hash "$2")
+        old=$(h256 "$2")
         cp "$2" "$backup/$1.before" && is "$old" "$backup/$1.before" || { say "Backup of $2 failed"; exit 1; }
     else old=absent; fi
     mkdir -p "${2%/*}"
@@ -262,20 +263,20 @@ stage tt-zoom.jar "$JAR" 755 "$NEW_JAR" "$B/tt-zoom.jar"
 stage tt.sh "$K/tt.sh" 755 "$NEW_KIT" "$P/tt.sh"
 stage altscreen-sha256 "$K/altscreen-sha256" 755 "$SHA_TOOL" "$P/altscreen-sha256"
 printf 'top\n' > /tmp/tt-ps.$$
-stage maneuverLayout "$LAYOUT" 644 "$(hash /tmp/tt-ps.$$)" /tmp/tt-ps.$$
+stage maneuverLayout "$LAYOUT" 644 "$(h256 /tmp/tt-ps.$$)" /tmp/tt-ps.$$
 printf '1\n' > /tmp/tt-ps.$$
-stage nav-query "$QUERY" 644 "$(hash /tmp/tt-ps.$$)" /tmp/tt-ps.$$
+stage nav-query "$QUERY" 644 "$(h256 /tmp/tt-ps.$$)" /tmp/tt-ps.$$
 # the app's own ETA bar off by default (the car's bottom strip shows the same); sh tt.sh eta on
 printf 'no\n' > /tmp/tt-ps.$$
-stage showETA "$ETA" 644 "$(hash /tmp/tt-ps.$$)" /tmp/tt-ps.$$
+stage showETA "$ETA" 644 "$(h256 /tmp/tt-ps.$$)" /tmp/tt-ps.$$
 # the iPhone's turn card off by default, also before the HMI has started (sh tt.sh card auto|on)
 printf 'map\n' > /tmp/tt-ps.$$
-stage navSurface "$SURFACE" 644 "$(hash /tmp/tt-ps.$$)" /tmp/tt-ps.$$
+stage navSurface "$SURFACE" 644 "$(h256 /tmp/tt-ps.$$)" /tmp/tt-ps.$$
 for t in /tmp/tt-pf.$$.*; do
     test -f "$t" || continue
     b=${t##*.$$.}
     if test -x "$PF_DIR/$b"; then m=755; else m=644; fi
-    stage "$b" "$PF_DIR/$b" "$m" "$(hash "$t")" "$t"
+    stage "$b" "$PF_DIR/$b" "$m" "$(h256 "$t")" "$t"
 done
 if test "$rgd" = 1; then
     {
@@ -290,7 +291,7 @@ if test "$rgd" = 1; then
     } > /tmp/tt-shim.$$
     stage librgd_hook.so "$RGD/librgd_hook.so" 755 "$RGD_HOOK" "$U/librgd_hook.so"
     stage mm-ipod.real "$SBIN/rgd_real/mm-ipod" 755 "$STOCK_MMIPOD" "$MMIPOD"
-    stage mm-ipod "$MMIPOD" 755 "$(hash /tmp/tt-shim.$$)" /tmp/tt-shim.$$
+    stage mm-ipod "$MMIPOD" 755 "$(h256 /tmp/tt-shim.$$)" /tmp/tt-shim.$$
 fi
 while IFS='|' read -r name dest mode old new; do
     mv "$dest.tt-new" "$dest" && is "$new" "$dest" || { say "Could not install $dest - run restore."; exit 1; }
