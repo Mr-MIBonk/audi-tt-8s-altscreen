@@ -843,12 +843,12 @@ tostock)
         test -z "$ob" && test -f "$d/manifest" && test -f "$d/altscreen-mu1462-install.sh" && grep -q "^dio_manager|.*|$S_DIO|" "$d/manifest" && ob=$d
     done
     say '== now on the car'
-    "$T" $S_DIO "$DIO" && say 'dio_manager       stock' || say 'dio_manager       CHANGED'
+    "$T" $S_DIO "$DIO" 2>/dev/null && say 'dio_manager       stock' || say 'dio_manager       CHANGED'
     test -e "$HOOK" && say 'CarPlay hook      present' || say 'CarPlay hook      none'
     test -e "$RT" && say 'renderer          present' || say 'renderer          none'
     test -e "$SUP" && say 'supervisor        present' || say 'supervisor        none'
     pf=$(grep -l 'port = 6031' "$PFD"/pf.conf "$PFD"/pf.*.conf 2>/dev/null); test -n "$pf" && say "firewall rule     in $pf" || say 'firewall rule     none'
-    "$T" $S_MMIPOD "$SB/mm-ipod" && say 'mm-ipod           stock' || say 'mm-ipod           CHANGED (route-guidance shim)'
+    "$T" $S_MMIPOD "$SB/mm-ipod" 2>/dev/null && say 'mm-ipod           stock' || say 'mm-ipod           CHANGED (route-guidance shim)'
     test -e "$JAR" && say 'tt-zoom.jar       present' || say 'tt-zoom.jar       none'
     say "markers           $(ls /mnt/app/root/mibr-carplay111-* /mnt/app/root/tt-rec-off 2>/dev/null | wc -l) file(s)"
     test -n "$ob" && say "original backup   $ob" || say 'original backup   NOT FOUND'
@@ -858,14 +858,15 @@ tostock)
         exit 0
     fi
     test -n "$ob" || { say 'No backup with the original dio_manager - stopping, nothing changed.'; exit 1; }
-    pidin ar 2>/dev/null | grep -q dio_manager && { say 'A phone is connected (dio_manager running): unplug it, wait 10 s, run again.'; exit 1; }
-    "$T" $S_MMIPOD "$SB/mm-ipod" || "$T" $S_MMIPOD /mnt/app/root/rgd/mm-ipod.orig || { say 'No stock mm-ipod copy found - stopping, nothing changed.'; exit 1; }
+    # list to a file first: in a pipe, grep would find its own 'grep dio_manager' line
+    pidin ar > /tmp/tt-ps.txt 2>/dev/null; grep -v grep /tmp/tt-ps.txt | grep -q dio_manager && { say 'A phone is connected (dio_manager running): unplug it, wait 10 s, run again. Seen:'; grep -v grep /tmp/tt-ps.txt | grep dio_manager; exit 1; }
+    "$T" $S_MMIPOD "$SB/mm-ipod" 2>/dev/null || "$T" $S_MMIPOD /mnt/app/root/rgd/mm-ipod.orig 2>/dev/null || { say 'No stock mm-ipod copy found - stopping, nothing changed.'; exit 1; }
     say "== 1/4 original package restore ($ob)"
     sh "$ob/altscreen-mu1462-install.sh" --restore --parked || { say 'Package restore failed - stopping. Send me the output.'; exit 1; }
     rw
     mount -uw /mnt/system 2>/dev/null || :
     say '== 2/4 stock mm-ipod'
-    if ! "$T" $S_MMIPOD "$SB/mm-ipod"; then
+    if ! "$T" $S_MMIPOD "$SB/mm-ipod" 2>/dev/null; then
         cp /mnt/app/root/rgd/mm-ipod.orig "$SB/mm-ipod.new" && chmod 755 "$SB/mm-ipod.new" && "$T" $S_MMIPOD "$SB/mm-ipod.new" \
             && mv "$SB/mm-ipod.new" "$SB/mm-ipod" || { say 'mm-ipod restore failed'; ro; exit 1; }
     fi
