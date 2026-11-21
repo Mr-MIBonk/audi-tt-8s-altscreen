@@ -78,6 +78,16 @@ installed with the `kit/tt.sh` toolkit. An SD-card (M.I.B.) installer is planned
 No firmware, patched stock files or converted HMI jars are in this repository;
 the port's `scripts/` rebuild them from your own firmware copy.
 
+## Support
+
+This is a free, spare-time project: the code, the 60+ versions and the hours in the car cost
+nothing to use. If it made your TT better and you'd like to give something back (a coffee, the AI
+tokens it was built with, the gas for test drives, or the time), you can:
+
+[![Sponsor on GitHub](https://img.shields.io/badge/Sponsor-GitHub-ea4aaa?logo=githubsponsors&logoColor=white)](https://github.com/sponsors/Tristar10)
+
+Entirely optional. Bug reports with logs from your car help just as much.
+
 ## Credits and licence
 
 GPL-3.0 (see LICENSE and NOTICE). Built on:
