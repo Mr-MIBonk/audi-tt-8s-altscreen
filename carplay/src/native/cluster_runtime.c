@@ -58,15 +58,40 @@ static uint64_t millis(void);
 #define PAUSED_FILE "/tmp/mu1438-cluster-paused"
 #define SPORT_FILE "/tmp/mu1438-cluster-sport"
 #define SPORT_SHIFT 453
+/* Stage 1b (run53/55): pause modes for timing tests, chosen per pause by /tmp/mu1438-pause-mode:
+ *   close  (default) close the video output and terminate KD, drop the stream connection
+ *   keepkd close only the video output (KD stays initialised: faster resume)
+ *   hide   keep everything and keep decoding, only switch the output off (attribute byte 60)
+ * Log lines start with the realtime clock in seconds.ms, the same clock as the hook's log. */
+#define MODE_FILE "/tmp/mu1438-pause-mode"
+enum { MODE_CLOSE, MODE_KEEPKD, MODE_HIDE };
 static volatile sig_atomic_t pause_wanted;
-static volatile uint64_t pause_signal_at;
-static int paused;
+static volatile uint64_t pause_signal_at,resume_signal_at;
+static int paused,hidden,mode_now=-1,at_header;
 static uint64_t resume_began;
 static int applied_shift=-1;
+static uint64_t rt_ms(void) { struct timespec t;clock_gettime(CLOCK_REALTIME,&t);return (uint64_t)t.tv_sec*1000+t.tv_nsec/1000000; }
+static void ts(void) { uint64_t m=rt_ms();printf("%lu.%03lu ",(unsigned long)(m/1000),(unsigned long)(m%1000)); }
 static void pause_handler(int sig)
 {
     pause_wanted=(sig==SIGUSR1);
-    if(pause_wanted)pause_signal_at=millis();
+    if(pause_wanted)pause_signal_at=rt_ms();else resume_signal_at=rt_ms();
+}
+/* The mode of the pause in progress: read once when the pause is first noticed. */
+static int pause_mode(void)
+{
+    char m[16];FILE *f;
+    if(mode_now>=0)return mode_now;
+    mode_now=MODE_CLOSE;
+    f=fopen(MODE_FILE,"r");
+    if(f){
+        if(fgets(m,sizeof(m),f)){
+            if(!strncmp(m,"keepkd",6))mode_now=MODE_KEEPKD;
+            else if(!strncmp(m,"hide",4))mode_now=MODE_HIDE;
+        }
+        fclose(f);
+    }
+    return mode_now;
 }
 #endif
 static int alive(void) { return !stopped && kill(owner,0)==0 && access("/tmp/mu1438-cluster-disable",F_OK)!=0; }
@@ -116,7 +141,11 @@ static int prepare_renderer(void)
 #endif
     unsigned char attrs[64];uint64_t began=millis();
     if(video_handle)return 0;
+#ifdef MU1462_TT
+    if(!kd_started){if(init_kd()!=0)return -1;kd_started=1;}
+#else
     if(init_kd()!=0)return -1;kd_started=1;
+#endif
     if(open_video(&video_handle,&p)!=0 || !video_handle)goto fail;
     if(configure(video_handle,&cfg)!=0)goto fail;
     memset(attrs,0,sizeof(attrs));if(get_attrs(video_handle,attrs)!=0)goto fail;
@@ -126,7 +155,11 @@ static int prepare_renderer(void)
 #ifdef MU1462_TT
     applied_shift=0;
 #endif
+#ifdef MU1462_TT
+    ts();printf("decoder prepared in %lu ms\n",(unsigned long)(millis()-began));
+#else
     printf("decoder prepared before TCP connect in %llu ms\n",(unsigned long long)(millis()-began));
+#endif
     return 0;
 fail:
     end_renderer();return -1;
@@ -145,14 +178,32 @@ static void apply_shift(void)
     attrs[60]=1;attrs[61]=0;
     if(set_attrs(video_handle,attrs)==0){applied_shift=want;printf("crop shift %d\n",want);}
 }
+static void write_paused(void)
+{
+    FILE *f=fopen(PAUSED_FILE,"w");if(f){fprintf(f,"%ld\n",(long)getpid());fclose(f);}
+}
 static void do_pause(void)
 {
-    uint64_t began=millis(),sig=pause_signal_at;FILE *f;
+    uint64_t began=rt_ms(),sig=pause_signal_at;int mode=pause_mode();
     if(paused)return;
-    end_renderer();paused=1;
-    f=fopen(PAUSED_FILE,"w");if(f){fprintf(f,"%ld\n",(long)getpid());fclose(f);}
-    printf("paused: output released %lu ms after the signal (close took %lu ms)\n",
-        (unsigned long)(millis()-sig),(unsigned long)(millis()-began));
+    if(mode==MODE_KEEPKD){
+        release_map();
+        if(video_handle){printf("decoder closed=%d frames=%lu\n",close_video(video_handle),frames);video_handle=NULL;}
+        recovery_start=0;frames=0;
+    }else end_renderer();
+    paused=1;write_paused();
+    ts();printf("paused (%s): output released %lu ms after the signal (close took %lu ms)\n",
+        mode==MODE_KEEPKD?"keepkd":"close",(unsigned long)(rt_ms()-sig),(unsigned long)(rt_ms()-began));
+}
+/* hide mode: the output is switched off, decoding goes on (attribute byte 60, set to 1 at prepare) */
+static void set_visible(int on)
+{
+    unsigned char attrs[64];uint64_t began=rt_ms(),sig=on?resume_signal_at:pause_signal_at;int rc;
+    memset(attrs,0,sizeof(attrs));
+    if(!video_handle || get_attrs(video_handle,attrs)!=0){ts();puts("hide: no attributes");return;}
+    attrs[60]=on?1:0;rc=set_attrs(video_handle,attrs);
+    ts();printf("%s: rc=%d %lu ms after the signal (set took %lu ms)\n",on?"shown":"hidden",rc,
+        (unsigned long)(rt_ms()-sig),(unsigned long)(rt_ms()-began));
 }
 #endif
 /* EOF is a transport event, not proof that CarPlay projection ended. Retain the
@@ -164,7 +215,8 @@ static int read_exact_frame(int fd,unsigned char *dst,size_t size)
     while(used<size && alive()){
         fd_set reads;struct timeval timeout={0,200000};int rc;ssize_t n;uint64_t now=millis();
 #ifdef MU1462_TT
-        if(pause_wanted)return 0;
+        if(pause_wanted && pause_mode()!=MODE_HIDE)return 0;
+        if(at_header && pause_wanted!=hidden && !used)return 2;
 #endif
         if(compositions && now-last_beat>=500)heartbeat();
         if(recovery_start && now-recovery_start>=3000)return -1;
@@ -191,24 +243,45 @@ static void play_stream(int fd)
     unsigned char header[8],*buf=NULL;size_t capacity=0;int rc;uint64_t worst=0;
     while(alive()){
         uint32_t n;struct input in;uint64_t began,elapsed;
+#ifdef MU1462_TT
+        if(pause_wanted && !hidden && pause_mode()==MODE_HIDE){
+            set_visible(0);hidden=1;release_map();write_paused();
+        }else if(!pause_wanted && hidden){
+            set_visible(1);hidden=0;mode_now=-1;unlink(PAUSED_FILE);resume_began=rt_ms();
+        }
+        at_header=1;rc=read_exact_frame(fd,header,8);at_header=0;
+        if(rc==2)continue;
+        if(rc!=1)break;
+#else
         if(read_exact_frame(fd,header,8)!=1)break;
+#endif
         n=mu1438_au_length(header);
         if(!n){puts("invalid framed-video header; refusing raw/mismatched stream");break;}
         if(n>capacity){unsigned char *next=realloc(buf,n);if(!next)break;buf=next;capacity=n;}
+#ifdef MU1462_TT
+        rc=read_exact_frame(fd,buf,n);
+        if(rc!=1)break;
+#else
         if(read_exact_frame(fd,buf,n)!=1)break;
+#endif
         if(!video_handle)break;
         memset(&in,0,sizeof(in));in.data=buf;in.length=n;
         began=millis();rc=decode(video_handle,&in,0);elapsed=millis()-began;
         if(elapsed>worst)worst=elapsed;
         if(rc){printf("decode failed 0x%x\n",rc);end_renderer();break;}
         frames++;recovery_start=0;
+#ifdef MU1462_TT
+        if(!compositions && !hidden){
+            compositions=1;
+            heartbeat();ts();puts("map ownership acquired, decoder accepting complete frames");
+            if(resume_began){ts();printf("resumed: first frame %lu ms after the resume signal\n",(unsigned long)(rt_ms()-resume_began));resume_began=0;}
+        }
+#else
         if(!compositions){
             compositions=1;
             heartbeat();puts("map ownership acquired, decoder accepting complete frames");
-#ifdef MU1462_TT
-            if(resume_began){printf("resumed: first frame %lu ms after the resume signal\n",(unsigned long)(millis()-resume_began));resume_began=0;}
-#endif
         }
+#endif
 #ifdef MU1462_TT
         if(frames%8==1)apply_shift();
 #endif
@@ -256,9 +329,11 @@ int main(int argc,char **argv)
     while(alive()){
         int fd;struct sockaddr_in a;
 #ifdef MU1462_TT
-        if(pause_wanted){do_pause();usleep(20000);continue;}
+        if(pause_wanted && pause_mode()!=MODE_HIDE){do_pause();usleep(20000);continue;}
+        if(!pause_wanted && !paused && !hidden)mode_now=-1;
         if(paused){
-            paused=0;unlink(PAUSED_FILE);resume_began=millis();puts("resume requested");
+            paused=0;mode_now=-1;unlink(PAUSED_FILE);resume_began=rt_ms();
+            ts();printf("resume requested %lu ms after the signal\n",(unsigned long)(rt_ms()-resume_signal_at));
         }
 #endif
         if(recovery_start && millis()-recovery_start>=3000)end_renderer();
