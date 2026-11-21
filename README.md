@@ -37,6 +37,7 @@ This version adds:
 | **Real-time display handover** | The CarPlay tab and our cockpit map share the display controller's few hardware windows. Our renderer keeps its window for the whole session and only switches its picture (about 40 ms). It watches the screen state itself every 25 ms and keeps a shadow of a write-only toggle register. The supervisor has no blocking IPC left. The map comes back in about a third of a second | This was the "CarPlay goes black, then the iPhone disconnects" crash. It is gone in normal switching ([the whole story, with diagrams and the RTOS view](ports/tt-8s-mu1462/wiki/Display-window-handover.md)) |
 | **TT plumbing** | Video output 0 on display 0, layer 60 in the TT's map contexts (including map + banner), TCP 6031 opened in the stock firewall, MMI-Kombi code paths handled | The upstream values are for a different display layout ([differences](ports/tt-8s-mu1462/wiki/TT-differences.md)) |
 | **Test kit** | `tt.sh`: one-command install and undo, a live system-log recorder that survives crashes, timestamped marks, parked tests | Rare faults are found from evidence, not guesses |
+| **Route recorder** | Every route is saved to the SD card as a replayable file: everything the iPhone sent, plus what our code did | A fault seen once on the road can be replayed parked, exactly as it happened |
 
 How the parts fit together: [system architecture](ports/tt-8s-mu1462/wiki/Architecture.md).
 
@@ -75,6 +76,30 @@ after about 10 seconds; rarely the phone needs a replug.
 - **No fix is planned for now.** Nobody switches like that while driving, and chasing it would
   mean changing timing in the stock CarPlay stack for no real-world gain. Background:
   [Display-window handover](ports/tt-8s-mu1462/wiki/Display-window-handover.md).
+
+**Rarely, the stock "straight on" arrow shows instead of our turn panel.** This was seen once, on a
+long drive. After switching to the Sport view during a route, the cockpit's right window showed
+Audi's own guidance picture (a plain straight arrow, with our distance and arrival time) instead
+of our panel. It stayed until the MMI was restarted (hold the MMI knob). It has not been
+reproduced parked, not even by replaying the recorded messages from that drive, so the cause is
+still open. The route recorder (below) is there to catch it: if you see it, a recording of that
+route is the most useful bug report there is.
+
+## Route recorder and bug reports
+
+The release records every route, so a fault on the road can be replayed and fixed parked:
+
+- **What:** everything the iPhone sends for the route (turns, lanes, distances, street names,
+  the destination), plus what our cockpit code did (panel state, view and screen changes, zoom).
+- **Where:** on the SD card in the head unit's slot, folder `tt-routes/`, one file per route,
+  the last 20. Without a card it is kept in RAM until the MMI restarts.
+- **Privacy:** it never leaves the card. Share a recording only if you choose to, and look at it
+  first: it is plain text and shows your route.
+- **Off:** M.I.B. action `recoff`, then restart the MMI. `recon` turns it back on. To remove
+  old recordings, delete `tt-routes/` from the card.
+
+To report a bug, open an issue with what you saw, the cockpit clock time and, if you are happy
+to share it, the `route-NNNN.txt` from that drive.
 
 ## Where things are
 

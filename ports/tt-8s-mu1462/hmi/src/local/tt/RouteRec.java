@@ -16,12 +16,14 @@ import java.io.FileOutputStream;
  * Starts when a route starts; a route off or a phone disconnect shorter than 2 minutes stays in
  * the same file; ends 2 minutes after the route stopped. Saved to the SD card (/fs/sda0 or
  * /fs/sdb0, folder tt-routes, last 20 routes) or, without a card, to /tmp/tt-routes (last 3,
- * lost at an MMI restart). Off: /tmp/tt-rec-off. Java 1.4 class library: StringBuffer only.
+ * lost at an MMI restart). Off: /tmp/tt-rec-off (until restart), /mnt/app/root/tt-rec-off (v60, for good). Java 1.4 class library: StringBuffer only.
  */
 final class RouteRec implements Runnable {
     private static final String[] CARDS = {"/fs/sda0", "/fs/sdb0"};
     private static final File RAM = new File("/tmp/tt-routes");
     private static final File OFF = new File("/tmp/tt-rec-off");
+    /** v60: off for good (installer / sh tt.sh routerec never), survives MMI restarts. */
+    private static final File OFF_FLASH = new File("/mnt/app/root/tt-rec-off");
     private static final File MARK = new File("/tmp/tt-mark");
     private static final long END_AFTER = 120000L;
     private static final long MAX_BYTES = 20L * 1024L * 1024L;
@@ -63,7 +65,7 @@ final class RouteRec implements Runnable {
         synchronized (LOCK) {
             if (on) {
                 offSince = -1L;
-                if (!recording && !OFF.exists()) {
+                if (!recording && !off()) {
                     begin(now);
                 }
             } else if (recording && offSince < 0L) {
@@ -160,7 +162,7 @@ final class RouteRec implements Runnable {
         written = 0L;
         lastMsgAt = now;
         pending = new StringBuffer();
-        pending.append("# TT cockpit CarPlay route recording (tt-zoom v59), file ").append(file.getPath()).append('\n')
+        pending.append("# TT cockpit CarPlay route recording (tt-zoom v60), file ").append(file.getPath()).append('\n')
             .append("# started ").append(now % 100000000L).append(" (head-unit clock, same as tt-rgd.log)")
             .append(onRam ? ", RAM: no SD card found" : "").append('\n')
             .append("# replay parked: cp this file /tmp/tt-rgi-play.txt   (or sh tt.sh play route N)\n")
@@ -189,8 +191,8 @@ final class RouteRec implements Runnable {
                     if (mark != null && recording) {
                         pending.append("# ").append(now % 100000000L).append(" ===== MARK ").append(mark).append(" =====\n");
                     }
-                    if (recording && OFF.exists()) {
-                        end("switched off (/tmp/tt-rec-off)");
+                    if (recording && off()) {
+                        end("switched off");
                     } else if (recording && offSince > 0L && now - offSince > END_AFTER) {
                         end("route off for 2 minutes");
                     } else if (recording) {
@@ -246,6 +248,10 @@ final class RouteRec implements Runnable {
             } catch (Throwable ignored) {
             }
         }
+    }
+
+    private static boolean off() {
+        return OFF.exists() || OFF_FLASH.exists();
     }
 
     private static String readMark() {

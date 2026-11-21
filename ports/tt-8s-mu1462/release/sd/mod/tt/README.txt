@@ -17,3 +17,10 @@ mod/tt/last-run.txt. Nothing restarts by itself.
  5. install   Unplug the phone first. Backs up and installs. Then restart the MMI (hold the knob).
  6. restore   Puts every changed file back, then restart the MMI.
     logs      Saves logs to mod/tt/logs/ for a bug report.
+    recoff    Route recorder off for good (recon: on again).
+
+Route recorder: while a route runs, everything the phone sends for it is saved to the SD
+card in the head unit (folder tt-routes/, the last 20 routes; without a card it is kept in
+RAM until the MMI restarts). This includes street names and the destination. It never leaves
+the card; it is there so a bug can be replayed and fixed. Send one with a bug report only if
+you want to. Off for good: action 'recoff' (back on: 'recon'), then restart the MMI.

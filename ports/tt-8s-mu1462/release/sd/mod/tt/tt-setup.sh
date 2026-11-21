@@ -12,7 +12,13 @@
 #   install  backs up, installs, verifies (flash write)
 #   restore  puts back every file the last install changed (flash write)
 #   logs     copies the logs to mod/tt/logs/ for a bug report
+#   recoff   route recorder off for good (one small file on flash); recon turns it back on
 # Never restarts the MMI; do that yourself afterwards (hold the MMI knob).
+#
+# Route recorder (in the HMI jar): every route is saved to the SD card in this slot's
+# tt-routes/ folder (last 20; without a card: RAM until the MMI restarts). A recording holds
+# what the phone sent for that route, street names and the destination included. It stays on
+# the card, is never sent anywhere, and is only needed for bug reports.
 set -u
 PATH=/proc/boot:/bin:/usr/bin:/sbin:/usr/sbin:/mnt/app/armle/bin:/mnt/app/armle/usr/bin:/mnt/app/armle/sbin:/mnt/app/armle/usr/sbin
 export PATH
@@ -106,7 +112,7 @@ if test "$action" = logs; then
     L=$D/logs/$n
     mkdir -p "$L" || { say 'Cannot write to the SD card.'; exit 1; }
     for f in /tmp/tt-rgd.log /tmp/tt-rgd.log.1 /tmp/tt-zoom.log /tmp/altscreen111.log /tmp/mu1438-cluster-runtime.log \
-             /tmp/mibr-alt111-gen2.status /tmp/mibr-carplay111.state /tmp/mu1462-supervisor.log; do
+             /tmp/mibr-alt111-gen2.status /tmp/mibr-carplay111.state /tmp/mu1462-supervisor.log /tmp/tt-routes/route-*.txt; do
         test -f "$f" && cp "$f" "$L/"
     done
     {
@@ -118,6 +124,18 @@ if test "$action" = logs; then
         pidin ar 2>/dev/null | grep -E 'dio_manager|cluster_runtime|mm-ipod|supervisor'
     } > "$L/report.txt" 2>&1
     say "Logs saved to the SD card: mod/tt/logs/$n"
+    say 'Route recordings on a card are in its tt-routes/ folder (they include street names and the destination).'
+    exit 0
+fi
+
+# ---- route recorder on/off (one marker file on flash) ------------------------------------------
+if test "$action" = recoff || test "$action" = recon; then
+    mount -uw /mnt/app && rw_app=1 || { say 'Cannot make /mnt/app writable.'; exit 1; }
+    if test "$action" = recoff; then
+        : > /mnt/app/root/tt-rec-off && say 'Route recorder off (from the next MMI restart). Existing recordings: delete the tt-routes/ folder on the card.'
+    else
+        rm -f /mnt/app/root/tt-rec-off && say 'Route recorder on (from the next MMI restart).'
+    fi
     exit 0
 fi
 
@@ -167,7 +185,7 @@ if test "$action" = restore; then
     exit 0
 fi
 
-case "$action" in check|install) ;; *) say "Unknown action '$action' (check, export, install, restore, logs)."; exit 2;; esac
+case "$action" in check|install) ;; *) say "Unknown action '$action' (check, export, install, restore, logs, recoff, recon)."; exit 2;; esac
 
 # ---- check / install -----------------------------------------------------------------------
 firmware
