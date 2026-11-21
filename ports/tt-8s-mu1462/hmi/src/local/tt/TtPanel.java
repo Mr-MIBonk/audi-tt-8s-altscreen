@@ -302,47 +302,7 @@ public final class TtPanel {
             return new StringBuffer("layout ").append(layoutForce).toString();
         }
         if (op.equals("where")) {
-            StringBuffer b = new StringBuffer("where: skin=").append(ZoomGate.skinNow())
-                .append(" small=").append(ZoomGate.small()).append(" smallMap=").append(ZoomGate.smallMap())
-                .append(" mode=").append(currentMode())
-                .append(" mapShowing=").append(mapShowing).append(" layers=").append(Layers.on());
-            if (mainRoot != null) {
-                b.append(" panel at ").append((int) mainRoot.getX()).append(',').append((int) mainRoot.getY())
-                    .append(" visible=").append(mainRoot.isVisible());
-            } else {
-                b.append(" panel none (no route?)");
-            }
-            de.audi.atip.hmi.view.IDisplayManager d = dm(m);
-            if (d != null) {
-                try {
-                    int[] p = d.getPosition(KDK, 0);
-                    b.append(" | stock window pos ");
-                    if (p == null) {
-                        b.append("null");
-                    } else {
-                        b.append(p[0]).append(',').append(p[1]);
-                    }
-                } catch (Throwable t) {
-                    b.append(" | pos error ").append(String.valueOf(t));
-                }
-                for (int i = 0; i < 2; i++) {
-                    try {
-                        int[] e = d.getExtends(i == 0 ? KDK : 0);
-                        b.append(i == 0 ? " ext(20) " : " ext(0) ");
-                        for (int j = 0; e != null && j < e.length; j++) {
-                            b.append(j > 0 ? "," : "").append(e[j]);
-                        }
-                    } catch (Throwable t) {
-                        b.append(" ext error");
-                    }
-                }
-                try {
-                    b.append(" opacity ").append(d.getOpacity(KDK, 0)).append(" ctx ").append(d.getCurrentContextID(0));
-                } catch (Throwable ignored) {
-                }
-            }
-            b.append(" | pos file ").append(posLine("kdk-small") != null ? "kdk-small set " : "").append(posLine("kdk-large") != null ? "kdk-large set" : "");
-            RgdBus.note(b.toString());
+            RgdBus.note(whereReport(m));
             return "where";
         }
         if (op.equals("fade") && w.length >= 2) {
@@ -539,6 +499,7 @@ public final class TtPanel {
                     liveShown = false;
                     liveKey = null;
                     post("off", false);
+                    diagSoon("route off");
                 }
                 return;
             }
@@ -562,12 +523,16 @@ public final class TtPanel {
             String k = rebuildArg(ic, metres, q, lanes, dq, etaUtc, exit, street);
             if (!k.equals(liveKey)) {
                 liveKey = k;
-                if (!liveShown) {
+                boolean first = !liveShown;
+                if (first) {
                     burst(2000L);
                 }
                 liveShown = true;
                 prerender(k);
                 post(k, false);
+                if (first) {
+                    diagSoon("route on");
+                }
             }
             startFader();
         } catch (Throwable ignored) {
@@ -707,6 +672,97 @@ public final class TtPanel {
     /** v50 Layers loop: /tmp/tt-panel-pos changed (redraw now) or /tmp/tt-panel-where asked for a report. */
     private static long posStamp = -1L;
     private static final java.io.File WHERE = new java.io.File("/tmp/tt-panel-where");
+    /** "where": skin, view, mode, our panel and the stock window (v57: in its own method, plus diagState). */
+    private static String whereReport(EALManager m) {
+        StringBuffer b = new StringBuffer("where: skin=").append(ZoomGate.skinNow())
+            .append(" small=").append(ZoomGate.small()).append(" smallMap=").append(ZoomGate.smallMap())
+            .append(" mode=").append(currentMode())
+            .append(" mapShowing=").append(mapShowing).append(" layers=").append(Layers.on())
+            .append(diagState());
+        if (mainRoot != null) {
+            b.append(" panel at ").append((int) mainRoot.getX()).append(',').append((int) mainRoot.getY())
+                .append(" visible=").append(mainRoot.isVisible());
+        } else {
+            b.append(" panel none (no route?)");
+        }
+        de.audi.atip.hmi.view.IDisplayManager d = dm(m);
+        if (d != null) {
+            try {
+                int[] p = d.getPosition(KDK, 0);
+                b.append(" | stock window pos ");
+                if (p == null) {
+                    b.append("null");
+                } else {
+                    b.append(p[0]).append(',').append(p[1]);
+                }
+            } catch (Throwable t) {
+                b.append(" | pos error ").append(String.valueOf(t));
+            }
+            b.append(ext(d, KDK, " ext(20) ")).append(ext(d, 0, " ext(0) "));
+            try {
+                b.append(" opacity ").append(d.getOpacity(KDK, 0)).append(" ctx ").append(d.getCurrentContextID(0));
+            } catch (Throwable ignored) {
+            }
+            b.append(visibleKdk(d));
+        }
+        b.append(" | pos file ").append(posLine("kdk-small") != null ? "kdk-small set " : "").append(posLine("kdk-large") != null ? "kdk-large set" : "");
+        return b.toString();
+    }
+
+    private static String ext(de.audi.atip.hmi.view.IDisplayManager d, int id, String label) {
+        StringBuffer b = new StringBuffer(label);
+        try {
+            int[] e = d.getExtends(id);
+            for (int j = 0; e != null && j < e.length; j++) {
+                b.append(j > 0 ? "," : "").append(e[j]);
+            }
+        } catch (Throwable t) {
+            b.append("error");
+        }
+        return b.toString();
+    }
+
+    /** v57: which banner window the cockpit shows now. */
+    private static String visibleKdk(Object d) {
+        try {
+            if (d instanceof de.audi.tghu.fwhmi.IDisplayManagerKombiControl) {
+                return new StringBuffer(" visibleKDK ").append(((de.audi.tghu.fwhmi.IDisplayManagerKombiControl) d).getVisibleKDK(0)).toString();
+            }
+        } catch (Throwable ignored) {
+        }
+        return " visibleKDK ?";
+    }
+
+    /** v57 (drive 61: stock arrow in Sport after a route restart): the whole panel state. */
+    private static String diagState() {
+        StringBuffer b = new StringBuffer();
+        try {
+            b.append(" live=").append(liveShown).append(" turn=").append(lastTurn != null)
+                .append(" rg=").append(de.audi.tghu.navi.app.cluster.TtRgi.rgActive(false))
+                .append(" guard=").append(guardRunning).append(" fader=").append(faderRunning)
+                .append(" fade=").append(fadeNow).append(" kdkAlpha=").append(kdkAlpha)
+                .append(" kdkUp=").append(kdkPanelUp).append(" hideBg=").append(hideKdkBg)
+                .append(" fixes=").append(guardFixes).append(" lastOp=").append(guardLastOpacity)
+                .append(" parent=").append(parentMode)
+                .append(" topVp=").append(topVp == null ? "none" : "set");
+            IWrappedNode3D r = mainRoot;
+            if (r != null) {
+                b.append(" nodeOpacity=").append(r.getOpacity());
+            }
+        } catch (Throwable t) {
+            b.append(" diag error ").append(String.valueOf(t));
+        }
+        return b.toString();
+    }
+
+    /** v57: last periodic state report. */
+    private static long diagAt;
+
+    /** v57: a state report soon after an event (route on/off, view or context change). */
+    static void diagSoon(String why) {
+        RgdBus.note(new StringBuffer("diag: ").append(why).toString());
+        post("where", false);
+    }
 
     static void poll() {
         try {
@@ -717,6 +773,12 @@ public final class TtPanel {
             posStamp = st;
             if (WHERE.exists()) {
                 WHERE.delete();
+                post("where", false);
+            }
+            // v57: a state report every 10 s while a route runs (diagnostics only)
+            long now = System.currentTimeMillis();
+            if ((liveShown || lastTurn != null) && now - diagAt >= 10000L) {
+                diagAt = now;
                 post("where", false);
             }
         } catch (Throwable ignored) {
@@ -730,6 +792,7 @@ public final class TtPanel {
         if (t != null) {
             post(t, false);
         }
+        diagSoon(new StringBuffer("view small=").append(ZoomGate.small()).toString());
     }
 
     private static void post(String arg, boolean log) {
@@ -1645,6 +1708,7 @@ public final class TtPanel {
                 RgdBus.note(new StringBuffer("context ").append(lastCtx).append(" -> ").append(ctx)
                     .append(map ? " (map)" : "").append(" small ").append(ZoomGate.small()).toString());
                 lastCtx = ctx;
+                post("where", false);
                 if (map != mapShowing) {
                     mapShowing = map;
                     de.audi.tghu.navi.app.cluster.TtRgi.viewChanged();
