@@ -16,6 +16,8 @@ Everything marked "works" was checked on one car (US TT, MU1462), November 2026.
 | iPhone turn-by-turn data on the head unit | Works | [Turn-by-turn data](Turn-by-turn-data.md) |
 | Turn panel on the cockpit (arrows, lanes, exit badge) | Works; first short drive done (Google Maps) | [Turn panel](Turn-panel.md) |
 | Stock guidance display fed with iPhone turns | Not possible | [Stock guidance dead ends](Stock-guidance-dead-ends.md) |
+| CarPlay tab and map switching without drops | Fixed for normal switching (renderer build 5/6, supervisor v9); light-speed flipping out of scope | [Display-window handover](Display-window-handover.md) |
+| Bottom strip with Google/Apple turn text ("Left to Alpha St") | Works | [CarPlay map](CarPlay-map.md#the-bottom-strip) |
 
 ## Pages
 
@@ -32,6 +34,7 @@ Everything marked "works" was checked on one car (US TT, MU1462), November 2026.
 - [HMI patching](HMI-patching.md): how `tt-zoom.jar` overrides stock classes, and the rules
 - [Cockpit drawing](Cockpit-drawing.md): drawing our own nodes with the EAL, and its traps
 - [Stock guidance dead ends](Stock-guidance-dead-ends.md): why the stock banner cannot show iPhone turns
+- [Display-window handover](Display-window-handover.md): the CarPlay-tab crash, how it was found, and the fix (with diagrams)
 
 **Working on it**
 - [Build and test](Build-and-test.md): build, `tt.sh` toolkit, parked tests, logs
@@ -40,11 +43,7 @@ Everything marked "works" was checked on one car (US TT, MU1462), November 2026.
 
 ## Next
 
-- v33 map test (`play map`): CarPlay map kept with our framed panel on the map;
-  where our layer shows over the map in the Sport view (full-screen grid).
-- v35 guided test (`sh tt.sh test`): panel over the map in the Sport view; the
-  iPhone's own maneuver card switched off (hook surface "map", `/tmp/mibr-alt111-url-mode`).
+- Stability run with renderer build 6: about 100 normal CarPlay-tab switches over two sessions.
+- v1.0.0: SD-card (M.I.B.) installer with the tested renderer, supervisor and jar; how-to on GitHub;
+  clean-install test.
 - Chinese phone language: exit numbers from Chinese instructions (need a sample).
-- Live drive with Google and Apple Maps.
-- Try the iPhone's own maneuver card (hook switches `/mnt/app/root/mibr-carplay111-nav*`).
-- Refresh the installer `package/` with the final jar; SD-card (M.I.B.) installer.
