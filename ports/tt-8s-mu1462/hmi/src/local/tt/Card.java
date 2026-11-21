@@ -16,11 +16,15 @@ import java.io.FileOutputStream;
  * touching /tmp/mibr-alt111-show-only makes it send showUI again with the current address, so the
  * iPhone switches while connected. At most one switch per 4 s. /tmp/tt-card-fixed (set by the
  * kit's manual card commands) turns this off.
+ *
+ * v56 (user, runs 48-49: the switching upset too much): map only by default; the automatic card
+ * (v54 rules, 1 km) is an option, /tmp/tt-card-auto (sh tt.sh card auto).
  */
 public final class Card {
     private static final File MODE = new File("/tmp/mibr-alt111-url-mode");
     private static final File SHOW = new File("/tmp/mibr-alt111-show-only");
     private static final File FIXED = new File("/tmp/tt-card-fixed");
+    private static final File AUTO = new File("/tmp/tt-card-auto");
     private static final File STATUS = new File("/tmp/mibr-alt111-gen2.status");
     /** -1 not set yet, 0 card ("base"), 1 map only ("map"). */
     private static int last = -1;
@@ -69,7 +73,8 @@ public final class Card {
             int want;
             boolean live;
             synchronized (MODE) {
-                boolean card = routeOn && !ZoomGate.smallMap() && (nearNow || now < startUntil || now < holdUntil);
+                boolean card = AUTO.exists() && routeOn && !ZoomGate.smallMap()
+                    && (nearNow || now < startUntil || now < holdUntil);
                 want = card ? 0 : 1;
                 if (want == last) {
                     return;
@@ -85,10 +90,6 @@ public final class Card {
                     write(SHOW, "1\n");
                     // v53 (run46): the iPhone rebuilds the map at its default zoom on every showUI.
                     ZoomGate.mapReset("card switch");
-                    if (want == 1) {
-                        // v55: the auto zoom-out goes into the same map rebuild
-                        AutoZoom.cardHidden();
-                    }
                 }
             }
             RgdBus.note(new StringBuffer("card: ").append(want == 0 ? "shown (turn near)" : "map only")

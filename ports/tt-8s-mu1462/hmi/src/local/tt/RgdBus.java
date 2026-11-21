@@ -76,7 +76,6 @@ public final class RgdBus implements Runnable {
     private static long calUtcMs;
     /** v43: when each lane-set slot (lgN_) was last sent, and the current maneuver id. */
     private static final Hashtable LANES_AT = new Hashtable();
-    private static final File CARD_EARLY = new File("/tmp/tt-card-early");
     private static int laneFirst = -1;
     // v40 bar glide: the iPhone sends rounded distances (0.2 mi, 0.1 mi, 50 ft steps), so the
     // bar jumped. Between changes it now slides at the speed the changes imply.
@@ -570,10 +569,8 @@ public final class RgdBus implements Runnable {
             }
             String result = TtRgi.update(on, declare, stockSafe(icon), mState, turn, bar, dest, eta, stripRoad, stripNext);
             TtPanel.near = nearTurn(main, turn);
-            // v55 (user, run47): the card comes with the auto zoom (330 m, motorway 800 m) instead
-            // of at 1 km, so each turn changes the map once going in and once coming out.
-            // /tmp/tt-card-early: the v46 distances (1 km, motorway 2 km).
-            Card.route(on, CARD_EARLY.exists() ? TtPanel.near : AutoZoom.inRange(main, turn));
+            // v56: back to the v46 card distances (1 km, motorway 2 km); the card is opt-in.
+            Card.route(on, TtPanel.near);
             AutoZoom.route(on, main, turn, manId);
             // Lanes only while approaching the turn, like stock.
             TtPanel.live(on, icon, turn, glideBar, mState >= 3 ? lanes : "-", dest, eta, exit, next);

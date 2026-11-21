@@ -68,7 +68,8 @@ v46 switches it by distance instead: the card shows only near a turn (1 km, moto
 and forks 2 km, plus 10 s at route start and 5 s after a turn), map only otherwise, in both views.
 The card cannot be made see-through: the iPhone draws it into the video.
 
-Defaults (user, 2026-11-20): card at the top (`sh tt.sh card top`), the app's own ETA bar off
+v56 (user, 2026-11-20): the card is off by default (map only); `sh tt.sh card auto` is the option.
+Defaults (user, 2026-11-20): card at the top when it shows (`sh tt.sh card top`), the app's own ETA bar off
 (`sh tt.sh eta off` writes `no` to `/mnt/app/root/mibr-carplay111-nav.showETA`; the car's bottom
 strip already shows ETA/distance), standard safe window. The map options are sent only while
 `/mnt/app/root/mibr-carplay111-nav-query.enabled` exists; the SD installer creates it.

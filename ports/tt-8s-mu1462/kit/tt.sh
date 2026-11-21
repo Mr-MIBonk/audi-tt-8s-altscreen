@@ -49,6 +49,7 @@ V52=f634de2ab5857215fb0b0d691b1787cf0cc609243420b13de0facc1809606125
 V53=bfcebae27e6c07d12f8b5942b77693d3616ee1d0afbfc96000870e8d0d73ee82
 V54=52bbefb3fa760eb4fb0efa22b543223f0ea558658e5044c6a2443273b44a5caf
 V55=5e756cb9a2c11070ad0a69cb198fcf4c901c7caca0bee4f82b9107e50b5d81fa
+V56=909ab2a72d066c7a1a255699d2b84387b5dfb5d9ba9dbcfde01cebaf7cb8d2e3
 SUP=/mnt/app/root/mu1438-cluster/cluster_supervisor.sh
 SUP_V2=9175a6deaff6acf2c4f35b61b245476ba8827e7f4b74977b48cdafc2c7c6f57c
 SUP_V3=4c37a375954a387e4938fbabcad868bb2fcc4207a97bcbe599421974e75f06bd
@@ -82,20 +83,20 @@ ro(){ sync; mount -ur /mnt/app 2>/dev/null; }
 which_jar(){
     h=$("$T" "$JAR" 2>/dev/null)
     case "$h" in
-        $V12) echo v12;; $V14) echo v14;; $V15) echo v15;; $V16) echo v16;; $V17) echo v17;; $V18) echo v18;; $V19) echo v19;; $V20) echo v20;; $V21) echo v21;; $V22) echo v22;; $V23) echo v23;; $V24) echo v24;; $V25) echo v25;; $V26) echo v26;; $V27) echo v27;; $V28) echo v28;; $V29) echo v29;; $V30) echo v30;; $V31) echo v31;; $V32) echo v32;; $V33) echo v33;; $V34) echo v34;; $V35) echo v35;; $V36) echo v36;; $V37) echo v37;; $V38) echo v38;; $V39) echo v39;; $V40) echo v40;; $V41) echo v41;; $V42) echo v42;; $V43) echo v43;; $V44) echo v44;; $V45) echo v45;; $V46) echo v46;; $V47) echo v47;; $V48) echo v48;; $V49) echo v49;; $V50) echo v50;; $V51) echo v51;; $V52) echo v52;; $V53) echo v53;; $V54) echo v54;; $V55) echo v55;; "") echo none;; *) echo "unknown ($h)";;
+        $V12) echo v12;; $V14) echo v14;; $V15) echo v15;; $V16) echo v16;; $V17) echo v17;; $V18) echo v18;; $V19) echo v19;; $V20) echo v20;; $V21) echo v21;; $V22) echo v22;; $V23) echo v23;; $V24) echo v24;; $V25) echo v25;; $V26) echo v26;; $V27) echo v27;; $V28) echo v28;; $V29) echo v29;; $V30) echo v30;; $V31) echo v31;; $V32) echo v32;; $V33) echo v33;; $V34) echo v34;; $V35) echo v35;; $V36) echo v36;; $V37) echo v37;; $V38) echo v38;; $V39) echo v39;; $V40) echo v40;; $V41) echo v41;; $V42) echo v42;; $V43) echo v43;; $V44) echo v44;; $V45) echo v45;; $V46) echo v46;; $V47) echo v47;; $V48) echo v48;; $V49) echo v49;; $V50) echo v50;; $V51) echo v51;; $V52) echo v52;; $V53) echo v53;; $V54) echo v54;; $V55) echo v55;; $V56) echo v56;; "") echo none;; *) echo "unknown ($h)";;
     esac
 }
 
 case "${1:-help}" in
 setup)
     # Run from /tmp after copying the kit there. Safe to run again for a kit update.
-    test -f /tmp/tt-zoom-v55.jar || { say 'Copy the kit files to /tmp first.'; exit 1; }
+    test -f /tmp/tt-zoom-v56.jar || { say 'Copy the kit files to /tmp first.'; exit 1; }
     rw
     mkdir -p "$K/logs"
-    for f in altscreen-sha256 tt-zoom-v55.jar stock-replay.txt catalogue.txt komo-test.txt panel-test.txt kdk-test.txt fit-test.txt win-test.txt new-test.txt map-test.txt place-test.txt; do
+    for f in altscreen-sha256 tt-zoom-v56.jar stock-replay.txt catalogue.txt komo-test.txt panel-test.txt kdk-test.txt fit-test.txt win-test.txt new-test.txt map-test.txt place-test.txt; do
         cp "/tmp/$f" "$K/$f" || { say "missing /tmp/$f"; ro; exit 1; }
     done
-    for f in tt-zoom-v12.jar tt-zoom-v14.jar tt-zoom-v15.jar tt-zoom-v16.jar tt-zoom-v17.jar tt-zoom-v18.jar tt-zoom-v19.jar tt-zoom-v20.jar tt-zoom-v21.jar tt-zoom-v22.jar tt-zoom-v23.jar tt-zoom-v24.jar tt-zoom-v25.jar tt-zoom-v26.jar tt-zoom-v27.jar tt-zoom-v28.jar tt-zoom-v29.jar tt-zoom-v30.jar tt-zoom-v31.jar tt-zoom-v32.jar tt-zoom-v33.jar tt-zoom-v34.jar tt-zoom-v35.jar tt-zoom-v36.jar tt-zoom-v37.jar tt-zoom-v42.jar tt-zoom-v43.jar tt-zoom-v44.jar tt-zoom-v50.jar tt-zoom-v51.jar tt-zoom-v52.jar tt-zoom-v53.jar tt-zoom-v54.jar libaltscreen111-tt1.so libaltscreen111-tt2.so cluster_supervisor-v6.sh cluster_supervisor-v7.sh; do
+    for f in tt-zoom-v12.jar tt-zoom-v14.jar tt-zoom-v15.jar tt-zoom-v16.jar tt-zoom-v17.jar tt-zoom-v18.jar tt-zoom-v19.jar tt-zoom-v20.jar tt-zoom-v21.jar tt-zoom-v22.jar tt-zoom-v23.jar tt-zoom-v24.jar tt-zoom-v25.jar tt-zoom-v26.jar tt-zoom-v27.jar tt-zoom-v28.jar tt-zoom-v29.jar tt-zoom-v30.jar tt-zoom-v31.jar tt-zoom-v32.jar tt-zoom-v33.jar tt-zoom-v34.jar tt-zoom-v35.jar tt-zoom-v36.jar tt-zoom-v37.jar tt-zoom-v42.jar tt-zoom-v43.jar tt-zoom-v44.jar tt-zoom-v50.jar tt-zoom-v51.jar tt-zoom-v52.jar tt-zoom-v53.jar tt-zoom-v54.jar tt-zoom-v55.jar libaltscreen111-tt1.so libaltscreen111-tt2.so cluster_supervisor-v6.sh cluster_supervisor-v7.sh; do
         test -f "/tmp/$f" && cp "/tmp/$f" "$K/$f"
     done
     # Optional panel background picture (made with scripts/mkbg.py; kept on the car, not in git).
@@ -103,14 +104,14 @@ setup)
     cp /tmp/tt.sh /mnt/app/root/tt.sh
     chmod 755 "$T" /mnt/app/root/tt.sh
     ok=1
-    "$T" $V55 "$K/tt-zoom-v55.jar" || ok=0
+    "$T" $V56 "$K/tt-zoom-v56.jar" || ok=0
     ro
     if test $ok = 1; then say 'Kit installed. From now on just type:  sh tt.sh help'
     else say 'A kit file is damaged - copy the kit again and rerun setup.'; exit 1; fi
     ;;
 use)
     v=${2:-}
-    case "$v" in v12) h=$V12;; v14) h=$V14;; v15) h=$V15;; v16) h=$V16;; v17) h=$V17;; v18) h=$V18;; v19) h=$V19;; v20) h=$V20;; v21) h=$V21;; v22) h=$V22;; v23) h=$V23;; v24) h=$V24;; v25) h=$V25;; v26) h=$V26;; v27) h=$V27;; v28) h=$V28;; v29) h=$V29;; v30) h=$V30;; v31) h=$V31;; v32) h=$V32;; v33) h=$V33;; v34) h=$V34;; v35) h=$V35;; v36) h=$V36;; v37) h=$V37;; v38) h=$V38;; v39) h=$V39;; v40) h=$V40;; v41) h=$V41;; v42) h=$V42;; v43) h=$V43;; v44) h=$V44;; v45) h=$V45;; v46) h=$V46;; v47) h=$V47;; v48) h=$V48;; v49) h=$V49;; v50) h=$V50;; v51) h=$V51;; v52) h=$V52;; v53) h=$V53;; v54) h=$V54;; v55) h=$V55;; *) say 'Usage: sh tt.sh use v55   (or v54 ... v12)'; exit 2;; esac
+    case "$v" in v12) h=$V12;; v14) h=$V14;; v15) h=$V15;; v16) h=$V16;; v17) h=$V17;; v18) h=$V18;; v19) h=$V19;; v20) h=$V20;; v21) h=$V21;; v22) h=$V22;; v23) h=$V23;; v24) h=$V24;; v25) h=$V25;; v26) h=$V26;; v27) h=$V27;; v28) h=$V28;; v29) h=$V29;; v30) h=$V30;; v31) h=$V31;; v32) h=$V32;; v33) h=$V33;; v34) h=$V34;; v35) h=$V35;; v36) h=$V36;; v37) h=$V37;; v38) h=$V38;; v39) h=$V39;; v40) h=$V40;; v41) h=$V41;; v42) h=$V42;; v43) h=$V43;; v44) h=$V44;; v45) h=$V45;; v46) h=$V46;; v47) h=$V47;; v48) h=$V48;; v49) h=$V49;; v50) h=$V50;; v51) h=$V51;; v52) h=$V52;; v53) h=$V53;; v54) h=$V54;; v55) h=$V55;; v56) h=$V56;; *) say 'Usage: sh tt.sh use v56   (or v55 ... v12)'; exit 2;; esac
     test -f "$K/tt-zoom-$v.jar" || { say "$v is not in the kit on the car."; exit 1; }
     "$T" $h "$K/tt-zoom-$v.jar" || { say "Stored $v jar is damaged."; exit 1; }
     rw
@@ -372,31 +373,30 @@ crash)
     ;;
 card)
     # The iPhone's own maneuver card on the cockpit CarPlay map.
-    #   auto           (default) card only near turns; never in the Sport skin's small view
-    #                  v55: together with the auto zoom (330 m, motorway 800 m) until 5 s after the turn
-    #   early | late   v55: early = card from 1 km (motorway 2 km) as before; late = with the zoom (default)
-    #   off | on       map only / card in both views (until "card auto" or an MMI restart)
+    #   off            (default, tt-zoom v56) map only
+    #   auto           card near turns (1 km, motorway 2 km, 10 s at route start, 5 s after a turn);
+    #                  never in the Sport skin's small view. RAM only: an MMI restart goes back to off
+    #   on             card the whole time, in both views
     #   left|right|top card position when it shows (small settings file on flash)
     #   default        auto, hook default position
     # Changes go to the iPhone at once when CarPlay is connected (the hook re-sends showUI).
     LAYOUT=/mnt/app/root/mibr-carplay111-nav.maneuverLayout
     send(){ touch /tmp/mibr-alt111-show-only; }
     case "${2:-}" in
-        auto) rm -f /tmp/tt-card-fixed; say 'Card: only near turns (switches within a few seconds).';;
-        early) rm -f /tmp/tt-card-fixed; touch /tmp/tt-card-early; say 'Card: near turns, from 1 km (motorway 2 km).';;
-        late) rm -f /tmp/tt-card-fixed /tmp/tt-card-early; say 'Card: near turns, together with the auto zoom (330 m, motorway 800 m).';;
-        off) touch /tmp/tt-card-fixed; echo map > /tmp/mibr-alt111-url-mode; send; say 'Card off (map only) in both views.';;
-        on) touch /tmp/tt-card-fixed; echo base > /tmp/mibr-alt111-url-mode; send; say 'Card on in both views.';;
+        auto) rm -f /tmp/tt-card-fixed; touch /tmp/tt-card-auto; say 'Card: near turns (switches within a few seconds).';;
+        off) rm -f /tmp/tt-card-auto; touch /tmp/tt-card-fixed; echo map > /tmp/mibr-alt111-url-mode; send; say 'Card off (map only) in both views.';;
+        on) rm -f /tmp/tt-card-auto; touch /tmp/tt-card-fixed; echo base > /tmp/mibr-alt111-url-mode; send; say 'Card on in both views.';;
         left|right|top)
             rw; echo "$2" > "$LAYOUT"; ro; send
             say "Card position $2 (whenever the card shows).";;
         default)
-            rm -f /tmp/tt-card-fixed
+            rm -f /tmp/tt-card-fixed /tmp/tt-card-auto
+            echo map > /tmp/mibr-alt111-url-mode
             if test -f "$LAYOUT"; then rw; rm -f "$LAYOUT"; ro; fi
             send
-            say 'Card: automatic, hook default position.';;
-        *) say "Usage: sh tt.sh card auto | early | late | off | on | left | right | top | default"
-           say "   now: $(test -e /tmp/tt-card-fixed && echo fixed || echo auto), surface $(cat /tmp/mibr-alt111-url-mode 2>/dev/null || echo base), position $(cat $LAYOUT 2>/dev/null || echo default)"
+            say 'Card: off (map only), hook default position.';;
+        *) say "Usage: sh tt.sh card off | auto | on | left | right | top | default"
+           say "   now: $(test -e /tmp/tt-card-auto && echo auto || echo fixed), surface $(cat /tmp/mibr-alt111-url-mode 2>/dev/null || echo base), position $(cat $LAYOUT 2>/dev/null || echo default)"
            exit 2;;
     esac
     ;;
@@ -585,7 +585,7 @@ panel)
     esac
     ;;
 report)
-    say "== jar: $(which_jar)    (v55 is the current one)"
+    say "== jar: $(which_jar)    (v56 is the current one)"
     say "== layers: map 10 = $(ctxlist 10)  map+banner 89 = $(ctxlist 89)  (v37 with CarPlay: 16 60 / 20 16 60)"
     grep "layers:" /tmp/tt-rgd.log 2>/dev/null | tail -3
     h=$("$T" "$HOOK" 2>/dev/null); case "$h" in $HOOK_STOCK) say '== CarPlay hook: original';; $HOOK_H320) say '== CarPlay hook: original (h320 preset)';; $FIX_STOCK|$FIX_H320) say '== CarPlay hook: fix1 (old byte patch - replace with: sh tt.sh hookfix)';; $HOOK_TT1) say '== CarPlay hook: TT build 1 (from source: no port leak, always falls back to plain CarPlay)';; $HOOK_TT2) say "== CarPlay hook: TT build 2 (build 1 + look tests: mm $(cat /tmp/tt-hook-mm 2>/dev/null || echo 320 120), safe $(cat /tmp/tt-hook-safe 2>/dev/null || echo 520 110 400 320))";; *) say "== CarPlay hook: unknown ($h)";; esac
@@ -624,7 +624,7 @@ save)
     ;;
 *)
     say 'sh tt.sh report              what is installed and what it is doing (paste this)'
-    say 'sh tt.sh use v55             switch version (v55 ... v12), then restart the MMI'
+    say 'sh tt.sh use v56             switch version (v56 ... v12), then restart the MMI'
     say 'sh tt.sh play map|new|fit|win|kdk|panel|komo|stock  parked tests'
     say 'sh tt.sh play arrows | stop  arrow catalogue / stop playback'
     say 'sh tt.sh test                the full guided test, Enter for each step, then saves the logs'
