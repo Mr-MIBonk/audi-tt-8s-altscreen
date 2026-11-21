@@ -538,15 +538,25 @@ mark)
     shift; mark "${*:-crash}"
     ;;
 rec)
-    # Crash recorder (RAM only, nothing on flash): writes the system log to /tmp/tt-slog-live.txt
-    # as it happens. The head unit's own CarPlay video reports there (<SCREEN>, NvssVideoImpl);
-    # after a CarPlay crash the system log came back empty, so 'save' alone never caught it.
+    # Crash recorder (RAM only, nothing on flash). Two background loops:
+    #  - the system log as it happens -> /tmp/tt-slog-live.txt. The head unit's own CarPlay video
+    #    reports there (<SCREEN>, NvssVideoImpl, nvdisp); after a CarPlay crash the system log came
+    #    back empty, so 'save' alone never caught it (run50 caught "Window is in use").
+    #  - every 2 s what the supervisor, the renderer and dmdt are doing (pidin state, blocked on)
+    #    -> /tmp/tt-procwatch.txt, written only when it changes. Shows where the supervisor
+    #    hangs when its log goes silent (runs 41, 49, 50).
     # Survives closing SSH, not switching the car off.   on | off | (no word: status)
-    LIVE=/tmp/tt-slog-live.txt; PIDF=/tmp/tt-rec.pid
-    running(){ test -f $PIDF && kill -0 "$(cat $PIDF)" 2>/dev/null; }
+    LIVE=/tmp/tt-slog-live.txt; PW=/tmp/tt-procwatch.txt; PIDF=/tmp/tt-rec.pid
+    running(){ test -f $PIDF && kill -0 "$(head -1 $PIDF)" 2>/dev/null; }
+    stop_rec(){
+        if test -f $PIDF; then for p in $(cat $PIDF); do kill "$p" 2>/dev/null; done; fi
+        slay -f sloginfo > /dev/null 2>&1
+        rm -f $PIDF
+    }
     case "${2:-}" in
         on)
-            running && { say 'Recorder already running.'; exit 0; }
+            # a recorder from an older kit has no process watch: replace it
+            stop_rec
             (
                 trap '' HUP
                 while :; do
@@ -558,16 +568,33 @@ rec)
                 done
             ) < /dev/null > /dev/null 2>&1 &
             echo $! > $PIDF
-            say "Recorder on (pid $!). It runs until 'sh tt.sh rec off' or the car is switched off."
+            (
+                trap '' HUP
+                last=
+                while :; do
+                    procs=$(pidin ar 2>/dev/null | grep -E 'cluster_supervisor|cluster_runtime|dmdt' | grep -v grep)
+                    snap=$(echo "$procs"
+                        for p in $(echo "$procs" | awk '{print $1}'); do
+                            pidin -p "$p" 2>/dev/null | grep -v 'STATE'
+                        done)
+                    if test "$snap" != "$last"; then
+                        { echo "== $(date)  supervisor log lines: $(wc -l < /tmp/mu1462-supervisor.log 2>/dev/null)"
+                          echo "$snap"; } >> $PW
+                        last=$snap
+                    fi
+                    sz=$(wc -c < $PW 2>/dev/null); test ${sz:-0} -gt 20000000 && mv -f $PW $PW.1
+                    sleep 2
+                done
+            ) < /dev/null > /dev/null 2>&1 &
+            echo $! >> $PIDF
+            say "Recorder on (system log + process watch). It runs until 'sh tt.sh rec off' or the car is switched off."
             ;;
         off)
-            running && kill "$(cat $PIDF)" 2>/dev/null
-            slay -f sloginfo > /dev/null 2>&1
-            rm -f $PIDF
+            stop_rec
             say 'Recorder off.'
             ;;
         *)
-            if running; then say "Recorder on, $(wc -c < $LIVE 2>/dev/null || echo 0) bytes in $LIVE"
+            if running; then say "Recorder on: $(wc -c < $LIVE 2>/dev/null || echo 0) bytes system log, $(wc -c < $PW 2>/dev/null || echo 0) bytes process watch"
             else say 'Recorder off.   sh tt.sh rec on | off'; fi
             ;;
     esac
@@ -652,7 +679,7 @@ save)
     n=1; while test -e "$K/logs/run$n"; do n=$((n+1)); done
     sloginfo 2>/dev/null | tail -4000 > /tmp/tt-slog.txt
     rw; mkdir -p "$K/logs/run$n"
-    for f in /tmp/tt-rgd.log /tmp/tt-rgd.log.1 /tmp/tt-nav.log /tmp/tt-zoom.log /tmp/tt-rgd.txt /tmp/tt-rgd-cat.txt /tmp/tt-route.txt /tmp/tt-dmdt.txt /tmp/altscreen111.log /tmp/mu1438-cluster-runtime.log /tmp/mibr-alt111-gen2.status /tmp/mibr-carplay111.state /tmp/tt-diag.txt /tmp/tt-slog.txt /tmp/mu1462-supervisor.log /tmp/tt-slog-marks.txt /tmp/tt-slog-live.txt /tmp/tt-slog-live.txt.1; do test -f "$f" && cp "$f" "$K/logs/run$n/"; done
+    for f in /tmp/tt-rgd.log /tmp/tt-rgd.log.1 /tmp/tt-nav.log /tmp/tt-zoom.log /tmp/tt-rgd.txt /tmp/tt-rgd-cat.txt /tmp/tt-route.txt /tmp/tt-dmdt.txt /tmp/altscreen111.log /tmp/mu1438-cluster-runtime.log /tmp/mibr-alt111-gen2.status /tmp/mibr-carplay111.state /tmp/tt-diag.txt /tmp/tt-slog.txt /tmp/mu1462-supervisor.log /tmp/tt-slog-marks.txt /tmp/tt-slog-live.txt /tmp/tt-slog-live.txt.1 /tmp/tt-procwatch.txt /tmp/tt-procwatch.txt.1; do test -f "$f" && cp "$f" "$K/logs/run$n/"; done
     ro
     say "Saved to $K/logs/run$n (kept across MMI restarts). On the Mac, this run only:"
     say "scp -O -r -o HostKeyAlgorithms=+ssh-rsa -o PubkeyAcceptedAlgorithms=+ssh-rsa root@10.173.189.1:$K/logs/run$n ~/Downloads/"
