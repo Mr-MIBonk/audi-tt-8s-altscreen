@@ -99,12 +99,34 @@ you have them, the logs saved before the MMI restart.
 
 ## Installing
 
-There is no one-click package yet. The current installers are in
-`ports/tt-8s-mu1462/package/` (see its `README.txt`), and the newest HMI jar is
-installed with the `kit/tt.sh` toolkit. An SD-card (M.I.B.) installer is planned.
+Download `tt-cockpit-carplay-v1.0.0.zip` from [Releases](https://github.com/Tristar10/audi-tt-8s-altscreen/releases).
+It installs from an SD card, through the **MIB2 Toolbox** (green engineering menu) or **M.I.B.**
 
-No firmware, patched stock files or converted HMI jars are in this repository;
-the port's `scripts/` rebuild them from your own firmware copy.
+**You need:** a TT 8S on **MHI2_US_AU43x_P5180 (MU1462)**; the MIB2 Toolbox or M.I.B. on
+the head unit; a computer with Python 3.8+ and Java 11+; the car parked with stable power. For the
+turn panel, chefranov's `librgd_hook.so` v1.1.10 (not included, see Credits).
+
+1. Copy the zip's `mod/` and `Custom/` folders to the root of your SD card (slot 1).
+   - MIB2 Toolbox only, once: MQBCoding → Customization → **GreenMenu** → "Install GreenMenu
+     screens…", then restart the green menu. The steps are now buttons under Customization →
+     **TTCarPlay**.
+   - M.I.B.: write the step name into `mod/tt/action.txt`, then Advanced Settings → Run Custom Script.
+2. **check:** read-only. Is this car supported, is the card complete?
+3. **export:** copies two files from your head unit to the card (read-only for the car).
+4. On your computer: `python3 mod/tt/pc/build.py` (on a Mac, copy the folder to the Mac's disk
+   first and copy `mod/tt/build/` back). It builds the HMI jar and the patched `dio_manager` from
+   *your* car's files and checks they match the tested build.
+5. Optional: `librgd_hook.so` into `mod/tt/user/`.
+6. **install**, with the iPhone unplugged. It backs up every file it changes, installs, and checks
+   each file. Then restart the MMI (hold the knob).
+
+Every step's output appears on screen (Toolbox) and in `mod/tt/last-run.txt`. **restore** puts
+every changed file back. The installer refuses to change anything on other firmware, or on a car
+that already has another CarPlay mod.
+
+No firmware, patched stock files or converted HMI jars are in this repository or the release zip;
+they are built from your own car. Developer tools (the `kit/tt.sh` toolkit, the older
+`package/` installers) are described in the [wiki](ports/tt-8s-mu1462/wiki/Build-and-test.md).
 
 ## Support
 
