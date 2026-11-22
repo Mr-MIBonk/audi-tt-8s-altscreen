@@ -38,7 +38,7 @@ public final class VerifyZoom {
         // every class of ours as well, so a new one cannot slip past (v59)
         java.util.List<String> all = new java.util.ArrayList<>(java.util.Arrays.asList(classes));
         try (java.util.stream.Stream<Path> s = Files.list(out.resolve("local/tt"))) {
-            s.map(f -> "local/tt/" + f.getFileName()).filter(n -> n.endsWith(".class")).sorted()
+            s.map(f -> "local/tt/" + f.getFileName()).filter(n -> n.endsWith(".class") && !n.startsWith("local/tt/._")).sorted()
                 .filter(n -> !all.contains(n)).forEach(all::add);
         }
         boolean ok = true;

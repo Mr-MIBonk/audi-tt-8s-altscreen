@@ -167,8 +167,13 @@ def main():
         print("4/5 building the HMI jar")
         out = os.path.join(work, "out")
         os.makedirs(out)
-        cp = os.pathsep.join([os.path.join(HERE, "classes", "tools")] + [os.path.join(cache, n) for n in ASM])
-        gate = os.path.join(HERE, "classes", "gate", "local", "tt", "ZoomGate.class")
+        # work on a copy without the "._Name" AppleDouble files macOS adds on FAT cards
+        # (PatchZoom read ._RouteRec.class as a class and stopped)
+        classes = os.path.join(work, "classes")
+        shutil.copytree(os.path.join(HERE, "classes"), classes,
+                        ignore=shutil.ignore_patterns("._*", ".DS_Store"))
+        cp = os.pathsep.join([os.path.join(classes, "tools")] + [os.path.join(cache, n) for n in ASM])
+        gate = os.path.join(classes, "gate", "local", "tt", "ZoomGate.class")
         for args in (["PatchZoom", stock, gate, out], ["VerifyZoom", stock, out]):
             p = subprocess.run(["java", "-cp", cp] + args, capture_output=True, text=True)
             if p.returncode != 0:
@@ -196,8 +201,9 @@ def main():
 
     print("\nDone: mod/tt/build/tt-zoom.jar and mod/tt/build/dio_manager match the tested build.")
     print("You may delete mod/tt/export/ now (60 MB).")
-    print("Next: optional librgd_hook.so into mod/tt/user/, set mod/tt/action.txt to 'install',")
-    print("eject the card and run the custom script in M.I.B. again.")
+    print("Next: optional librgd_hook.so into mod/tt/user/, eject the card, then run 'install':")
+    print("MIB2 Toolbox: Customization -> TTCarPlay -> 3. install;  M.I.B.: write install into")
+    print("mod/tt/action.txt and Run Custom Script.")
 
 
 if __name__ == "__main__":

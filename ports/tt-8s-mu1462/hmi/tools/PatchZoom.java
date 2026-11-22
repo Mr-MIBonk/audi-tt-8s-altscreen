@@ -350,7 +350,7 @@ public final class PatchZoom implements Opcodes {
         int rewritten = 0;
         try (var files = Files.walk(gateRoot)) {
             for (Path p : (Iterable<Path>) files.sorted()::iterator) {
-                if (!p.toString().endsWith(".class")) continue;
+                if (!p.toString().endsWith(".class") || p.getFileName().toString().startsWith("._")) continue;
                 ClassNode gate = new ClassNode();
                 new ClassReader(Files.readAllBytes(p)).accept(gate, ClassReader.SKIP_FRAMES);
                 if (!gate.name.startsWith("local/tt/") && !gate.name.equals("de/audi/tghu/navi/app/cluster/TtRgi"))
