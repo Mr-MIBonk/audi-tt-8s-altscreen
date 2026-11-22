@@ -223,7 +223,14 @@ for f in "$PF_DIR"/pf.conf "$PF_DIR"/pf.*.conf; do
         print -r -- "$line" >> "/tmp/tt-pf.$$.$b"
     done < "$f"
     case $n in
-        1) if pfctl -n -f "/tmp/tt-pf.$$.$b" >/dev/null 2>&1; then pf_count=$((pf_count+1)); else bad "firewall $b: new rule rejected"; fi;;
+        1) if pfctl -n -f "/tmp/tt-pf.$$.$b" >/dev/null 2>&1; then pf_count=$((pf_count+1))
+           elif pfctl -n -f "$f" >/dev/null 2>&1; then bad "firewall $b: the stock file parses but the new rule does not"
+           else
+               # e.g. pf.ppp0.conf: its interface does not exist on this unit, so even the unmodified
+               # stock file fails the test (the old package installer handled it the same way)
+               note "firewall $b: the stock file also fails pfctl's test (interface not present), updating it anyway"
+               pf_count=$((pf_count+1))
+           fi;;
         0) rm -f "/tmp/tt-pf.$$.$b";;
         *) bad "firewall $b: $n carplay0 block lines";;
     esac
