@@ -99,12 +99,11 @@ you have them, the logs saved before the MMI restart.
 
 ## Installing
 
-Download `tt-cockpit-carplay-v1.0.0.zip` from [Releases](https://github.com/Tristar10/audi-tt-8s-altscreen/releases).
+Download the latest `tt-cockpit-carplay-vX.Y.Z.zip` from [Releases](https://github.com/Tristar10/audi-tt-8s-altscreen/releases).
 It installs from an SD card, through the **MIB2 Toolbox** (green engineering menu) or **M.I.B.**
 
 **You need:** a TT 8S on **MHI2_US_AU43x_P5180 (MU1462)**; the MIB2 Toolbox or M.I.B. on
-the head unit; a computer with Python 3.8+ and Java 11+; the car parked with stable power. For the
-turn panel, chefranov's `librgd_hook.so` v1.1.10 (not included, see Credits).
+the head unit; a computer with Python 3.8+, Java 11+ and internet; the car parked with stable power.
 
 1. Copy the zip's `mod/` and `Custom/` folders to the root of your SD card (slot 1).
    - MIB2 Toolbox only, once: MQBCoding → Customization → **GreenMenu** → "Install GreenMenu
@@ -115,9 +114,9 @@ turn panel, chefranov's `librgd_hook.so` v1.1.10 (not included, see Credits).
 3. **export:** copies two files from your head unit to the card (read-only for the car).
 4. On your computer: `python3 mod/tt/pc/build.py` (on a Mac, copy the folder to the Mac's disk
    first and copy `mod/tt/build/` back). It builds the HMI jar and the patched `dio_manager` from
-   *your* car's files and checks they match the tested build.
-5. Optional: `librgd_hook.so` into `mod/tt/user/`.
-6. **install**, with the iPhone unplugged. It backs up every file it changes, installs, and checks
+   *your* car's files and checks they match the tested build. For the turn panel it also fetches
+   chefranov's route-guidance hook from his official release and checks it (`--no-rgd`: map only).
+5. **install**, with the iPhone unplugged. It backs up every file it changes, installs, and checks
    each file. Then restart the MMI (hold the knob).
 
 Every step's output appears on screen (Toolbox) and in `mod/tt/last-run.txt`. **restore** puts

@@ -6,11 +6,15 @@ dio_manager) into the two install files that cannot be published, because they c
 Audi/Harman code: mod/tt/build/tt-zoom.jar and mod/tt/build/dio_manager.
 
     python3 build.py            (run it from the SD card; Windows: py build.py)
+    python3 build.py --no-rgd   (without the route-guidance hook: map only, no turn panel)
+    python3 build.py --rgd-zip mhi2-au37x-carplay-v1.1.10-sd.zip   (a copy you downloaded yourself)
 
 Needs Python 3.8+ and Java 11+ (java on the PATH), and internet once: it downloads
 jxe2jar (luka-dev, pinned commit) and ASM 9.7 (Maven Central) and checks every file's
 SHA-256. The result must match the tested build byte for byte, or nothing is written.
-Nothing is uploaded anywhere.
+For the turn panel it also downloads chefranov's official v1.1.10 SD package from his GitHub
+release, checks it, and puts the librgd_hook.so from it into mod/tt/user/ for your car (his
+licence allows free use; this project does not redistribute it). Nothing is uploaded anywhere.
 """
 import hashlib
 import os
@@ -27,6 +31,14 @@ STOCK_JXE = "@@STOCK_JXE@@"
 STOCK_DIO = "@@STOCK_DIO@@"
 NEW_JAR = "@@NEW_JAR@@"
 NEW_DIO = "@@NEW_DIO@@"
+RGD_HOOK = "@@RGD_HOOK@@"
+
+# chefranov's route-guidance hook: fetched from his own release, never redistributed by us
+RGD_ZIP = ("https://github.com/chefranov/mhi2-au37x-carplay/releases/download/v1.1.10/"
+           "mhi2-au37x-carplay-v1.1.10-sd.zip")
+RGD_ZIP_SHA = "3d64930531966e7e12baeddd81f066e9f2719d86a945b6b03067ec9aa65fd674"
+RGD_MEMBER = "mod/carplay/bin/librgd_hook.so"
+RGD_CREDIT = "librgd_hook.so (c) Eugene Chefranov - https://github.com/chefranov/mhi2-au37x-carplay"
 
 JXE2JAR = "https://raw.githubusercontent.com/luka-dev/jxe2jar/9eeb45bbf14bf8afe3452c7be96a4d1f0206a286/src/"
 JXE2JAR_FILES = {
@@ -50,6 +62,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 TT = os.path.dirname(HERE)
 EXPORT = os.path.join(TT, "export")
 BUILD = os.path.join(TT, "build")
+USER = os.path.join(TT, "user")
 
 
 def sha(path):
@@ -191,17 +204,50 @@ def main():
         if sha(dnew) != NEW_DIO:
             stop("the patched dio_manager does not match the tested build. Please report this.")
 
+        rgd = os.path.join(USER, "librgd_hook.so")
+        rgd_new = None
+        if "--no-rgd" in sys.argv[1:]:
+            print("+   route-guidance hook: skipped (--no-rgd): map only, no turn panel")
+        elif os.path.exists(rgd) and sha(rgd) == RGD_HOOK:
+            print("+   route-guidance hook: already in mod/tt/user/")
+        else:
+            print("+   route-guidance hook: chefranov's official v1.1.10 package")
+            args = sys.argv[1:]
+            if "--rgd-zip" in args and args.index("--rgd-zip") + 1 < len(args):
+                rz = args[args.index("--rgd-zip") + 1]
+                if not os.path.exists(rz) or sha(rz) != RGD_ZIP_SHA:
+                    stop("--rgd-zip: not chefranov's v1.1.10 SD package (checksum differs)")
+            else:
+                rz = os.path.join(cache, "rgd-package.zip")
+                fetch(RGD_ZIP, rz, RGD_ZIP_SHA)
+            try:
+                with zipfile.ZipFile(rz) as zf:
+                    data = zf.read(RGD_MEMBER)
+            except Exception as e:
+                stop("could not read librgd_hook.so from chefranov's package: %s" % e)
+            if hashlib.sha256(data).hexdigest() != RGD_HOOK:
+                stop("librgd_hook.so in chefranov's package is not the expected v1.1.10 file. Please report this.")
+            rgd_new = os.path.join(work, "librgd_hook.so")
+            with open(rgd_new, "wb") as f:
+                f.write(data)
+            print("    " + RGD_CREDIT)
+
         os.makedirs(BUILD, exist_ok=True)
         for f in ("tt-zoom.jar", "dio_manager"):
             shutil.copyfile(os.path.join(work, f), os.path.join(BUILD, f))
         if sha(os.path.join(BUILD, "tt-zoom.jar")) != NEW_JAR or sha(os.path.join(BUILD, "dio_manager")) != NEW_DIO:
             stop("writing to the SD card failed (card full or damaged?)")
+        if rgd_new:
+            os.makedirs(USER, exist_ok=True)
+            shutil.copyfile(rgd_new, rgd)
+            if sha(rgd) != RGD_HOOK:
+                stop("writing librgd_hook.so to the SD card failed (card full or damaged?)")
     finally:
         shutil.rmtree(work, ignore_errors=True)
 
     print("\nDone: mod/tt/build/tt-zoom.jar and mod/tt/build/dio_manager match the tested build.")
     print("You may delete mod/tt/export/ now (60 MB).")
-    print("Next: optional librgd_hook.so into mod/tt/user/, eject the card, then run 'install':")
+    print("Next: eject the card, then run 'install':")
     print("MIB2 Toolbox: Customization -> TTCarPlay -> 3. install;  M.I.B.: write install into")
     print("mod/tt/action.txt and Run Custom Script.")
 

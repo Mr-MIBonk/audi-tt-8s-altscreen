@@ -20,7 +20,8 @@ by itself.
  2. export    Copies two files from your head unit to mod/tt/export/ (read-only).
  3. On your computer:  python3 mod/tt/pc/build.py   (Windows: py mod\tt\pc\build.py)
               Builds mod/tt/build/ from those files and checks it matches the tested build.
- 4. Optional: chefranov's librgd_hook.so v1.1.10 into mod/tt/user/ for the turn-by-turn panel.
+ 4. (automatic) The builder also fetches chefranov's route-guidance hook for the turn panel
+              from his official v1.1.10 release (--no-rgd: map only).
  5. install   Unplug the phone first. Backs up and installs. Then restart the MMI (hold the knob).
  6. restore   Puts every changed file back, then restart the MMI.
     logs      Saves logs to mod/tt/logs/ for a bug report.

@@ -71,6 +71,7 @@ def main():
     for a in ("stock-jar", "asm-dir", "jdk-bin", "hook", "runtime", "supervisor", "sha-tool"):
         ap.add_argument("--" + a, required=True)
     ap.add_argument("--test-jxe")
+    ap.add_argument("--test-rgd-zip", help="chefranov's v1.1.10 SD zip for the end-to-end test (else it is downloaded)")
     ap.add_argument("--test-dio")
     o = ap.parse_args()
 
@@ -145,9 +146,10 @@ def main():
         shutil.copyfile(o.test_dio, os.path.join(copy, "mod", "tt", "export", "dio_manager"))
         env = dict(os.environ)
         env["PATH"] = jbin + os.pathsep + env.get("PATH", "")
-        run([sys.executable, os.path.join(copy, "mod", "tt", "pc", "build.py")], env=env)
-        for f, key in (("tt-zoom.jar", "NEW_JAR"), ("dio_manager", "NEW_DIO")):
-            if sha(os.path.join(copy, "mod", "tt", "build", f)) != sub[key]:
+        extra = ["--rgd-zip", o.test_rgd_zip] if o.test_rgd_zip else []
+        run([sys.executable, os.path.join(copy, "mod", "tt", "pc", "build.py")] + extra, env=env)
+        for f, key in (("build/tt-zoom.jar", "NEW_JAR"), ("build/dio_manager", "NEW_DIO"), ("user/librgd_hook.so", "RGD_HOOK")):
+            if sha(os.path.join(copy, "mod", "tt", *f.split("/"))) != sub[key]:
                 sys.exit("end-to-end: %s does not match" % f)
         shutil.rmtree(t, ignore_errors=True)
         print("end-to-end OK")
