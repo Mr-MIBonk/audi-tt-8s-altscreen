@@ -50,7 +50,7 @@ How the parts fit together: [system architecture](ports/tt-8s-mu1462/wiki/Archit
 | Turn-by-turn panel: 3D arrows, lanes, exit badge, distance, ETA | Works |
 | Bottom strip with the next turn ("Left to Alpha St"), auto zoom near turns | Works |
 | Switching between the map and the CarPlay tab without drops | Works for normal switching ([how it was fixed](ports/tt-8s-mu1462/wiki/Display-window-handover.md)) |
-| Android Auto | Not ported to the TT |
+| Android Auto | Not ported to the TT. I don't have an Android device. |
 
 Details, the dead ends and what is next: **[the TT wiki](ports/tt-8s-mu1462/wiki/Home.md)**.
 Built with Claude Code; how, and how to start on your own car: [Working with Claude](ports/tt-8s-mu1462/wiki/Working-with-Claude.md).
@@ -136,7 +136,7 @@ tokens it was built with, the gas for test drives, or the time), you can:
 [![Buy me a coffee on Ko-fi](https://img.shields.io/badge/Buy%20me%20a%20coffee-Ko--fi-ff5e5b?logo=kofi&logoColor=white)](https://ko-fi.com/tristar10)
 [![Sponsor on GitHub](https://img.shields.io/badge/Sponsor-GitHub-ea4aaa?logo=githubsponsors&logoColor=white)](https://github.com/sponsors/Tristar10)
 
-Entirely optional. Bug reports with logs from your car help just as much.
+Entirely optional. Bug reports with logs from your car help just as much. Please report your problem to Issues if there is one.
 
 ## Credits and licence
 
