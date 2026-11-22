@@ -1,4 +1,4 @@
-# CarPlay on the Audi TT 8S Virtual Cockpit
+# Fullscreen CarPlay Maps on the Audi TT 8S Virtual Cockpit
 
 Apple Maps and Google Maps from CarPlay on the Audi TT 8S Virtual Cockpit, with
 turn-by-turn guidance drawn in the cockpit's guidance banner.
